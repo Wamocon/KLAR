@@ -6,6 +6,8 @@ import { extractUrlContent } from "@/lib/utils/extract-url";
 import { z } from "zod/v4";
 import type { AnalysisMode } from "@/types";
 
+export const maxDuration = 60;
+
 const scanSchema = z.object({
   text: z.string().min(50).max(5000).optional(),
   url: z.string().url().optional(),

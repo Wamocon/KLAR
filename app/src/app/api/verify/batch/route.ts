@@ -4,6 +4,8 @@ import { runVerificationPipeline } from "@/lib/verification/pipeline";
 import { sanitizeInput } from "@/lib/security/sanitize";
 import { z } from "zod/v4";
 
+export const maxDuration = 60;
+
 const batchSchema = z.object({
   items: z.array(
     z.object({

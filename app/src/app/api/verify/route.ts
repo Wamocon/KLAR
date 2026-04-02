@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { runVerificationPipeline } from "@/lib/verification/pipeline";
+
+// Allow up to 60s for AI processing (Gemini calls + evidence search)
+export const maxDuration = 60;
 import { extractUrlContent } from "@/lib/utils/extract-url";
 import { extractTextFromFile } from "@/lib/utils/file-extract";
 import { sanitizeInput } from "@/lib/security/sanitize";
