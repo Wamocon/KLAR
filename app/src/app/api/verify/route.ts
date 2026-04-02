@@ -4,8 +4,10 @@ import { runVerificationPipeline } from "@/lib/verification/pipeline";
 
 // Allow up to 60s for AI processing (Gemini calls + evidence search)
 export const maxDuration = 60;
-import { extractUrlContent } from "@/lib/utils/extract-url";
-import { extractTextFromFile } from "@/lib/utils/file-extract";
+
+// Lazy imports for heavy dependencies (jsdom ~20MB, pdf-parse) — only loaded when needed
+const getExtractUrlContent = () => import("@/lib/utils/extract-url").then(m => m.extractUrlContent);
+const getExtractTextFromFile = () => import("@/lib/utils/file-extract").then(m => m.extractTextFromFile);
 import { sanitizeInput } from "@/lib/security/sanitize";
 import { detectAdversarialContent, getOverallThreatLevel } from "@/lib/security/adversarial";
 import {
@@ -132,6 +134,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
+      const extractTextFromFile = await getExtractTextFromFile();
       const extracted = await extractTextFromFile(buffer, file.name, file.type);
       text = extracted.text;
       fileFilename = file.name;
@@ -171,6 +174,7 @@ export async function POST(request: NextRequest) {
 
     if ("url" in input && input.url) {
       try {
+        const extractUrlContent = await getExtractUrlContent();
         const page = await extractUrlContent(input.url);
         text = page.content;
         sourceUrl = page.url;

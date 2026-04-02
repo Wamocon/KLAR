@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiKey, hasScope, checkApiKeyRateLimit } from "@/lib/security/api-key-auth";
 import { sanitizeInput } from "@/lib/security/sanitize";
 import { runVerificationPipeline } from "@/lib/verification/pipeline";
-import { extractUrlContent } from "@/lib/utils/extract-url";
 import { z } from "zod/v4";
 import type { AnalysisMode } from "@/types";
 
 export const maxDuration = 60;
+
+// Lazy import for heavy jsdom dependency
+const getExtractUrlContent = () => import("@/lib/utils/extract-url").then(m => m.extractUrlContent);
 
 const scanSchema = z.object({
   text: z.string().min(50).max(5000).optional(),
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
 
   if (parsed.data.url) {
     try {
+      const extractUrlContent = await getExtractUrlContent();
       const page = await extractUrlContent(parsed.data.url);
       text = page.content.slice(0, 5000); // Truncate for extension
       sourceUrl = page.url;
