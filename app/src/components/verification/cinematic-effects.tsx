@@ -157,7 +157,7 @@ export function StageIndicator({
         <span className="text-lg">{stageIcons[stage] || "⏳"}</span>
       </div>
       <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-white typewriter-cursor">
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-300 typewriter-cursor">
           {message}
         </p>
         <div className="mt-1 h-1 w-32 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">

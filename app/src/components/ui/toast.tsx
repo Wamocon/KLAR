@@ -68,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="alert"
           >
             {icons[t.type]}
-            <span className="text-sm font-medium text-gray-900 dark:text-white">{t.message}</span>
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-300">{t.message}</span>
             <button
               onClick={() => removeToast(t.id)}
               className="ml-2 rounded-lg p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"

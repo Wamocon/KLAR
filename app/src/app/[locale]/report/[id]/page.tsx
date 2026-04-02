@@ -269,7 +269,7 @@ export default function ReportPage() {
 
               <div className="col-span-3 grid grid-cols-2 sm:grid-cols-4 border-l border-gray-100 dark:border-gray-800">
                 {[
-                  { label: t("totalClaims"), value: verification.total_claims, color: "text-gray-900 dark:text-white" },
+                  { label: t("totalClaims"), value: verification.total_claims, color: "text-slate-800 dark:text-slate-300" },
                   { label: t("supported"), value: verification.supported_count, color: "text-emerald-600" },
                   { label: t("unverifiable"), value: verification.unverifiable_count, color: "text-amber-600" },
                   { label: t("contradicted"), value: verification.contradicted_count, color: "text-red-600" },
@@ -290,7 +290,7 @@ export default function ReportPage() {
             <CardContent className="flex items-center gap-3 p-5">
               <Clock className="h-5 w-5 text-gray-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-300">
                   {(verification.processing_time_ms / 1000).toFixed(1)} {t("seconds")}
                 </p>
                 <p className="text-xs text-gray-500">{t("processingTime")}</p>
@@ -344,7 +344,7 @@ export default function ReportPage() {
         </Card>
 
         {/* Claims List */}
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-300">
           {locale === "de" ? "Einzelne Behauptungen" : "Individual Claims"} ({claims.length})
         </h2>
         <div className="space-y-3">
@@ -366,7 +366,7 @@ export default function ReportPage() {
                 <div className="flex items-start gap-3">
                   {getVerdictIcon(claim.verdict)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">{claim.claim_text}</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-300 leading-relaxed">{claim.claim_text}</p>
                     <div className="mt-2 flex items-center gap-2">
                       <Badge variant={claim.verdict === "supported" ? "success" : claim.verdict === "contradicted" ? "destructive" : "warning"}>
                         {getVerdictLabel(claim.verdict)}
@@ -395,7 +395,7 @@ export default function ReportPage() {
                               onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
                               <div className="min-w-0">
-                                <span className="font-medium text-gray-900 dark:text-white">{source.title}</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-300">{source.title}</span>
                                 <Badge variant="secondary" className="ml-2 text-[10px]">{source.source_type}</Badge>
                                 <p className="mt-1 text-xs text-gray-500 leading-relaxed">{source.snippet}</p>
                               </div>

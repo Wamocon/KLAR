@@ -23,7 +23,7 @@ export default async function TermsPage({
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "1. Nutzung des Dienstes" : "1. Use of Service"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -34,7 +34,7 @@ export default async function TermsPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "2. Kontoregistrierung" : "2. Account Registration"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -45,7 +45,7 @@ export default async function TermsPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "3. Nutzungsgrenzen" : "3. Usage Limits"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -56,7 +56,7 @@ export default async function TermsPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "4. Haftungsausschluss" : "4. Disclaimer"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -67,7 +67,7 @@ export default async function TermsPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "5. Geistiges Eigentum" : "5. Intellectual Property"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -78,7 +78,7 @@ export default async function TermsPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "6. Kündigung" : "6. Termination"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">

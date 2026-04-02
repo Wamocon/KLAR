@@ -23,7 +23,7 @@ export default async function PrivacyPage({
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "1. Verantwortlicher" : "1. Data Controller"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -34,7 +34,7 @@ export default async function PrivacyPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "2. Erhobene Daten" : "2. Data We Collect"}
             </h2>
             <ul className="list-disc pl-6 text-gray-600 dark:text-gray-400 space-y-2">
@@ -46,7 +46,7 @@ export default async function PrivacyPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "3. Zweck der Datenverarbeitung" : "3. Purpose of Data Processing"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -57,7 +57,7 @@ export default async function PrivacyPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "4. Datenspeicherung" : "4. Data Storage"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -68,7 +68,7 @@ export default async function PrivacyPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "5. Ihre Rechte" : "5. Your Rights"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -79,7 +79,7 @@ export default async function PrivacyPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "6. Kontakt" : "6. Contact"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">

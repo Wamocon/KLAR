@@ -5,6 +5,15 @@
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --klar-heading: #1e293b;     /* slate-800 — steel grey for headings */
+  --klar-body: #334155;        /* slate-700 — readable body text */
+  --klar-muted: #64748b;       /* slate-500 — secondary text */
+}
+
+.dark {
+  --klar-heading: #cbd5e1;     /* slate-300 — soft steel for dark mode */
+  --klar-body: #94a3b8;        /* slate-400 — readable in dark */
+  --klar-muted: #64748b;       /* slate-500 — secondary text dark */
 }
 
 html {

@@ -53,7 +53,7 @@ export default function LoginPage() {
             <Link href={`/${locale}`} className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform hover:scale-105">
               <Shield className="h-7 w-7" />
             </Link>
-            <h2 className="mt-5 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+            <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-300">
               {t("loginTitle")}
             </h2>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">

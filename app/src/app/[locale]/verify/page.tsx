@@ -447,7 +447,7 @@ export default function VerifyPage() {
               onClick={() => { setInputMode("text"); setError(""); }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 inputMode === "text"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-300 shadow-sm"
                   : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
@@ -458,7 +458,7 @@ export default function VerifyPage() {
               onClick={() => { setInputMode("url"); setError(""); }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 inputMode === "url"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-300 shadow-sm"
                   : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
@@ -469,7 +469,7 @@ export default function VerifyPage() {
               onClick={() => { setInputMode("file"); setError(""); }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 inputMode === "file"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-300 shadow-sm"
                   : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
@@ -592,7 +592,7 @@ export default function VerifyPage() {
                     <>
                       <FileText className="h-10 w-10 text-emerald-500" />
                       <div className="text-center">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-300">{file.name}</p>
                         <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
                       </div>
                       <button
@@ -645,7 +645,7 @@ export default function VerifyPage() {
             <CardContent className="flex items-center gap-3 p-4">
               <ExternalLink className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-300 truncate">
                   {extractedMeta.title || extractedMeta.url}
                 </p>
                 <p className="text-xs text-gray-500 truncate">{extractedMeta.url}</p>
@@ -672,7 +672,7 @@ export default function VerifyPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-300">
                       {aiDetectionResult.overallScore}%
                     </span>
                     <Badge variant={
@@ -713,7 +713,7 @@ export default function VerifyPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-300">
                       {biasResult.overallScore}%
                     </span>
                     <Badge variant={
@@ -758,7 +758,7 @@ export default function VerifyPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-300">
                       {plagiarismResult.originalityPercent}%
                     </span>
                     <Badge variant={
@@ -797,7 +797,7 @@ export default function VerifyPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-300">
                       {frameworkResult.overallScore}
                     </span>
                     <Badge variant={

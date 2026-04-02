@@ -53,7 +53,7 @@ export default async function ContactPage({
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
                 <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h3 className="mb-1 font-semibold text-gray-900 dark:text-white">{title}</h3>
+              <h3 className="mb-1 font-semibold text-slate-800 dark:text-slate-300">{title}</h3>
               <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{detail}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{desc}</p>
             </div>

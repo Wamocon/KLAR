@@ -160,7 +160,7 @@ export default function HistoryPage() {
                     href={`/${locale}/report/${v.id}`}
                     className="flex-1 min-w-0"
                   >
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-300 truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                       {truncateText(v.input_text, 120)}
                     </p>
                     <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">

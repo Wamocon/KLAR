@@ -20,7 +20,7 @@ export default async function ImprintPage({
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "Angaben gemäß § 5 TMG" : "Information according to § 5 TMG"}
             </h2>
             <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-1">
@@ -31,7 +31,7 @@ export default async function ImprintPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "Kontakt" : "Contact"}
             </h2>
             <div className="text-gray-600 dark:text-gray-400 leading-relaxed space-y-1">
@@ -40,7 +40,7 @@ export default async function ImprintPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "Haftungsausschluss" : "Disclaimer"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -51,7 +51,7 @@ export default async function ImprintPage({
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-300">
               {isDE ? "Streitschlichtung" : "Dispute Resolution"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">

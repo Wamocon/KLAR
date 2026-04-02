@@ -258,7 +258,7 @@ export default function DashboardPage() {
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {contradictedClaims.map(claim => (
                     <div key={claim.id} className="p-4 hover:bg-red-50/30 dark:hover:bg-red-900/10 transition-colors">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">&ldquo;{claim.claim_text}&rdquo;</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-300 line-clamp-2">&ldquo;{claim.claim_text}&rdquo;</p>
                       <p className="mt-1.5 text-xs text-red-500 truncate">{claim.reasoning}</p>
                     </div>
                   ))}
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                   <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                   <Badge variant={stat.badgeVariant}>{stat.badge}</Badge>
                 </div>
-                <p className="mt-4 text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="mt-4 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {stat.value}
                 </p>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-300 truncate">
                         {truncateText(v.input_text, 80)}
                       </p>
                       <p className="mt-1 text-xs text-gray-400">

@@ -68,7 +68,7 @@ export default async function AboutPage({
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
                 <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+              <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-slate-300">{title}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{desc}</p>
             </div>
           ))}
@@ -77,7 +77,7 @@ export default async function AboutPage({
         {/* What KLAR Analyzes */}
         <ScrollReveal>
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-300">
               {isDE ? "Was KLAR analysiert" : "What KLAR Analyzes"}
             </h2>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
@@ -102,7 +102,7 @@ export default async function AboutPage({
                 <Icon className="h-4 w-4" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{label}</h4>
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-300">{label}</h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{desc}</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export default async function AboutPage({
         {/* Technology & Compliance */}
         <ScrollReveal>
           <div className="rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-300 mb-4">
               {isDE ? "Technologie & Compliance" : "Technology & Compliance"}
             </h2>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -123,7 +123,7 @@ export default async function AboutPage({
               ].map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="text-center p-3">
                   <Icon className="h-6 w-6 mx-auto text-emerald-600 dark:text-emerald-400 mb-2" />
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h4>
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-300">{title}</h4>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{desc}</p>
                 </div>
               ))}

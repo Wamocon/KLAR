@@ -59,7 +59,7 @@ function LandingContent({ locale }: { locale: string }) {
             {locale === "de" ? "KI-Verifizierung" : "AI Verification"}
           </Badge>
 
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-300 sm:text-5xl lg:text-6xl">
             {t("hero.title")}{" "}
             <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">
               {t("hero.titleHighlight")}
@@ -160,7 +160,7 @@ function LandingContent({ locale }: { locale: string }) {
         <div className="mx-auto max-w-6xl">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
                 {t("howItWorks.title")}
               </h2>
               <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
@@ -184,12 +184,12 @@ function LandingContent({ locale }: { locale: string }) {
               { icon: FileCheck, title: t("howItWorks.step5Title"), desc: t("howItWorks.step5Desc") },
             ].map((step, i) => (
               <div key={i} className="relative flex flex-col items-center text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 text-white shadow-lg dark:bg-white dark:text-gray-900 magnetic-hover">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 text-white shadow-lg dark:bg-white dark:text-slate-800 magnetic-hover">
                   <step.icon className="h-6 w-6" />
                 </div>
                 <div className="absolute -left-4 top-7 hidden h-px w-full bg-gray-200 dark:bg-gray-700 md:block first:hidden" style={{ display: i === 0 ? "none" : undefined }} />
                 <span className="mt-2 text-xs font-bold text-gray-400">{i + 1}</span>
-                <h3 className="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                <h3 className="mt-2 text-base font-semibold text-slate-800 dark:text-slate-300">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -207,7 +207,7 @@ function LandingContent({ locale }: { locale: string }) {
         <div className="mx-auto max-w-6xl">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl inline-block bg-gradient-to-r from-gray-900 to-gray-500 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+              <h2 className="text-3xl font-bold sm:text-4xl inline-block bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
                 {t("features.title")}
               </h2>
               <p className="mt-2 mx-auto max-w-xl text-sm text-gray-400 dark:text-gray-500">
@@ -258,7 +258,7 @@ function LandingContent({ locale }: { locale: string }) {
                 <Sparkles className="mr-1.5 h-3 w-3" />
                 {locale === "de" ? "5 KI-Engines" : "5 AI Engines"}
               </Badge>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
                 {locale === "de" ? "Umfassende Inhaltsanalyse" : "Comprehensive Content Analysis"}
               </h2>
               <p className="mt-3 mx-auto max-w-2xl text-gray-500 dark:text-gray-400">
@@ -328,7 +328,7 @@ function LandingContent({ locale }: { locale: string }) {
                   <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${colorMap[color]} text-white shadow-lg`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
+                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-300">{title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{desc}</p>
                 </div>
               );
@@ -352,7 +352,7 @@ function LandingContent({ locale }: { locale: string }) {
         <div className="mx-auto max-w-5xl">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
                 {t("pricing.title")}
               </h2>
               <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
@@ -367,7 +367,7 @@ function LandingContent({ locale }: { locale: string }) {
             <Card>
               <CardHeader className="text-center">
                 <CardTitle>{t("pricing.free")}</CardTitle>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.freePrice")}
                   <span className="text-base font-normal text-gray-500">
                     {t("pricing.perMonth")}
@@ -400,7 +400,7 @@ function LandingContent({ locale }: { locale: string }) {
               </div>
               <CardHeader className="text-center">
                 <CardTitle>{t("pricing.pro")}</CardTitle>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.proPrice")}
                   <span className="text-base font-normal text-gray-500">
                     {t("pricing.perMonth")}
@@ -426,7 +426,7 @@ function LandingContent({ locale }: { locale: string }) {
             <Card>
               <CardHeader className="text-center">
                 <CardTitle>{t("pricing.team")}</CardTitle>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.teamPrice")}
                   <span className="text-base font-normal text-gray-500">
                     {t("pricing.perUser")}{t("pricing.perMonth")}
@@ -457,7 +457,7 @@ function LandingContent({ locale }: { locale: string }) {
       <section className="bg-gray-50 px-4 py-20 dark:bg-gray-900/50 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
               {t("trust.title")}
             </h2>
             <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
@@ -478,7 +478,7 @@ function LandingContent({ locale }: { locale: string }) {
                 key={i}
                 className="flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-900 magnetic-hover"
               >
-                <item.icon className="h-6 w-6 text-gray-900 dark:text-white" />
+                <item.icon className="h-6 w-6 text-slate-800 dark:text-slate-300" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {item.label}
                 </span>
@@ -497,7 +497,7 @@ function LandingContent({ locale }: { locale: string }) {
                 <Building2 className="mr-1.5 h-3.5 w-3.5" />
                 Enterprise
               </Badge>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
                 {locale === "de"
                   ? "KI-Qualitätssicherung für Unternehmen"
                   : "AI Quality Assurance for Enterprise"}

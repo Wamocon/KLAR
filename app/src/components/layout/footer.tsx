@@ -27,7 +27,7 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-300">
               {t("product")}
             </h3>
             <ul className="space-y-2">
@@ -52,7 +52,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-300">
               {t("company")}
             </h3>
             <ul className="space-y-2">
@@ -77,7 +77,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-300">
               {t("legal")}
             </h3>
             <ul className="space-y-2">

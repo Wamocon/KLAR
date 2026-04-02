@@ -65,7 +65,7 @@ export default function SignupPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h2 className="mt-6 text-xl font-bold text-gray-900 dark:text-white">
+            <h2 className="mt-6 text-xl font-bold text-slate-800 dark:text-slate-300">
               {t("signupSuccess")}
             </h2>
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -95,7 +95,7 @@ export default function SignupPage() {
             <Link href={`/${locale}`} className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform hover:scale-105">
               <Shield className="h-7 w-7" />
             </Link>
-            <h2 className="mt-5 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+            <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-300">
               {t("signupTitle")}
             </h2>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">

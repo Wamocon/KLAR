@@ -197,7 +197,7 @@ for line in response.iter_lines():
                     {item.step}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-300">{item.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
                   </div>
                 </div>
@@ -211,7 +211,7 @@ for line in response.iter_lines():
         <ScrollReveal>
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-300">
               {locale === "de" ? "API-Integration" : "API Integration"}
             </h2>
             <Badge variant="secondary" className="text-xs">REST + SSE</Badge>
