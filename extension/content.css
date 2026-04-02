@@ -1,0 +1,195 @@
+#klar-extension-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 360px;
+  max-height: 500px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  display: none;
+  animation: klar-slide-in 0.3s ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  #klar-extension-panel {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes klar-slide-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.klar-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f0fdf4, #f0f9ff);
+}
+
+@media (prefers-color-scheme: dark) {
+  .klar-panel-header {
+    border-bottom-color: #374151;
+    background: linear-gradient(135deg, #0f2a1a, #0f1f3a);
+  }
+}
+
+.klar-logo {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #059669, #0891b2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.klar-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.klar-close:hover { color: #4b5563; }
+
+.klar-panel-body {
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+/* Loading */
+.klar-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.klar-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #059669;
+  border-radius: 50%;
+  animation: klar-spin 0.8s linear infinite;
+}
+
+@keyframes klar-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Score */
+.klar-score {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.klar-score-number {
+  font-size: 36px;
+  font-weight: 800;
+  display: block;
+  line-height: 1.1;
+}
+
+.klar-score-label {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Claims summary */
+.klar-claims-summary {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.klar-supported { color: #22c55e; }
+.klar-contradicted { color: #ef4444; }
+.klar-unverifiable { color: #eab308; }
+
+/* Individual claims */
+.klar-claims {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .klar-claims { border-top-color: #374151; }
+}
+
+.klar-claim {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .klar-claim { border-bottom-color: #1f2937; }
+}
+
+.klar-claim-verdict {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.klar-claim-supported .klar-claim-verdict { background: #dcfce7; color: #16a34a; }
+.klar-claim-contradicted .klar-claim-verdict { background: #fee2e2; color: #dc2626; }
+.klar-claim-unverifiable .klar-claim-verdict { background: #fef9c3; color: #ca8a04; }
+
+.klar-claim-text {
+  color: #4b5563;
+}
+
+@media (prefers-color-scheme: dark) {
+  .klar-claim-text { color: #d1d5db; }
+}
+
+.klar-more {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Error */
+.klar-error {
+  color: #ef4444;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.klar-time {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 8px;
+}

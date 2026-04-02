@@ -1,0 +1,9 @@
+# Python virtual env
+.venv/
+
+# Next.js build output (root level)
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db

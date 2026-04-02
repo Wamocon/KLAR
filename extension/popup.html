@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=360">
+  <title>KLAR</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a2e; color: #e0e0e0; }
+    }
+    .header {
+      padding: 16px;
+      background: linear-gradient(135deg, #f0fdf4, #f0f9ff);
+      border-bottom: 1px solid #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      .header { background: linear-gradient(135deg, #0f2a1a, #0f1f3a); border-bottom-color: #374151; }
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #059669, #0891b2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tagline { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .body { padding: 16px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500; }
+    .field input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #f9fafb;
+    }
+    @media (prefers-color-scheme: dark) {
+      .field input { background: #111827; border-color: #374151; color: #e0e0e0; }
+    }
+    .field input:focus { outline: 2px solid #059669; outline-offset: -1px; }
+    .status {
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .status-ok { background: #dcfce7; color: #16a34a; }
+    .status-error { background: #fee2e2; color: #dc2626; }
+    .status-none { background: #f3f4f6; color: #6b7280; }
+    @media (prefers-color-scheme: dark) {
+      .status-ok { background: #052e16; }
+      .status-error { background: #450a0a; }
+      .status-none { background: #1f2937; }
+    }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #059669, #0891b2);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .actions { margin-top: 12px; }
+    .link {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #059669;
+      text-decoration: none;
+      margin-top: 12px;
+    }
+    .link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">KLAR</div>
+    <div class="tagline">AI Content Verifier</div>
+  </div>
+  <div class="body">
+    <div id="status" class="status status-none">No API key configured</div>
+
+    <div class="field">
+      <label for="apiKey">API Key</label>
+      <input type="password" id="apiKey" placeholder="klar_xxxxxxxx_...">
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn">Save API Key</button>
+
+    <div class="actions" style="margin-top: 16px;">
+      <button class="btn btn-primary" id="verifyBtn" disabled>Verify Selected Text</button>
+    </div>
+
+    <a class="link" href="https://klar.tools/en/settings" target="_blank" rel="noopener">
+      Get your API key →
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
