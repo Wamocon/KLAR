@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "KLAR – AI Content Verifier",
+    "description": "Extension name"
+  },
+  "appDescription": {
+    "message": "Verify AI-generated content against real sources. EU AI Act compliant.",
+    "description": "Extension description"
+  }
+}

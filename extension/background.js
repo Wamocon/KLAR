@@ -4,7 +4,7 @@
  * Handles context menus, API communication, and extension state.
  */
 
-const API_BASE = "https://klar.tools";
+const API_BASE = "https://klar-app.vercel.app";
 
 // Context menu for right-click → "Verify with KLAR"
 chrome.runtime.onInstalled.addListener(() => {
