@@ -16,7 +16,7 @@ export function Footer() {
           <div className="space-y-6">
             <div className="flex items-center gap-2.5">
               <KlarLogo size={32} />
-              <span className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+              <span className="text-lg font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
                 KLAR
               </span>
             </div>

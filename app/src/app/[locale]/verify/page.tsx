@@ -347,9 +347,8 @@ export default function VerifyPage() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      <div className="absolute inset-0 -z-10 bg-mesh-light dark:bg-mesh-dark opacity-40" />
-      <div className="absolute top-[20%] right-[5%] -z-10 h-80 w-80 animate-float rounded-full bg-emerald-500/10 blur-[80px]" />
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="absolute top-[20%] right-[5%] -z-10 h-80 w-80 rounded-full bg-emerald-100/40 blur-[100px] dark:bg-emerald-900/10" />
 
       <div className="mx-auto max-w-4xl animate-fade-in px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
@@ -357,7 +356,7 @@ export default function VerifyPage() {
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 mb-4">
             <FileSearch className="h-7 w-7" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
             {locale === "de" ? "Inhaltsanalyse" : "Content Analysis"}
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">

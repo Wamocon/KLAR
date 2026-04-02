@@ -128,7 +128,7 @@ export default function ComplianceReportsPage() {
 
       <div className="mx-auto max-w-3xl animate-fade-in px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
             {locale === "de" ? "Compliance-Berichte" : "Compliance Reports"}
           </h1>
           <Button

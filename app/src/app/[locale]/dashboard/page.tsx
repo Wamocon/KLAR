@@ -170,18 +170,19 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-mesh-light dark:bg-mesh-dark opacity-50" />
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      {/* Subtle decorative orbs */}
+      <div className="absolute top-20 right-[10%] -z-10 h-[300px] w-[300px] rounded-full bg-emerald-100/40 blur-[100px] dark:bg-emerald-900/10" />
+      <div className="absolute bottom-40 left-[5%] -z-10 h-[250px] w-[250px] rounded-full bg-blue-100/30 blur-[80px] dark:bg-blue-900/10" />
 
-      <div className="mx-auto max-w-6xl animate-fade-in px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl animate-fade-in px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
               {t("title")}
             </h1>
-            <p className="mt-1 text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-slate-500 dark:text-slate-400">
               {t("welcome")}, {profile?.full_name || profile?.email}
             </p>
           </div>
@@ -193,143 +194,139 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Dashboard Insights: Trends & Contradictions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <Card className="md:col-span-2 border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm shadow-sm animate-fade-in" style={{ animationDelay: "100ms" }}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-indigo-500" />
-                <CardTitle className="text-base">{locale === "de" ? "Aktivität der letzten 7 Tage" : "Last 7 Days Activity"}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-44 flex items-end justify-between gap-2 pt-4">
-                {trendData.map((day, i) => {
-                  const maxVal = Math.max(...trendData.map(d => d.supported + d.contradicted), 1);
-                  const sHeight = `${(day.supported / maxVal) * 100}%`;
-                  const cHeight = `${(day.contradicted / maxVal) * 100}%`;
-                  const hasData = day.supported > 0 || day.contradicted > 0;
-                  
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
-                      {/* Tooltip */}
-                      {hasData && (
-                        <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-[10px] py-1 px-2 rounded z-10 pointer-events-none whitespace-nowrap shadow-lg">
-                          {day.supported} Supported<br />
-                          {day.contradicted} Contradicted
-                        </div>
-                      )}
-                      {/* Stacked Bar */}
-                      <div className="w-full h-full flex flex-col-reverse justify-start relative rounded-t-sm overflow-hidden bg-gray-100/50 dark:bg-gray-800/50">
-                        {day.supported > 0 && (
-                          <div 
-                            className="w-full bg-emerald-400 hover:bg-emerald-500 transition-colors"
-                            style={{ height: sHeight }}
-                          />
-                        )}
-                        {day.contradicted > 0 && (
-                          <div 
-                            className="w-full bg-red-400 hover:bg-red-500 transition-colors"
-                            style={{ height: cHeight }}
-                          />
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500 font-medium">{day.date}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm shadow-sm animate-fade-in" style={{ animationDelay: "150ms" }}>
-            <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <CardTitle className="text-base">{locale === "de" ? "Widerlegte Behauptungen" : "Contradicted Insights"}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-4 p-0">
-              {contradictedClaims.length === 0 ? (
-                <div className="p-6 text-center text-sm text-gray-500">
-                  {locale === "de" ? "Keine widerlegten Behauptungen gefunden." : "No contradicted claims found."}
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {contradictedClaims.map(claim => (
-                    <div key={claim.id} className="p-4 hover:bg-red-50/30 dark:hover:bg-red-900/10 transition-colors">
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-300 line-clamp-2">&ldquo;{claim.claim_text}&rdquo;</p>
-                      <p className="mt-1.5 text-xs text-red-500 truncate">{claim.reasoning}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="mb-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Grid — clean white cards */}
+        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat, i) => (
-            <Card key={i} className="group relative overflow-hidden border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-50`} />
-              <CardContent className="relative p-6">
+            <div key={i} className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-40`} />
+              <div className="relative">
                 <div className="flex items-center justify-between">
-                  <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700`}>
+                    <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+                  </div>
                   <Badge variant={stat.badgeVariant}>{stat.badge}</Badge>
                 </div>
-                <p className="mt-4 text-3xl font-bold text-slate-800 dark:text-slate-300">
+                <p className="mt-4 text-3xl font-bold text-slate-800 dark:text-slate-200">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
-              </CardContent>
-            </Card>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Usage Quota */}
-        <Card className="mb-10 border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {locale === "de" ? "Nutzungskontingent" : "Usage Quota"}
-              </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {thisMonth} / {planLimit}
-              </span>
+        {/* Dashboard Insights: Trends & Contradictions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-2 rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                <BarChart3 className="h-4 w-4 text-indigo-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{locale === "de" ? "Aktivität der letzten 7 Tage" : "Last 7 Days Activity"}</h3>
             </div>
-            <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
-                style={{ width: `${Math.min(usagePercent, 100)}%` }}
-              />
+            <div className="h-44 flex items-end justify-between gap-3">
+              {trendData.map((day, i) => {
+                const maxVal = Math.max(...trendData.map(d => d.supported + d.contradicted), 1);
+                const sHeight = `${Math.max((day.supported / maxVal) * 100, 4)}%`;
+                const cHeight = `${(day.contradicted / maxVal) * 100}%`;
+                const hasData = day.supported > 0 || day.contradicted > 0;
+                
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
+                    {hasData && (
+                      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] py-1 px-2 rounded-lg z-10 pointer-events-none whitespace-nowrap shadow-lg">
+                        {day.supported} Supported · {day.contradicted} Contradicted
+                      </div>
+                    )}
+                    <div className="w-full h-full flex flex-col-reverse justify-start relative rounded-lg overflow-hidden bg-slate-50 dark:bg-gray-800/50">
+                      {day.supported > 0 && (
+                        <div 
+                          className="w-full rounded-t-sm bg-gradient-to-t from-emerald-400 to-emerald-300 transition-colors"
+                          style={{ height: sHeight }}
+                        />
+                      )}
+                      {day.contradicted > 0 && (
+                        <div 
+                          className="w-full rounded-t-sm bg-gradient-to-t from-red-400 to-red-300 transition-colors"
+                          style={{ height: cHeight }}
+                        />
+                      )}
+                      {!hasData && (
+                        <div className="w-full bg-slate-100 dark:bg-gray-700/50" style={{ height: "4%" }} />
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium">{day.date}</span>
+                  </div>
+                );
+              })}
             </div>
-            <p className="mt-2 text-xs text-gray-400">
-              {profile?.plan === "free"
-                ? locale === "de" ? "Kostenloser Plan" : "Free plan"
-                : `${profile?.plan} plan`}
-            </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Recent Verifications */}
-        <Card className="border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">{t("recentVerifications")}</CardTitle>
+          <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center gap-2 p-5 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{locale === "de" ? "Widerlegte Behauptungen" : "Contradicted Insights"}</h3>
+            </div>
+            {contradictedClaims.length === 0 ? (
+              <div className="p-6 text-center text-sm text-slate-400">
+                {locale === "de" ? "Keine widerlegten Behauptungen gefunden." : "No contradicted claims found."}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {contradictedClaims.map(claim => (
+                  <div key={claim.id} className="p-4 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2">&ldquo;{claim.claim_text}&rdquo;</p>
+                    <p className="mt-1.5 text-xs text-red-500 truncate">{claim.reasoning}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Usage Quota — clean white card */}
+        <div className="mb-8 rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {locale === "de" ? "Nutzungskontingent" : "Usage Quota"}
+            </span>
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              {thisMonth} / {planLimit}
+            </span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-gray-800">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700"
+              style={{ width: `${Math.min(usagePercent, 100)}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            {profile?.plan === "free"
+              ? locale === "de" ? "Kostenloser Plan" : "Free plan"
+              : `${profile?.plan} plan`}
+          </p>
+        </div>
+
+        {/* Recent Verifications — clean white card */}
+        <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between p-6 pb-4">
+            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">{t("recentVerifications")}</h3>
             <Link href={`/${locale}/history`}>
               <Button variant="ghost" size="sm" className="gap-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
                 {t("viewAll")}
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-6 pb-6">
             {verifications.length === 0 ? (
               <div className="py-12 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4">
-                  <FileSearch className="h-6 w-6 text-gray-400" />
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-gray-800 mb-4">
+                  <FileSearch className="h-6 w-6 text-slate-300" />
                 </div>
-                <p className="text-sm text-gray-500 mb-4">{t("noVerifications")}</p>
+                <p className="text-sm text-slate-500 mb-4">{t("noVerifications")}</p>
                 <Link href={`/${locale}/verify`}>
                   <Button size="sm" className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                     <FileSearch className="h-3 w-3" />
@@ -338,19 +335,19 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {verifications.map((v, index) => (
                   <Link
                     key={v.id}
                     href={`/${locale}/report/${v.id}`}
-                    className="group flex items-center justify-between rounded-2xl border border-gray-100/80 p-4 transition-all duration-200 hover:border-emerald-200/50 hover:bg-emerald-50/30 hover:shadow-sm dark:border-gray-800/80 dark:hover:border-emerald-800/50 dark:hover:bg-emerald-900/10"
+                    className="group flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-200 hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-sm dark:border-gray-800 dark:bg-gray-800/50 dark:hover:border-emerald-800/50 dark:hover:bg-emerald-900/10"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-300 truncate">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                         {truncateText(v.input_text, 80)}
                       </p>
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="mt-1 text-xs text-slate-400">
                         {formatDate(v.created_at, locale)} · {v.total_claims}{" "}
                         {locale === "de" ? "Behauptungen" : "claims"}
                       </p>
@@ -371,8 +368,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

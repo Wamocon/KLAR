@@ -200,7 +200,7 @@ export default function ReportPage() {
               <ArrowLeft className="h-3.5 w-3.5" />
               {locale === "de" ? "Zurück zur Übersicht" : "Back to history"}
             </Link>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
               {t("title")}
             </h1>
           </div>

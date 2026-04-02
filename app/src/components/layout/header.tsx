@@ -74,7 +74,7 @@ export function Header() {
   const isActive = (href: string) => pathname === href;
 
   return (
-    <header className="sticky top-0 z-50 w-full glass dark:glass-dark transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg border-b border-slate-200/60 dark:bg-gray-950/80 dark:border-gray-800/60 transition-all duration-300">
       {/* Skip to content link for keyboard/screen reader users */}
       <a
         href="#main-content"
@@ -89,7 +89,7 @@ export function Header() {
           className="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
         >
           <KlarLogo size={32} className="transition-transform group-hover:scale-105" />
-          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
             KLAR
           </span>
         </Link>

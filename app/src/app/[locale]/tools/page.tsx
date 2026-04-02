@@ -72,7 +72,7 @@ for line in response.iter_lines():
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 mb-4">
             <Zap className="h-7 w-7" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
             {locale === "de" ? "Werkzeuge & Integration" : "Tools & Integration"}
           </h1>
           <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">

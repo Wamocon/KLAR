@@ -14,7 +14,7 @@ export default async function ImprintPage({
     <div className="relative min-h-screen">
       <div className="absolute inset-0 -z-10 bg-mesh-light dark:bg-mesh-dark opacity-30" />
       <div className="mx-auto max-w-3xl animate-fade-in px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="mb-6 text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+        <h1 className="mb-6 text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
           {isDE ? "Impressum" : "Imprint"}
         </h1>
 

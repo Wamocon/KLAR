@@ -39,7 +39,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-50">
+      <body className="flex min-h-full flex-col bg-white text-slate-800 dark:bg-gray-950 dark:text-slate-200">
         {children}
       </body>
     </html>

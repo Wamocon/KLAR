@@ -170,7 +170,7 @@ export default function SettingsPage() {
       <div className="absolute inset-0 -z-10 bg-mesh-light dark:bg-mesh-dark opacity-40" />
 
       <div className="mx-auto max-w-2xl animate-fade-in px-4 py-10 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-white dark:to-gray-400">
+        <h1 className="mb-8 text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
           {locale === "de" ? "Kontoeinstellungen" : "Account Settings"}
         </h1>
 
