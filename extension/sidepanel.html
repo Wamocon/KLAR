@@ -6,130 +6,187 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
-      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #0f172a; color: #e2e8f0; padding: 0;
     }
-    @media (prefers-color-scheme: dark) {
-      body { background: #1a1a2e; color: #e0e0e0; }
-    }
+
+    /* ─── Header ─── */
     .header {
-      padding: 16px;
-      border-bottom: 1px solid #e5e7eb;
-      background: linear-gradient(135deg, #f0fdf4, #f0f9ff);
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(135deg, #0f2a1a 0%, #0f172a 50%, #0f1f3a 100%);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
     }
-    @media (prefers-color-scheme: dark) {
-      .header { background: linear-gradient(135deg, #0f2a1a, #0f1f3a); border-bottom-color: #374151; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      flex-shrink: 0;
     }
-    .logo {
-      font-size: 20px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #059669, #0891b2);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .header-text .logo { font-size: 16px; font-weight: 800; color: #f1f5f9; }
+    .header-text .tagline { font-size: 10px; color: #64748b; }
+    .header-actions { display: flex; gap: 6px; }
+    .header-btn {
+      background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+      color: #94a3b8; font-size: 12px; padding: 5px 10px; cursor: pointer;
+      transition: all 0.15s; text-decoration: none;
     }
-    .tagline { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    .header-btn:hover { background: #334155; color: #e2e8f0; }
     .content { padding: 16px; }
 
-    /* Empty state */
-    .empty-state { text-align: center; padding: 32px 16px; }
-    .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
-    .empty-title { font-size: 14px; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
-    .empty-hint { font-size: 12px; color: #9ca3af; line-height: 1.5; }
-    .empty-hint strong { color: #059669; }
+    /* ─── Empty state ─── */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-title { font-size: 15px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; }
+    .empty-hint { font-size: 12px; color: #64748b; line-height: 1.7; }
+    .empty-steps { text-align: left; max-width: 260px; margin: 16px auto 0; }
+    .empty-step { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12px; color: #64748b; }
+    .step-num { width: 20px; height: 20px; border-radius: 50%; background: #1e293b; color: #94a3b8; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-    /* Loading */
-    .loading { display: none; align-items: center; gap: 10px; padding: 24px 0; justify-content: center; }
+    /* ─── Loading ─── */
+    .loading { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; }
     .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid #e5e7eb; border-top-color: #059669;
+      width: 32px; height: 32px;
+      border: 3px solid #1e293b; border-top-color: #059669;
       border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 13px; color: #6b7280; }
+    .loading-text { font-size: 13px; color: #64748b; }
+    .loading-sub { font-size: 11px; color: #475569; margin-top: -8px; }
 
-    /* Result */
-    .result { display: none; }
-    .score-section { text-align: center; padding: 16px 0; }
-    .score-number { font-size: 42px; font-weight: 800; display: block; line-height: 1.1; }
-    .score-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-    .claims-bar {
-      display: flex; justify-content: center; gap: 12px; font-size: 12px;
-      margin: 8px 0 16px; font-weight: 500;
+    /* ─── Score Card ─── */
+    .score-card {
+      text-align: center; padding: 24px 16px 16px;
+      background: #1e293b; border-radius: 14px; margin-bottom: 14px;
     }
-    .cb-supported { color: #22c55e; }
-    .cb-contradicted { color: #ef4444; }
-    .cb-unknown { color: #eab308; }
+    .score-ring { font-size: 52px; font-weight: 800; display: block; line-height: 1.1; }
+    .score-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; display: block; }
+    .claims-bar { display: flex; justify-content: center; gap: 20px; font-size: 12px; font-weight: 600; margin-top: 12px; }
+    .cb-s { color: #4ade80; } .cb-c { color: #f87171; } .cb-u { color: #fbbf24; }
 
-    .claims-list { border-top: 1px solid #e5e7eb; padding-top: 12px; }
-    @media (prefers-color-scheme: dark) { .claims-list { border-top-color: #374151; } }
-    .claim {
-      display: flex; gap: 8px; padding: 8px 0;
-      font-size: 13px; line-height: 1.4;
-      border-bottom: 1px solid #f3f4f6;
+    /* ─── Claim Cards ─── */
+    .section-title { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px 2px; }
+    .claim-card {
+      background: #1e293b; border-radius: 12px; padding: 14px;
+      margin-bottom: 10px; border-left: 3px solid #334155;
     }
-    @media (prefers-color-scheme: dark) { .claim { border-bottom-color: #1f2937; } }
-    .claim-verdict {
-      flex-shrink: 0; font-size: 9px; font-weight: 700; text-transform: uppercase;
-      padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-top: 2px;
+    .claim-card.supported { border-left-color: #22c55e; }
+    .claim-card.contradicted { border-left-color: #ef4444; }
+    .claim-card.unverifiable { border-left-color: #eab308; }
+    .claim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .claim-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; letter-spacing: 0.04em; }
+    .supported .claim-badge { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .contradicted .claim-badge { background: rgba(239,68,68,0.15); color: #f87171; }
+    .unverifiable .claim-badge { background: rgba(234,179,8,0.15); color: #fbbf24; }
+    .claim-conf { font-size: 10px; color: #64748b; font-family: "SF Mono", monospace; }
+    .claim-text { font-size: 13px; color: #cbd5e1; line-height: 1.6; margin-bottom: 6px; }
+    .claim-reasoning { font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+    .claim-sources { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04); }
+    .source-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; background: rgba(6,182,212,0.08);
+      border: 1px solid rgba(6,182,212,0.15); border-radius: 6px;
+      color: #22d3ee; font-size: 11px; text-decoration: none;
+      transition: background 0.15s; max-width: 280px; overflow: hidden;
     }
-    .claim-supported .claim-verdict { background: #dcfce7; color: #16a34a; }
-    .claim-contradicted .claim-verdict { background: #fee2e2; color: #dc2626; }
-    .claim-unverifiable .claim-verdict { background: #fef9c3; color: #ca8a04; }
-    .claim-text { color: #4b5563; }
-    @media (prefers-color-scheme: dark) { .claim-text { color: #d1d5db; } }
-    .more-claims { font-size: 12px; color: #9ca3af; text-align: center; margin-top: 8px; }
-    .proc-time { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 10px; }
+    .source-pill:hover { background: rgba(6,182,212,0.18); }
+    .source-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .source-type { font-size: 9px; color: #475569; }
 
-    /* Error */
-    .error { display: none; text-align: center; padding: 20px 0; }
-    .error-icon { font-size: 32px; margin-bottom: 8px; }
-    .error-title { font-size: 14px; font-weight: 600; color: #ef4444; margin-bottom: 4px; }
-    .error-message { font-size: 12px; color: #9ca3af; line-height: 1.4; }
-    .error-retry {
-      display: inline-block; margin-top: 12px; padding: 6px 16px;
-      font-size: 12px; font-weight: 600; color: #fff; border: none; border-radius: 8px;
-      background: linear-gradient(135deg, #059669, #0891b2); cursor: pointer;
+    /* ─── Analysis Cards ─── */
+    .analysis-card {
+      background: #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 10px;
     }
-    .error-retry:hover { opacity: 0.9; }
+    .analysis-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .analysis-icon { font-size: 18px; }
+    .analysis-title { font-size: 14px; font-weight: 700; color: #f1f5f9; flex: 1; }
+    .analysis-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .bar-track { flex: 1; height: 6px; background: #0f172a; border-radius: 3px; overflow: hidden; }
+    .bar-track-sm { height: 4px; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+    .bar-value { font-size: 12px; font-weight: 600; font-family: "SF Mono", monospace; min-width: 44px; text-align: right; }
+    .signal-list { display: flex; flex-direction: column; gap: 6px; }
+    .signal-item { padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 2px solid #475569; }
+    .signal-item.low { border-left-color: #eab308; }
+    .signal-item.medium { border-left-color: #f97316; }
+    .signal-item.high { border-left-color: #ef4444; }
+    .signal-type { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: capitalize; margin-bottom: 2px; }
+    .signal-detail { font-size: 11px; color: #64748b; line-height: 1.5; }
+    .signal-examples { font-size: 10px; color: #475569; margin-top: 4px; font-family: "SF Mono", monospace; }
+    .analysis-clean { font-size: 12px; color: #4ade80; text-align: center; padding: 10px 0; }
+    .analysis-summary { font-size: 12px; color: #94a3b8; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.04); line-height: 1.6; }
 
-    /* History */
-    .history { margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
-    @media (prefers-color-scheme: dark) { .history { border-top-color: #374151; } }
-    .history-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    /* ─── Framework Grid ─── */
+    .fw-grid { display: flex; flex-direction: column; gap: 8px; }
+    .fw-item { display: flex; align-items: center; gap: 10px; }
+    .fw-name { font-size: 12px; font-weight: 500; color: #94a3b8; min-width: 80px; }
+    .fw-score { font-size: 12px; font-weight: 700; font-family: "SF Mono", monospace; min-width: 28px; text-align: right; }
+    .fw-pass { font-size: 10px; margin-left: 4px; }
+
+    /* ─── Plagiarism matches ─── */
+    .match-item { padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; }
+    .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .match-pct { font-size: 11px; font-weight: 700; font-family: "SF Mono", monospace; }
+    .match-source a { font-size: 11px; color: #22d3ee; text-decoration: none; }
+    .match-source a:hover { text-decoration: underline; }
+    .match-text { font-size: 11px; color: #64748b; font-style: italic; }
+
+    /* ─── History ─── */
+    .history { margin-top: 16px; border-top: 1px solid #1e293b; padding-top: 14px; }
     .history-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 12px; cursor: default;
+      padding: 10px 12px; border-radius: 8px; margin-bottom: 4px; cursor: pointer;
+      transition: background 0.15s;
     }
-    .history-item:hover { background: #f3f4f6; }
-    @media (prefers-color-scheme: dark) { .history-item:hover { background: #1f2937; } }
-    .history-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; color: #6b7280; }
+    .history-item:hover { background: #1e293b; }
+    .history-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; color: #64748b; font-size: 12px; }
     .history-score { font-weight: 700; font-size: 13px; }
+    .history-time { font-size: 10px; color: #475569; margin-left: 8px; }
+
+    /* ─── Error ─── */
+    .error { display: none; text-align: center; padding: 40px 20px; }
+    .error-icon { font-size: 36px; margin-bottom: 12px; }
+    .error-title { font-size: 15px; font-weight: 600; color: #f87171; margin-bottom: 8px; }
+    .error-message { font-size: 12px; color: #64748b; line-height: 1.6; }
+
+    /* ─── Utility ─── */
+    .proc-time { font-size: 11px; color: #475569; text-align: center; margin: 12px 0 4px; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="logo">KLAR</div>
-    <div class="tagline">AI Content Verifier</div>
+    <div class="header-left">
+      <img class="header-icon" src="icons/icon-32.png" alt="KLAR">
+      <div class="header-text">
+        <div class="logo">KLAR</div>
+        <div class="tagline">AI Content Verifier</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a class="header-btn" id="openAppBtn" target="_blank" rel="noopener">Open App</a>
+    </div>
   </div>
+
   <div class="content">
     <div id="empty" class="empty-state">
       <div class="empty-icon">🔍</div>
       <div class="empty-title">No verification yet</div>
-      <p class="empty-hint">
-        Select text on any page and right-click →<br>
-        <strong>Verify with KLAR</strong>
-      </p>
+      <div class="empty-steps">
+        <div class="empty-step"><span class="step-num">1</span> Select text on any webpage</div>
+        <div class="empty-step"><span class="step-num">2</span> Click the KLAR extension icon</div>
+        <div class="empty-step"><span class="step-num">3</span> Choose an analysis action</div>
+      </div>
     </div>
 
     <div id="loading" class="loading">
       <div class="spinner"></div>
-      <span class="loading-text">Verifying claims…</span>
+      <span class="loading-text">Analyzing content…</span>
+      <span class="loading-sub">This may take 10–30 seconds</span>
     </div>
 
-    <div id="result" class="result"></div>
+    <div id="result" class="result hidden"></div>
 
     <div id="error" class="error">
       <div class="error-icon">⚠️</div>
@@ -137,13 +194,14 @@
       <div id="errorMessage" class="error-message"></div>
     </div>
 
-    <div id="history" class="history" style="display:none;">
-      <div class="history-title">Recent verifications</div>
+    <div id="history" class="history hidden">
+      <div class="section-title">Recent verifications</div>
       <div id="historyList"></div>
     </div>
   </div>
 
   <script src="constants.js"></script>
+  <script src="i18n.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

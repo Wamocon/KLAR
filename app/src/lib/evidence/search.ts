@@ -2,6 +2,7 @@ import type { ClaimSource, ExtractedClaim } from "@/types";
 import { searchWikipedia, searchWikidata } from "./wikipedia";
 import { searchWeb } from "./serper";
 import { searchGrounded } from "./grounded-search";
+import { retrieveKnowledge, knowledgeToSources } from "@/lib/rag/retrieval";
 
 export async function findEvidence(
   claim: ExtractedClaim,
@@ -10,12 +11,17 @@ export async function findEvidence(
   const sources: ClaimSource[] = [];
   const query = claim.claim_text;
 
-  // Run all evidence sources in parallel for speed
-  const [wikiResults, wikidataResults, groundedResults] = await Promise.all([
+  // Run all evidence sources in parallel for speed — including RAG knowledge base
+  const [wikiResults, wikidataResults, groundedResults, ragResults] = await Promise.all([
     searchWikipedia(query, language),
     searchWikidata(query),
     searchGrounded(claim),
+    retrieveKnowledge(query, { limit: 5 }).catch(() => []),
   ]);
+
+  // Add RAG knowledge base results first (highest relevance)
+  const ragSources = knowledgeToSources(ragResults);
+  sources.push(...ragSources);
 
   sources.push(...wikiResults, ...wikidataResults);
 
@@ -39,6 +45,6 @@ export async function findEvidence(
     }
   }
 
-  // Limit to 7 sources max
-  return sources.slice(0, 7);
+  // Limit to 10 sources max (increased for knowledge base)
+  return sources.slice(0, 10);
 }

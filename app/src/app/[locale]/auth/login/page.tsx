@@ -31,12 +31,26 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(t("loginError"));
+      // Map Supabase error codes to user-friendly messages
+      if (error.message?.includes("Invalid login credentials")) {
+        setError(t("loginError"));
+      } else if (error.message?.includes("Email not confirmed")) {
+        setError(locale === "de" 
+          ? "E-Mail nicht bestätigt. Bitte prüfen Sie Ihren Posteingang." 
+          : "Email not confirmed. Please check your inbox.");
+      } else if (error.status === 429) {
+        setError(locale === "de"
+          ? "Zu viele Versuche. Bitte warten Sie einen Moment."
+          : "Too many attempts. Please wait a moment.");
+      } else {
+        setError(t("loginError"));
+      }
       setLoading(false);
       return;
     }
 
     router.push(`/${locale}/dashboard`);
+    router.refresh();
   };
 
   return (

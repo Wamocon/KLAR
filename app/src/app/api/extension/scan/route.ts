@@ -11,11 +11,11 @@ export const maxDuration = 60;
 const getExtractUrlContent = () => import("@/lib/utils/extract-url").then(m => m.extractUrlContent);
 
 const scanSchema = z.object({
-  text: z.string().min(50).max(5000).optional(),
+  text: z.string().min(50).max(10000).optional(),
   url: z.string().url().optional(),
   language: z.string().optional().default("en"),
   analyses: z.array(z.enum([
-    "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval",
+    "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",
   ])).optional().default(["fact-check"]),
 }).refine(
   (data) => data.text || data.url,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     try {
       const extractUrlContent = await getExtractUrlContent();
       const page = await extractUrlContent(parsed.data.url);
-      text = page.content.slice(0, 5000); // Truncate for extension
+      text = page.content.slice(0, 10000); // Truncate for extension
       sourceUrl = page.url;
       sourceTitle = page.title;
     } catch (err) {
@@ -97,10 +97,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Run verification (non-streaming, collect all events)
+  // Run verification (non-streaming, collect all events including analysis-specific)
   try {
     let result: Record<string, unknown> | null = null;
     let claims: Record<string, unknown>[] = [];
+    let biasAnalysis: Record<string, unknown> | null = null;
+    let aiDetection: Record<string, unknown> | null = null;
+    let plagiarismCheck: Record<string, unknown> | null = null;
+    let frameworkEvaluation: Record<string, unknown> | null = null;
+    let pipelineError: string | null = null;
 
     for await (const event of runVerificationPipeline(
       text,
@@ -115,11 +120,24 @@ export async function POST(request: NextRequest) {
         };
         result = completedEvent.verification;
         claims = completedEvent.claims;
+      } else if (event.type === "error") {
+        pipelineError = (event as unknown as { message: string }).message;
+      } else if (event.type === "bias_analysis") {
+        biasAnalysis = (event as unknown as { result: Record<string, unknown> }).result;
+      } else if (event.type === "ai_detection") {
+        aiDetection = (event as unknown as { result: Record<string, unknown> }).result;
+      } else if (event.type === "plagiarism_check") {
+        plagiarismCheck = (event as unknown as { result: Record<string, unknown> }).result;
+      } else if (event.type === "framework_evaluation") {
+        frameworkEvaluation = (event as unknown as { result: Record<string, unknown> }).result;
       }
     }
 
     if (!result) {
-      return corsResponse({ error: "Verification failed" }, 500);
+      return corsResponse(
+        { error: pipelineError || "Verification failed — no claims could be extracted from this text" },
+        pipelineError?.includes("No factual claims") ? 422 : 500
+      );
     }
 
     return corsResponse({
@@ -139,6 +157,11 @@ export async function POST(request: NextRequest) {
         reasoning: c.reasoning,
         sources: c.sources,
       })),
+      // Analysis-specific results (only included when requested)
+      ...(biasAnalysis && { bias: biasAnalysis }),
+      ...(aiDetection && { ai_detection: aiDetection }),
+      ...(plagiarismCheck && { plagiarism: plagiarismCheck }),
+      ...(frameworkEvaluation && { framework: frameworkEvaluation }),
     }, 200);
   } catch (err) {
     return corsResponse(

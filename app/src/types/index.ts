@@ -172,7 +172,8 @@ export interface ClaimSource {
   title: string;
   url: string;
   snippet: string;
-  source_type: "wikipedia" | "wikidata" | "web";
+  source_type: "wikipedia" | "wikidata" | "web" | "academic" | "government" | "news" | "fact_check" | "manual" | "verified_claim";
+  credibility_score?: number;
 }
 
 export interface Claim {

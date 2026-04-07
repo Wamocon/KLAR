@@ -2,24 +2,17 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 360px;
-  max-height: 500px;
-  background: #ffffff;
+  width: 390px;
+  max-height: 600px;
+  background: #0f172a;
+  color: #e2e8f0;
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
   z-index: 2147483647;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   overflow: hidden;
   display: none;
   animation: klar-slide-in 0.3s ease-out;
-}
-
-@media (prefers-color-scheme: dark) {
-  #klar-extension-panel {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
 }
 
 @keyframes klar-slide-in {
@@ -32,25 +25,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f0fdf4, #f0f9ff);
-}
-
-@media (prefers-color-scheme: dark) {
-  .klar-panel-header {
-    border-bottom-color: #374151;
-    background: linear-gradient(135deg, #0f2a1a, #0f1f3a);
-  }
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(135deg, #0f2a1a 0%, #0f172a 50%, #0f1f3a 100%);
 }
 
 .klar-logo {
   font-size: 16px;
   font-weight: 800;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #059669, #0891b2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #f1f5f9;
+  letter-spacing: 0.04em;
 }
 
 .klar-close {
@@ -58,32 +41,35 @@
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #9ca3af;
+  color: #64748b;
   padding: 0 4px;
   line-height: 1;
+  transition: color 0.15s;
 }
 
-.klar-close:hover { color: #4b5563; }
+.klar-close:hover { color: #f1f5f9; }
 
 .klar-panel-body {
-  padding: 16px;
+  padding: 14px;
   overflow-y: auto;
-  max-height: 400px;
+  max-height: 520px;
 }
 
 /* Loading */
 .klar-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  color: #6b7280;
-  font-size: 14px;
+  gap: 12px;
+  color: #64748b;
+  font-size: 13px;
+  padding: 20px 0;
 }
 
 .klar-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e5e7eb;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #1e293b;
   border-top-color: #059669;
   border-radius: 50%;
   animation: klar-spin 0.8s linear infinite;
@@ -93,119 +79,318 @@
   to { transform: rotate(360deg); }
 }
 
-/* Score */
+/* ─── Fact-Check: Score ─── */
 .klar-score {
   text-align: center;
   margin-bottom: 12px;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 16px;
 }
 
 .klar-score-number {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 800;
   display: block;
   line-height: 1.1;
 }
 
 .klar-score-label {
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: 10px;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  display: block;
 }
 
 /* Claims summary */
 .klar-claims-summary {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   font-size: 12px;
+  font-weight: 500;
   margin-bottom: 12px;
 }
 
-.klar-supported { color: #22c55e; }
-.klar-contradicted { color: #ef4444; }
-.klar-unverifiable { color: #eab308; }
+.klar-supported { color: #4ade80; }
+.klar-contradicted { color: #f87171; }
+.klar-unverifiable { color: #fbbf24; }
 
-/* Individual claims */
+/* ─── Fact-Check: Individual Claims ─── */
 .klar-claims {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 12px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .klar-claims { border-top-color: #374151; }
+  border-top: 1px solid #1e293b;
+  padding-top: 10px;
 }
 
 .klar-claim {
-  display: flex;
-  gap: 8px;
-  padding: 6px 0;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #1e293b;
+  border-radius: 10px;
+  border-left: 3px solid #334155;
   font-size: 13px;
-  line-height: 1.4;
-  border-bottom: 1px solid #f3f4f6;
+  line-height: 1.5;
 }
 
-@media (prefers-color-scheme: dark) {
-  .klar-claim { border-bottom-color: #1f2937; }
+.klar-claim-supported { border-left-color: #22c55e; }
+.klar-claim-contradicted { border-left-color: #ef4444; }
+.klar-claim-unverifiable { border-left-color: #eab308; }
+
+.klar-claim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .klar-claim-verdict {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
   text-transform: uppercase;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
-  align-self: flex-start;
-  margin-top: 2px;
+  letter-spacing: 0.04em;
 }
 
-.klar-claim-supported .klar-claim-verdict { background: #dcfce7; color: #16a34a; }
-.klar-claim-contradicted .klar-claim-verdict { background: #fee2e2; color: #dc2626; }
-.klar-claim-unverifiable .klar-claim-verdict { background: #fef9c3; color: #ca8a04; }
+.klar-claim-supported .klar-claim-verdict { background: rgba(34,197,94,0.15); color: #4ade80; }
+.klar-claim-contradicted .klar-claim-verdict { background: rgba(239,68,68,0.15); color: #f87171; }
+.klar-claim-unverifiable .klar-claim-verdict { background: rgba(234,179,8,0.15); color: #fbbf24; }
+
+.klar-claim-conf {
+  font-size: 10px;
+  color: #64748b;
+  font-family: "SF Mono", monospace;
+}
 
 .klar-claim-text {
-  color: #4b5563;
+  color: #cbd5e1;
+  font-size: 12px;
+  margin-bottom: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .klar-claim-text { color: #d1d5db; }
+.klar-claim-reasoning {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+/* ─── Citations / Source Links ─── */
+.klar-claim-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.klar-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 5px;
+  color: #22d3ee;
+  font-size: 10px;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.klar-source-link:hover {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.klar-source-icon { font-size: 9px; flex-shrink: 0; }
+
+.klar-source-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .klar-more {
   font-size: 12px;
-  color: #9ca3af;
+  color: #475569;
   text-align: center;
   margin-top: 8px;
 }
 
-/* Error */
+/* ─── Analysis Cards (Bias, AI, Plagiarism, Framework) ─── */
+.klar-analysis-card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.klar-analysis-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.klar-analysis-icon { font-size: 16px; }
+
+.klar-analysis-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+  flex: 1;
+}
+
+.klar-analysis-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Score bars */
+.klar-analysis-score-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.klar-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #0f172a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.klar-bar-track.klar-bar-sm { height: 4px; }
+
+.klar-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.klar-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: "SF Mono", monospace;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Signals */
+.klar-analysis-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.klar-signal {
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+  border-left: 2px solid #475569;
+}
+
+.klar-signal-low { border-left-color: #eab308; }
+.klar-signal-medium { border-left-color: #f97316; }
+.klar-signal-high { border-left-color: #ef4444; }
+
+.klar-signal-type {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: capitalize;
+  margin-bottom: 2px;
+}
+
+.klar-signal-detail {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.klar-analysis-clean {
+  font-size: 12px;
+  color: #4ade80;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.klar-analysis-summary {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  line-height: 1.5;
+}
+
+/* ─── Framework Evaluation Grid ─── */
+.klar-fw-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.klar-fw-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.klar-fw-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  min-width: 70px;
+}
+
+.klar-fw-score {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "SF Mono", monospace;
+  min-width: 24px;
+  text-align: right;
+}
+
+/* ─── Error ─── */
 .klar-error {
   text-align: center;
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
 .klar-error-icon {
   font-size: 32px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .klar-error-title {
   font-size: 14px;
   font-weight: 600;
-  color: #ef4444;
-  margin-bottom: 4px;
+  color: #f87171;
+  margin-bottom: 6px;
 }
 
 .klar-error-message {
   font-size: 12px;
-  color: #9ca3af;
-  line-height: 1.4;
+  color: #64748b;
+  line-height: 1.5;
 }
 
 .klar-time {
   font-size: 11px;
-  color: #9ca3af;
+  color: #475569;
   text-align: center;
-  margin-top: 8px;
+  margin-top: 10px;
 }

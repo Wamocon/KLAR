@@ -7,113 +7,327 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 340px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
+      width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      overflow-x: hidden;
     }
-    @media (prefers-color-scheme: dark) {
-      body { background: #1a1a2e; color: #e0e0e0; }
-    }
+    .hidden { display: none !important; }
+
+    /* ─── Header ─── */
     .header {
-      padding: 16px;
-      background: linear-gradient(135deg, #f0fdf4, #f0f9ff);
-      border-bottom: 1px solid #e5e7eb;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #0f2a1a 0%, #0f172a 50%, #0f1f3a 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
     }
-    @media (prefers-color-scheme: dark) {
-      .header { background: linear-gradient(135deg, #0f2a1a, #0f1f3a); border-bottom-color: #374151; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      flex-shrink: 0;
     }
-    .logo {
-      font-size: 20px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #059669, #0891b2);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .header-text .logo { font-size: 16px; font-weight: 800; color: #f1f5f9; letter-spacing: 0.03em; }
+    .header-text .tagline { font-size: 10px; color: #475569; }
+    .header-actions { display: flex; gap: 6px; }
+    .header-btn {
+      background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+      color: #94a3b8; font-size: 14px; padding: 4px 8px; cursor: pointer;
+      transition: all 0.15s; text-decoration: none; line-height: 1;
     }
-    .tagline { font-size: 12px; color: #6b7280; margin-top: 2px; }
-    .body { padding: 16px; }
-    .field { margin-bottom: 12px; }
-    .field label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500; }
-    .field input {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 13px;
-      background: #f9fafb;
+    .header-btn:hover { background: #334155; color: #e2e8f0; }
+
+    /* ─── SETUP SCREEN ─── */
+    .setup { padding: 24px 20px; }
+    .setup-title { font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .setup-desc { font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+    .setup-desc a { color: #22d3ee; text-decoration: none; }
+    .setup-desc a:hover { text-decoration: underline; }
+
+    /* ─── MAIN SCREEN ─── */
+    .main { padding: 12px 16px 16px; }
+
+    /* ─── Selection Card ─── */
+    .selection-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 12px;
     }
-    @media (prefers-color-scheme: dark) {
-      .field input { background: #111827; border-color: #374151; color: #e0e0e0; }
+    .selection-card.has-text { border-color: rgba(5,150,105,0.3); }
+    .selection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .selection-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
+    .selection-count { font-size: 10px; color: #475569; font-family: "SF Mono", monospace; }
+    .selection-count.valid { color: #4ade80; }
+    .selection-count.invalid { color: #f87171; }
+    .selection-text {
+      font-size: 12px; color: #94a3b8; line-height: 1.5;
+      max-height: 44px; overflow: hidden;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
-    .field input:focus { outline: 2px solid #059669; outline-offset: -1px; }
-    .status {
-      font-size: 12px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      margin-bottom: 12px;
+    .selection-empty { font-size: 12px; color: #475569; font-style: italic; }
+
+    /* ─── Capture Toggle ─── */
+    .capture-toggle {
+      display: flex; gap: 4px; margin-bottom: 10px;
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 3px;
     }
-    .status-ok { background: #dcfce7; color: #16a34a; }
-    .status-error { background: #fee2e2; color: #dc2626; }
-    .status-none { background: #f3f4f6; color: #6b7280; }
-    @media (prefers-color-scheme: dark) {
-      .status-ok { background: #052e16; }
-      .status-error { background: #450a0a; }
-      .status-none { background: #1f2937; }
+    .capture-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 7px 6px; border: none; border-radius: 8px;
+      background: transparent; color: #64748b; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
     }
+    .capture-btn:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+    .capture-btn.active { background: #1e293b; color: #4ade80; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .capture-icon { font-size: 12px; }
+
+    /* ─── Actions Grid ─── */
+    .section-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; padding: 0 2px; }
+    .actions-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .action-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 10px; background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; cursor: pointer; transition: all 0.15s;
+      text-align: left;
+    }
+    .action-btn:hover { background: #334155; border-color: #475569; transform: translateY(-1px); }
+    .action-btn:active { transform: translateY(0); }
+    .action-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+    .action-btn.full-width { grid-column: 1 / -1; }
+    .action-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .action-icon.green { background: rgba(34,197,94,0.12); }
+    .action-icon.blue { background: rgba(6,182,212,0.12); }
+    .action-icon.purple { background: rgba(168,85,247,0.12); }
+    .action-icon.orange { background: rgba(251,146,60,0.12); }
+    .action-icon.teal { background: rgba(20,184,166,0.12); }
+    .action-icon.pink { background: rgba(244,114,182,0.12); }
+    .action-info { flex: 1; min-width: 0; }
+    .action-name { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+    .action-desc { font-size: 10px; color: #64748b; margin-top: 1px; }
+
+    /* ─── Quick Links ─── */
+    .quick-links { display: flex; gap: 6px; margin-bottom: 12px; }
+    .quick-link {
+      flex: 1; padding: 8px; background: #1e293b; border: 1px solid #334155;
+      border-radius: 8px; text-align: center; text-decoration: none;
+      font-size: 11px; font-weight: 500; color: #94a3b8;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .quick-link:hover { background: #334155; color: #e2e8f0; }
+    .quick-link-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+
+    /* ─── Key Footer ─── */
+    .key-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: #1e293b; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .key-info { display: flex; align-items: center; gap: 8px; }
+    .key-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+    .key-label { font-size: 11px; color: #64748b; }
+    .key-prefix { font-size: 11px; color: #94a3b8; font-family: "SF Mono", monospace; }
+    .key-change {
+      font-size: 11px; color: #475569; background: none; border: none;
+      cursor: pointer; text-decoration: underline; padding: 0;
+    }
+    .key-change:hover { color: #94a3b8; }
+
+    /* ─── Shared Input ─── */
+    .input-group { position: relative; margin-bottom: 12px; }
+    .input-group input {
+      width: 100%; padding: 10px 40px 10px 12px;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; font-size: 13px; color: #e2e8f0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .input-group input::placeholder { color: #475569; }
+    .input-group input:focus { outline: none; border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8,145,178,0.15); }
+    .toggle-vis {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #64748b; cursor: pointer;
+      font-size: 16px; padding: 2px; line-height: 1;
+    }
+    .toggle-vis:hover { color: #94a3b8; }
+
+    /* ─── Buttons ─── */
     .btn {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
+      width: 100%; padding: 11px 16px; border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease; display: flex; align-items: center;
+      justify-content: center; gap: 8px;
     }
     .btn-primary {
       background: linear-gradient(135deg, #059669, #0891b2);
       color: white;
     }
-    .btn-primary:hover { opacity: 0.9; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .actions { margin-top: 12px; }
-    .link {
-      display: block;
-      text-align: center;
-      font-size: 12px;
-      color: #059669;
-      text-decoration: none;
-      margin-top: 12px;
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+    /* ─── Status ─── */
+    .toast {
+      position: fixed; bottom: 16px; left: 16px; right: 16px;
+      padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      z-index: 100; opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+      text-align: center; line-height: 1.4;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
-    .link:hover { text-decoration: underline; }
+    .toast.show { opacity: 1; pointer-events: auto; }
+    .toast-ok { background: #065f46; color: #a7f3d0; border: 1px solid #059669; }
+    .toast-error { background: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; }
+    .toast-info { background: #164e63; color: #a5f3fc; border: 1px solid #0891b2; }
+
+    /* ─── Spinner ─── */
+    .spinner-sm {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+
   <div class="header">
-    <div class="logo">KLAR</div>
-    <div class="tagline">AI Content Verifier</div>
+    <div class="header-left">
+      <img class="header-icon" src="icons/icon-32.png" alt="KLAR">
+      <div class="header-text">
+        <div class="logo">KLAR</div>
+        <div class="tagline" data-i18n="tagline">AI Content Verifier</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a class="header-btn" id="openAppBtn" title="Open KLAR App" target="_blank" rel="noopener">🌐</a>
+      <button class="header-btn" id="settingsToggle" title="Settings">⚙</button>
+    </div>
   </div>
-  <div class="body">
-    <div id="status" class="status status-none">No API key configured</div>
 
-    <div class="field">
-      <label for="apiKey">API Key</label>
-      <input type="password" id="apiKey" placeholder="klar_xxxxxxxx_...">
+  <!-- ═══ SETUP SCREEN (no API key) ═══ -->
+  <div id="setupScreen" class="setup hidden">
+    <div class="setup-title">Connect your account</div>
+    <div class="setup-desc">
+      Enter your API key to start verifying content.
+      <a id="getKeyLink" href="#" target="_blank" rel="noopener">Generate one in Settings →</a>
+    </div>
+    <div class="input-group">
+      <input type="password" id="apiKeyInput" placeholder="klar_xxxxxxxx_..." autocomplete="off" spellcheck="false">
+      <button class="toggle-vis" id="toggleVis">👁</button>
+    </div>
+    <button class="btn btn-primary" id="saveKeyBtn">
+      <span class="spinner-sm" id="saveSpinner"></span>
+      <span id="saveBtnText">Verify &amp; Save Key</span>
+    </button>
+  </div>
+
+  <!-- ═══ MAIN SCREEN (API key configured) ═══ -->
+  <div id="mainScreen" class="main hidden">
+    <!-- Capture Mode Toggle -->
+    <div class="capture-toggle" id="captureToggle">
+      <button class="capture-btn active" id="captureSelection" title="Analyze selected text">
+        <span class="capture-icon">✂</span> Selection
+      </button>
+      <button class="capture-btn" id="capturePage" title="Analyze entire visible page">
+        <span class="capture-icon">📄</span> Full Page
+      </button>
+      <button class="capture-btn" id="captureUrl" title="Analyze page via URL (server-side)">
+        <span class="capture-icon">🌐</span> URL
+      </button>
     </div>
 
-    <button class="btn btn-primary" id="saveBtn">Save API Key</button>
-
-    <div class="actions" style="margin-top: 16px;">
-      <button class="btn btn-primary" id="verifyBtn" disabled>Verify Selected Text</button>
+    <!-- Selected text preview -->
+    <div class="selection-card" id="selectionCard">
+      <div class="selection-header">
+        <span class="selection-label" id="selLabel">Selected text</span>
+        <span class="selection-count" id="selCount"></span>
+      </div>
+      <div id="selContent">
+        <div class="selection-empty" id="selEmpty">Select text on a page, then pick an action below</div>
+        <div class="selection-text hidden" id="selText"></div>
+      </div>
     </div>
 
-    <a class="link" href="https://klar-app.vercel.app/en/settings" target="_blank" rel="noopener">
-      Get your API key →
-    </a>
+    <!-- Analysis Actions -->
+    <div class="section-label">Analyze</div>
+    <div class="actions-grid" id="actionsGrid">
+      <button class="action-btn" data-analysis="fact-check" disabled>
+        <div class="action-icon green">✓</div>
+        <div class="action-info">
+          <div class="action-name">Fact Check</div>
+          <div class="action-desc">Verify claims</div>
+        </div>
+      </button>
+      <button class="action-btn" data-analysis="bias-check" disabled>
+        <div class="action-icon blue">⚖</div>
+        <div class="action-info">
+          <div class="action-name">Bias Check</div>
+          <div class="action-desc">Detect slant</div>
+        </div>
+      </button>
+      <button class="action-btn" data-analysis="ai-detection" disabled>
+        <div class="action-icon purple">🤖</div>
+        <div class="action-info">
+          <div class="action-name">AI Detection</div>
+          <div class="action-desc">Human or AI?</div>
+        </div>
+      </button>
+      <button class="action-btn" data-analysis="plagiarism" disabled>
+        <div class="action-icon orange">📋</div>
+        <div class="action-info">
+          <div class="action-name">Plagiarism</div>
+          <div class="action-desc">Check originality</div>
+        </div>
+      </button>
+      <button class="action-btn" data-analysis="framework-eval" disabled>
+        <div class="action-icon teal">🧪</div>
+        <div class="action-info">
+          <div class="action-name">Framework</div>
+          <div class="action-desc">MECE/Red Team</div>
+        </div>
+      </button>
+      <button class="action-btn full-width" data-analysis="comprehensive" disabled>
+        <div class="action-icon pink">🔬</div>
+        <div class="action-info">
+          <div class="action-name">Full Analysis</div>
+          <div class="action-desc">All checks at once</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="section-label">Quick Links</div>
+    <div class="quick-links">
+      <a class="quick-link" id="linkDashboard" target="_blank" rel="noopener">
+        <span class="quick-link-icon">📊</span> Dashboard
+      </a>
+      <a class="quick-link" id="linkHistory" target="_blank" rel="noopener">
+        <span class="quick-link-icon">📜</span> History
+      </a>
+      <a class="quick-link" id="linkVerify" target="_blank" rel="noopener">
+        <span class="quick-link-icon">🔍</span> Verify
+      </a>
+      <a class="quick-link" id="linkSettings" target="_blank" rel="noopener">
+        <span class="quick-link-icon">⚙</span> Settings
+      </a>
+    </div>
+
+    <!-- API Key Footer -->
+    <div class="key-footer" id="keyFooter">
+      <div class="key-info">
+        <div class="key-dot"></div>
+        <span class="key-prefix" id="keyPrefix">klar_xxxx</span>
+      </div>
+      <button class="key-change" id="changeKeyBtn">Change key</button>
+    </div>
   </div>
 
   <script src="constants.js"></script>
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

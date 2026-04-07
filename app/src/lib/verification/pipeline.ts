@@ -8,6 +8,7 @@ import { detectBias } from "@/lib/analysis/bias-detector";
 import { detectAIContent } from "@/lib/analysis/ai-detector";
 import { detectPlagiarism } from "@/lib/analysis/plagiarism-detector";
 import { evaluateWithFrameworks } from "@/lib/analysis/framework-evaluator";
+import { collectTrainingSample } from "@/lib/rag/ingest";
 import type {
   AnalysisMode,
   ExtractedClaim,
@@ -251,4 +252,16 @@ export async function* runVerificationPipeline(
     verification: verification as Verification,
     claims: claims as Claim[],
   };
+
+  // ── Collect training data (fire-and-forget, non-blocking) ──
+  for (const j of judgments) {
+    collectTrainingSample({
+      claimText: j.claim.claim_text,
+      verdict: j.verdict,
+      confidence: j.confidence,
+      reasoning: j.reasoning,
+      evidenceSources: j.sources as unknown as Record<string, unknown>[],
+      language,
+    }).catch(() => {});
+  }
 }

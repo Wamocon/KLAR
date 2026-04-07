@@ -10,13 +10,13 @@ importScripts("constants.js");
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "klar-verify-selection",
-    title: "Verify with KLAR",
+    title: chrome.i18n.getMessage("verifyWithKlar") || "Verify with KLAR",
     contexts: ["selection"],
   });
 
   chrome.contextMenus.create({
     id: "klar-verify-page",
-    title: "Verify this page with KLAR",
+    title: chrome.i18n.getMessage("verifyPage") || "Verify this page with KLAR",
     contexts: ["page"],
   });
 });
@@ -25,15 +25,17 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "klar-verify-selection" && info.selectionText) {
     await verifyText(info.selectionText, tab?.id);
   } else if (info.menuItemId === "klar-verify-page" && tab?.url) {
-    await verifyUrl(tab.url, tab.id);
+    await verifyUrl(tab.url, tab.id, ["fact-check", "bias-check", "ai-detection"]);
   }
 });
 
 // Listen for messages from popup/content script
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "VERIFY_TEXT") {
-    verifyText(message.text, message.tabId).then(sendResponse);
-    return true; // async response
+    verifyText(message.text, message.tabId, message.analyses)
+      .then(sendResponse)
+      .catch(() => {}); // sender (popup) may have closed
+    return true;
   }
   if (message.type === "VERIFY_URL") {
     verifyUrl(message.url, message.tabId).then(sendResponse);
@@ -61,17 +63,62 @@ async function getApiKey() {
   });
 }
 
-async function verifyText(text, tabId) {
+/**
+ * Ensure the content script is injected into the target tab.
+ * Pings first; if no response, injects programmatically.
+ * Waits briefly after injection to let the listener register.
+ */
+async function ensureContentScript(tabId) {
+  if (!tabId) return false;
+  try {
+    await chrome.tabs.sendMessage(tabId, { type: "KLAR_PING" });
+    return true; // already injected
+  } catch {
+    // Content script missing (tab was open before extension load/reload)
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] });
+      await chrome.scripting.executeScript({ target: { tabId }, files: ["constants.js", "content.js"] });
+      // Wait for listener to register before sending messages
+      await new Promise((r) => setTimeout(r, 150));
+      return true;
+    } catch {
+      return false; // restricted page (chrome://, about:, etc.)
+    }
+  }
+}
+
+/**
+ * Open the side panel so the user can see results immediately.
+ */
+async function openSidePanel(tabId) {
+  try {
+    if (tabId) {
+      await chrome.sidePanel.open({ tabId });
+    }
+  } catch {
+    // Side panel API may not be available or tab is restricted
+  }
+}
+
+async function verifyText(text, tabId, analyses) {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    notifyTab(tabId, { type: "KLAR_ERROR", error: "No API key configured. Open the extension popup to set up." });
+    const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured. Open the extension popup to set up.";
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
     return { error: "No API key" };
   }
 
   if (text.length < KLAR.MIN_TEXT_LENGTH) {
-    notifyTab(tabId, { type: "KLAR_ERROR", error: `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` });
+    const msg = chrome.i18n.getMessage("textTooShortError", [String(KLAR.MIN_TEXT_LENGTH)]) || `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.`;
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
     return { error: "Text too short" };
   }
+
+  // Open side panel first so user immediately sees loading state
+  await openSidePanel(tabId);
+
+  // Ensure content script is available to receive results
+  await ensureContentScript(tabId);
 
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
@@ -82,7 +129,10 @@ async function verifyText(text, tabId) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ text: text.slice(0, KLAR.MAX_TEXT_LENGTH), analyses: ["fact-check"] }),
+      body: JSON.stringify({
+        text: text.slice(0, KLAR.MAX_TEXT_LENGTH),
+        analyses: analyses || ["fact-check"],
+      }),
     });
 
     if (!response.ok) {
@@ -100,13 +150,16 @@ async function verifyText(text, tabId) {
   }
 }
 
-async function verifyUrl(url, tabId) {
+async function verifyUrl(url, tabId, analyses) {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    notifyTab(tabId, { type: "KLAR_ERROR", error: "No API key configured." });
+    const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured.";
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
     return { error: "No API key" };
   }
 
+  await openSidePanel(tabId);
+  await ensureContentScript(tabId);
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
   try {
@@ -116,7 +169,7 @@ async function verifyUrl(url, tabId) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ url, analyses: ["fact-check"] }),
+      body: JSON.stringify({ url, analyses: analyses || ["fact-check"] }),
     });
 
     if (!response.ok) {

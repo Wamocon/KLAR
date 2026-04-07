@@ -12,9 +12,9 @@ export async function middleware(request: NextRequest) {
   // Then run intl middleware
   const intlResponse = intlMiddleware(request);
 
-  // Merge cookies from supabase response into intl response
+  // Merge cookies from supabase response into intl response (preserve options)
   supabaseResponse.cookies.getAll().forEach((cookie) => {
-    intlResponse.cookies.set(cookie.name, cookie.value);
+    intlResponse.cookies.set(cookie);
   });
 
   return intlResponse;

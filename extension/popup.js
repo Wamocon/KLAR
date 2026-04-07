@@ -1,73 +1,310 @@
 /**
  * KLAR Extension — Popup Script
+ *
+ * Two-screen UX:
+ *   Setup screen: Shown only when no API key. Validate against server → auto-transition.
+ *   Main screen:  Selection preview, 5 analysis actions, quick links, key management.
  */
 
-const apiKeyInput = document.getElementById("apiKey");
-const saveBtn = document.getElementById("saveBtn");
-const verifyBtn = document.getElementById("verifyBtn");
-const statusEl = document.getElementById("status");
+// ─── DOM refs ───
+const setupScreen = document.getElementById("setupScreen");
+const mainScreen = document.getElementById("mainScreen");
+const apiKeyInput = document.getElementById("apiKeyInput");
+const toggleVis = document.getElementById("toggleVis");
+const saveKeyBtn = document.getElementById("saveKeyBtn");
+const saveBtnText = document.getElementById("saveBtnText");
+const saveSpinner = document.getElementById("saveSpinner");
+const toastEl = document.getElementById("toast");
+const selCard = document.getElementById("selectionCard");
+const selCount = document.getElementById("selCount");
+const selEmpty = document.getElementById("selEmpty");
+const selText = document.getElementById("selText");
+const keyPrefix = document.getElementById("keyPrefix");
+const changeKeyBtn = document.getElementById("changeKeyBtn");
+const settingsToggle = document.getElementById("settingsToggle");
+const openAppBtn = document.getElementById("openAppBtn");
+const actionsGrid = document.getElementById("actionsGrid");
 
-// Load saved API key
+let capturedText = "";
+let currentApiKey = null;
+let captureMode = "selection"; // "selection" | "page" | "url"
+let currentPageUrl = "";
+let currentPageTitle = "";
+
+// ─── Detect language for links ───
+const lang = chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en";
+
+// Set all app links
+document.getElementById("getKeyLink").href = `${KLAR.API_BASE}/${lang}/settings`;
+document.getElementById("openAppBtn").href = `${KLAR.API_BASE}/${lang}/dashboard`;
+document.getElementById("linkDashboard").href = `${KLAR.API_BASE}/${lang}/dashboard`;
+document.getElementById("linkHistory").href = `${KLAR.API_BASE}/${lang}/history`;
+document.getElementById("linkVerify").href = `${KLAR.API_BASE}/${lang}/verify`;
+document.getElementById("linkSettings").href = `${KLAR.API_BASE}/${lang}/settings`;
+
+// ─── Init: Check for existing key ───
 chrome.runtime.sendMessage({ type: "GET_API_KEY" }, (response) => {
   if (response?.apiKey) {
-    apiKeyInput.value = response.apiKey;
-    updateStatus(true);
+    currentApiKey = response.apiKey;
+    showMainScreen();
+  } else {
+    showSetupScreen();
   }
 });
 
-saveBtn.addEventListener("click", () => {
+// ─── Capture selected text immediately ───
+(async () => {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id || tab.url?.startsWith("chrome://") || tab.url?.startsWith("about:")) return;
+    currentPageUrl = tab.url || "";
+    currentPageTitle = tab.title || "";
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => window.getSelection()?.toString() || "",
+    });
+    capturedText = results?.[0]?.result || "";
+    updateSelectionUI();
+  } catch { /* Can't inject into this page */ }
+})();
+
+// ─── Capture mode toggles ───
+const captureSelBtn = document.getElementById("captureSelection");
+const capturePageBtn = document.getElementById("capturePage");
+const captureUrlBtn = document.getElementById("captureUrl");
+const selLabel = document.getElementById("selLabel");
+
+function setCaptureModeUI(mode) {
+  captureMode = mode;
+  [captureSelBtn, capturePageBtn, captureUrlBtn].forEach(b => b.classList.remove("active"));
+  if (mode === "selection") {
+    captureSelBtn.classList.add("active");
+    selLabel.textContent = "Selected text";
+  } else if (mode === "page") {
+    capturePageBtn.classList.add("active");
+    selLabel.textContent = "Full page content";
+  } else {
+    captureUrlBtn.classList.add("active");
+    selLabel.textContent = "Page URL (server-side)";
+  }
+  updateSelectionUI();
+}
+
+captureSelBtn.addEventListener("click", () => setCaptureModeUI("selection"));
+
+capturePageBtn.addEventListener("click", async () => {
+  setCaptureModeUI("page");
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const sel = ["article", "main", "[role='main']", ".post-content", ".article-body", ".entry-content"];
+        for (const s of sel) {
+          const el = document.querySelector(s);
+          if (el && el.innerText.trim().length > 100) return el.innerText.trim();
+        }
+        return document.body.innerText.trim();
+      },
+    });
+    capturedText = (results?.[0]?.result || "").slice(0, KLAR.MAX_TEXT_LENGTH);
+    updateSelectionUI();
+  } catch {
+    toast("error", "Cannot capture this page — try a regular website");
+    setCaptureModeUI("selection");
+  }
+});
+
+captureUrlBtn.addEventListener("click", () => {
+  setCaptureModeUI("url");
+  capturedText = currentPageUrl;
+  updateSelectionUI();
+});
+
+// ─── Screen transitions ───
+function showSetupScreen() {
+  setupScreen.classList.remove("hidden");
+  mainScreen.classList.add("hidden");
+  apiKeyInput.focus();
+}
+
+function showMainScreen() {
+  setupScreen.classList.add("hidden");
+  mainScreen.classList.remove("hidden");
+  // Show key prefix
+  if (currentApiKey) {
+    const parts = currentApiKey.split("_");
+    keyPrefix.textContent = parts.length >= 2 ? `klar_${parts[1]}` : "klar_****";
+  }
+  updateSelectionUI();
+}
+
+// ─── Selection UI ───
+function updateSelectionUI() {
+  const isUrlMode = captureMode === "url";
+  const hasText = isUrlMode ? currentPageUrl.length > 0 : capturedText.length > 0;
+  const isValid = isUrlMode ? currentPageUrl.startsWith("http") : capturedText.length >= KLAR.MIN_TEXT_LENGTH;
+
+  if (hasText) {
+    selEmpty.classList.add("hidden");
+    selText.classList.remove("hidden");
+    selText.textContent = isUrlMode ? currentPageUrl : capturedText;
+    selCard.classList.add("has-text");
+    selCount.textContent = isUrlMode ? "URL" : `${capturedText.length} chars`;
+    selCount.className = "selection-count " + (isValid ? "valid" : "invalid");
+  } else {
+    selEmpty.classList.remove("hidden");
+    selText.classList.add("hidden");
+    selCard.classList.remove("has-text");
+    selCount.textContent = "";
+    selEmpty.textContent = captureMode === "page"
+      ? "Capturing page content…"
+      : captureMode === "url"
+        ? "No page URL available"
+        : "Select text on a page, then pick an action below";
+  }
+  }
+
+  // Enable/disable action buttons
+  actionsGrid.querySelectorAll(".action-btn").forEach((btn) => {
+    btn.disabled = !isValid;
+  });
+}
+
+// ─── Toggle password visibility ───
+toggleVis.addEventListener("click", () => {
+  const isPassword = apiKeyInput.type === "password";
+  apiKeyInput.type = isPassword ? "text" : "password";
+  toggleVis.textContent = isPassword ? "🙈" : "👁";
+});
+
+// ─── Save & Validate key (server-side) ───
+saveKeyBtn.addEventListener("click", async () => {
   const key = apiKeyInput.value.trim();
 
   if (!key) {
-    updateStatus(false, "Please enter an API key");
+    toast("error", "Please enter an API key");
     return;
   }
-
   if (!key.startsWith("klar_")) {
-    updateStatus(false, "Invalid key format. Keys start with klar_");
+    toast("error", "Invalid format — keys start with klar_");
     return;
   }
 
-  chrome.runtime.sendMessage({ type: "SET_API_KEY", apiKey: key }, () => {
-    updateStatus(true, "API key saved!");
-  });
-});
+  // Loading state
+  saveKeyBtn.disabled = true;
+  saveSpinner.style.display = "inline-block";
+  saveBtnText.textContent = "Validating...";
 
-verifyBtn.addEventListener("click", async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return;
+  try {
+    const res = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        text: "KLAR API key validation request. This is a minimum length text used solely for verifying that the provided API key is valid and has the correct scopes.",
+      }),
+    });
 
-  // Get selected text from active tab
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: () => window.getSelection()?.toString() || "",
-  }, (results) => {
-    const selectedText = results?.[0]?.result;
-    if (!selectedText || selectedText.length < KLAR.MIN_TEXT_LENGTH) {
-      statusEl.textContent = `Select at least ${KLAR.MIN_TEXT_LENGTH} characters on the page first`;
-      statusEl.className = "status status-error";
+    if (res.status === 401) {
+      toast("error", "Invalid API key — not found on server");
+      return;
+    }
+    if (res.status === 403) {
+      toast("error", "Key missing 'verify' scope");
       return;
     }
 
-    chrome.runtime.sendMessage({
-      type: "VERIFY_TEXT",
-      text: selectedText,
-      tabId: tab.id,
+    // 200 or 429 both mean key is valid
+    currentApiKey = key;
+    chrome.runtime.sendMessage({ type: "SET_API_KEY", apiKey: key }, () => {
+      toast("ok", "API key verified & saved ✓");
+      setTimeout(() => showMainScreen(), 600);
     });
-
-    // Close popup — result shows in content script panel
-    window.close();
-  });
+  } catch (err) {
+    if (err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
+      toast("error", "Unable to connect to KLAR. Please check your internet connection and try again.");
+    } else {
+      toast("error", err.message || "Something went wrong. Please try again.");
+    }
+  } finally {
+    saveKeyBtn.disabled = false;
+    saveSpinner.style.display = "none";
+    saveBtnText.textContent = "Verify & Save Key";
+  }
 });
 
-function updateStatus(hasKey, message) {
-  if (hasKey) {
-    statusEl.textContent = message || "API key configured ✓";
-    statusEl.className = "status status-ok";
-    verifyBtn.disabled = false;
-  } else {
-    statusEl.textContent = message || "No API key configured";
-    statusEl.className = message ? "status status-error" : "status status-none";
-    verifyBtn.disabled = true;
+// ─── Analysis action buttons ───
+actionsGrid.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".action-btn");
+  if (!btn || btn.disabled) return;
+
+  const analysis = btn.dataset.analysis;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+
+  // Block restricted pages where content script cannot run
+  const url = tab.url || "";
+  if (/^(chrome|edge|brave|about|chrome-extension|devtools):/.test(url)) {
+    toast("error", "Cannot analyze on this page — try a regular website");
+    return;
   }
+
+  const analyses = analysis === "comprehensive"
+    ? ["fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval"]
+    : [analysis];
+
+  // Visual feedback: lock buttons, show "Analyzing…" on the clicked one
+  actionsGrid.querySelectorAll(".action-btn").forEach(b => { b.disabled = true; });
+  const nameEl = btn.querySelector(".action-name");
+  const originalName = nameEl.textContent;
+  nameEl.textContent = "Analyzing…";
+  btn.style.borderColor = "#059669";
+
+  // Dispatch based on capture mode
+  if (captureMode === "url") {
+    chrome.runtime.sendMessage({
+      type: "VERIFY_URL",
+      url: currentPageUrl,
+      tabId: tab.id,
+    });
+  } else {
+    chrome.runtime.sendMessage({
+      type: "VERIFY_TEXT",
+      text: capturedText,
+      tabId: tab.id,
+      analyses,
+    });
+  }
+
+  toast("info", "Opening results panel…");
+  setTimeout(() => window.close(), 500);
+});
+
+// ─── Change key button ───
+changeKeyBtn.addEventListener("click", () => {
+  apiKeyInput.value = currentApiKey || "";
+  showSetupScreen();
+});
+
+// ─── Settings toggle (same as change key for now) ───
+settingsToggle.addEventListener("click", () => {
+  if (mainScreen.classList.contains("hidden")) {
+    if (currentApiKey) showMainScreen();
+  } else {
+    apiKeyInput.value = currentApiKey || "";
+    showSetupScreen();
+  }
+});
+
+// ─── Toast notifications ───
+let toastTimeout;
+function toast(type, message) {
+  clearTimeout(toastTimeout);
+  toastEl.textContent = message;
+  toastEl.className = `toast toast-${type} show`;
+  toastTimeout = setTimeout(() => { toastEl.classList.remove("show"); }, 3000);
 }

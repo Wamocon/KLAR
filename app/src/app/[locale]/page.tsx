@@ -23,6 +23,18 @@ import {
   Building2,
   Scale,
   Layers,
+  AlertTriangle,
+  Newspaper,
+  Briefcase,
+  GraduationCap,
+  Pen,
+  Gavel,
+  School,
+  ChevronDown,
+  ShieldCheck,
+  ScanEye,
+  FileText,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,163 +57,180 @@ function LandingContent({ locale }: { locale: string }) {
 
   return (
     <div className="animate-fade-in">
-      {/* Hero Section */}
+      {/* ═══ HERO — Anchoring Bias + Loss Aversion + Urgency ═══ */}
       <section className="relative overflow-hidden px-4 pb-20 pt-20 sm:px-6 lg:px-8 lg:pt-32 min-h-[90vh] flex flex-col justify-center">
         <div className="absolute inset-0 -z-10 bg-mesh-light dark:bg-mesh-dark opacity-100 transition-colors duration-700" />
-        
-        {/* Animated Orbs */}
-        <div className="absolute right-[10%] top-[20%] -z-10 h-[400px] w-[400px] animate-float rounded-full bg-gradient-to-br from-emerald-400/30 to-teal-500/10 blur-[80px] dark:from-emerald-600/20 dark:to-teal-900/20" />
-        <div className="absolute -left-[5%] bottom-[10%] -z-10 h-[500px] w-[500px] animate-float-delayed rounded-full bg-gradient-to-tr from-blue-400/20 to-emerald-300/20 blur-[100px] dark:from-blue-900/20 dark:to-emerald-800/20" />
+        <div className="absolute top-20 left-1/4 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-blue-400/10 blur-3xl animate-pulse-slow delay-1000" />
 
-        <div className="mx-auto max-w-4xl text-center">
-          <Badge variant="secondary" className="mb-6 text-sm">
-            <Shield className="mr-1.5 h-3.5 w-3.5" />
-            {locale === "de" ? "KI-Verifizierung" : "AI Verification"}
-          </Badge>
+        <div className="mx-auto max-w-4xl text-center relative z-10">
+          <ScrollReveal>
+            <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm shadow-sm">
+              <Shield className="mr-2 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              {t("hero.badge")}
+            </Badge>
+          </ScrollReveal>
 
-          <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-300 sm:text-5xl lg:text-6xl">
-            {t("hero.title")}{" "}
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">
-              {t("hero.titleHighlight")}
-            </span>
-          </h1>
+          <ScrollReveal>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+              <span className="text-slate-800 dark:text-slate-200">{t("hero.title")}</span>
+              <br />
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
+                {t("hero.titleHighlight")}
+              </span>
+            </h1>
+          </ScrollReveal>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400 sm:text-xl">
-            {t("hero.description")}
-          </p>
+          <ScrollReveal>
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-400 sm:text-xl">
+              {t("hero.description")}
+            </p>
+          </ScrollReveal>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href={`/${locale}/verify`}>
-              <Button size="xl" className="gap-2 shadow-lg shadow-gray-900/10">
-                <FileSearch className="h-5 w-5" />
-                {t("hero.cta")}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <a href="#how-it-works">
-              <Button variant="outline" size="lg">
-                {t("hero.ctaSecondary")}
-              </Button>
-            </a>
-          </div>
+          <ScrollReveal>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Link href={`/${locale}/verify`}>
+                <Button size="xl" variant="success" className="gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow">
+                  <FileSearch className="h-5 w-5" />
+                  {t("hero.cta")}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <a href="#how-it-works">
+                <Button size="lg" variant="outline" className="gap-2">
+                  {t("hero.ctaSecondary")}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </a>
+            </div>
+          </ScrollReveal>
 
-          {/* Demo Preview */}
-          <div className="mx-auto mt-20 max-w-3xl animate-float-delayed">
-            <div className="glass dark:glass-dark rounded-2xl p-6 shadow-2xl shadow-emerald-900/5">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-4 dark:border-gray-800">
-                <div className="h-3 w-3 rounded-full bg-red-400" />
-                <div className="h-3 w-3 rounded-full bg-amber-400" />
-                <div className="h-3 w-3 rounded-full bg-emerald-400" />
-                <span className="ml-2 text-xs text-gray-400">klar.ai</span>
+          {/* Live demo preview */}
+          <ScrollReveal>
+            <div className="mx-auto mt-16 max-w-2xl rounded-2xl border border-gray-200/60 bg-white/80 p-6 shadow-2xl backdrop-blur-xl dark:border-gray-800/60 dark:bg-gray-900/80">
+              <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                {locale === "de" ? "Live-Vorschau — Vertrauensbericht" : "Live preview — Trust Report"}
               </div>
-              <div className="mt-4 space-y-3">
-                <div className="verdict-supported rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+              <div className="space-y-3">
+                {[
+                  { verdict: "supported", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300", text: locale === "de" ? "Die Erde umkreist die Sonne in 365,25 Tagen." : "The Earth orbits the Sun in 365.25 days.", icon: Check, source: locale === "de" ? "✓ Bestätigt — Wikipedia, NASA" : "✓ Supported — Wikipedia, NASA" },
+                  { verdict: "contradicted", color: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300", text: locale === "de" ? "Die Chinesische Mauer ist vom Mond aus sichtbar." : "The Great Wall of China is visible from the Moon.", icon: AlertTriangle, source: locale === "de" ? "✗ Widerlegt — NASA, Scientific American" : "✗ Contradicted — NASA, Scientific American" },
+                  { verdict: "unverifiable", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300", text: locale === "de" ? "85 % der Unternehmen nutzen KI im täglichen Betrieb." : "85% of companies use AI daily in their operations.", icon: Search, source: locale === "de" ? "? Nicht überprüfbar — keine zuverlässige Quelle gefunden" : "? Unverifiable — no reliable source found" },
+                ].map((claim, i) => (
+                  <div key={i} className="flex items-start gap-3 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40 transition-colors">
+                    <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${claim.color}`}>
+                      <claim.icon className="h-3.5 w-3.5" />
+                    </span>
                     <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {locale === "de"
-                          ? '"Deutschland hat über 200 KI-Startups in Berlin."'
-                          : '"Germany has over 200 AI startups in Berlin."'}
-                      </p>
-                      <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                        ✓{" "}
-                        {locale === "de"
-                          ? "Bestätigt — Quelle: Wikipedia"
-                          : "Supported — Source: Wikipedia"}
-                      </p>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{claim.text}</p>
+                      <p className="mt-0.5 text-xs text-gray-400">{claim.source}</p>
                     </div>
                   </div>
-                </div>
-                <div className="verdict-contradicted rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 text-sm text-red-600">✗</span>
-                    <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {locale === "de"
-                          ? '"n8n wurde 2015 in München gegründet."'
-                          : '"n8n was founded in 2015 in Munich."'}
-                      </p>
-                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                        ✗{" "}
-                        {locale === "de"
-                          ? "Widerlegt — n8n ist in Berlin ansässig"
-                          : "Contradicted — n8n is based in Berlin"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="verdict-unverifiable rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 text-sm text-amber-600">?</span>
-                    <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {locale === "de"
-                          ? '"85% der DAX-Unternehmen nutzen KI-Tools intern."'
-                          : '"85% of DAX companies use AI tools internally."'}
-                      </p>
-                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                        ?{" "}
-                        {locale === "de"
-                          ? "Nicht überprüfbar — keine verlässliche Quelle gefunden"
-                          : "Unverifiable — no reliable source found"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="bg-gray-50 px-4 py-20 dark:bg-gray-900/50 sm:px-6 lg:px-8">
+      {/* ═══ PROBLEM / PAIN — Fear + Loss Aversion + Negativity Bias ═══ */}
+      <section className="bg-gray-50 px-4 py-24 dark:bg-gray-900/50 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
-                {t("howItWorks.title")}
+              <Badge variant="secondary" className="mb-4 text-xs">
+                <AlertTriangle className="mr-1.5 h-3 w-3 text-amber-600" />
+                {locale === "de" ? "Das Problem" : "The Problem"}
+              </Badge>
+              <h2 className="text-3xl font-bold sm:text-4xl inline-block bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
+                {t("problem.title")}
               </h2>
-              <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
-                {t("howItWorks.subtitle")}
-              </p>
-              <p className="mt-2 mx-auto max-w-2xl text-sm text-gray-400 dark:text-gray-500">
-                {locale === "de"
-                  ? "KLAR verwendet einen mehrstufigen Verifizierungsprozess: Zuerst werden Behauptungen extrahiert, dann gegen echte Quellen geprüft und abschließend von einer zweiten KI bewertet."
-                  : "KLAR uses a multi-stage verification pipeline: first extracting claims, then checking them against real sources, and finally having a second AI pass evaluate each claim."}
+              <p className="mt-4 mx-auto max-w-3xl text-gray-500 dark:text-gray-400 leading-relaxed">
+                {t("problem.subtitle")}
               </p>
               <div className="mx-auto mt-3 section-divider" />
             </div>
           </ScrollReveal>
 
-          <ScrollReveal stagger className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-5">
+          <ScrollReveal stagger className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
-              { icon: ClipboardPaste, title: t("howItWorks.step1Title"), desc: t("howItWorks.step1Desc") },
-              { icon: FileSearch, title: t("howItWorks.step2Title"), desc: t("howItWorks.step2Desc") },
-              { icon: Search, title: t("howItWorks.step3Title"), desc: t("howItWorks.step3Desc") },
-              { icon: Brain, title: t("howItWorks.step4Title"), desc: t("howItWorks.step4Desc") },
-              { icon: FileCheck, title: t("howItWorks.step5Title"), desc: t("howItWorks.step5Desc") },
-            ].map((step, i) => (
-              <div key={i} className="relative flex flex-col items-center text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-900 text-white shadow-lg dark:bg-white dark:text-slate-800 magnetic-hover">
-                  <step.icon className="h-6 w-6" />
+              { value: t("problem.stat1Value"), label: t("problem.stat1Label"), desc: t("problem.stat1Desc"), color: "text-red-600 dark:text-red-400" },
+              { value: t("problem.stat2Value"), label: t("problem.stat2Label"), desc: t("problem.stat2Desc"), color: "text-emerald-600 dark:text-emerald-400" },
+              { value: t("problem.stat3Value"), label: t("problem.stat3Label"), desc: t("problem.stat3Desc"), color: "text-blue-600 dark:text-blue-400" },
+            ].map((stat, i) => (
+              <div key={i} className="rounded-2xl border border-gray-200/60 bg-white/70 p-8 text-center dark:border-gray-800/60 dark:bg-gray-900/70 backdrop-blur-sm">
+                <div className={`text-4xl font-extrabold tracking-tight sm:text-5xl ${stat.color}`}>{stat.value}</div>
+                <div className="mt-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{stat.label}</div>
+                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 leading-relaxed">{stat.desc}</p>
+              </div>
+            ))}
+          </ScrollReveal>
+
+          <ScrollReveal stagger className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {[
+              { icon: Newspaper, badge: t("problem.painJournalist"), title: t("problem.painJournalistTitle"), desc: t("problem.painJournalistDesc"), color: "from-emerald-500 to-teal-600" },
+              { icon: Briefcase, badge: t("problem.painBusiness"), title: t("problem.painBusinessTitle"), desc: t("problem.painBusinessDesc"), color: "from-blue-500 to-indigo-600" },
+              { icon: GraduationCap, badge: t("problem.painStudent"), title: t("problem.painStudentTitle"), desc: t("problem.painStudentDesc"), color: "from-violet-500 to-purple-600" },
+            ].map((pain, i) => (
+              <div key={i} className="group rounded-2xl border border-gray-200/60 bg-white/60 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-800/60 dark:bg-gray-900/60 backdrop-blur-sm">
+                <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${pain.color} text-white shadow-lg`}>
+                  <pain.icon className="h-5 w-5" />
                 </div>
-                <div className="absolute -left-4 top-7 hidden h-px w-full bg-gray-200 dark:bg-gray-700 md:block first:hidden" style={{ display: i === 0 ? "none" : undefined }} />
-                <span className="mt-2 text-xs font-bold text-gray-400">{i + 1}</span>
-                <h3 className="mt-2 text-base font-semibold text-slate-800 dark:text-slate-300">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  {step.desc}
-                </p>
+                <Badge variant="outline" className="mb-3 text-xs">{pain.badge}</Badge>
+                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-300">{pain.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{pain.desc}</p>
               </div>
             ))}
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Features */}
+      {/* ═══ HOW IT WORKS — Progressive Disclosure ═══ */}
+      <section id="how-it-works" className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <ScrollReveal>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold sm:text-4xl inline-block bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
+                {t("howItWorks.title")}
+              </h2>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">
+                {t("howItWorks.subtitle")}
+              </p>
+              <div className="mx-auto mt-3 section-divider" />
+            </div>
+          </ScrollReveal>
+
+          <div className="mt-16 relative">
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-emerald-500/30 via-emerald-500/60 to-emerald-500/30 hidden lg:block" />
+            <ScrollReveal stagger className="space-y-12 lg:space-y-16">
+              {[
+                { icon: ClipboardPaste, title: t("howItWorks.step1Title"), desc: t("howItWorks.step1Desc") },
+                { icon: ScanEye, title: t("howItWorks.step2Title"), desc: t("howItWorks.step2Desc") },
+                { icon: Brain, title: t("howItWorks.step3Title"), desc: t("howItWorks.step3Desc") },
+                { icon: Search, title: t("howItWorks.step4Title"), desc: t("howItWorks.step4Desc") },
+                { icon: FileCheck, title: t("howItWorks.step5Title"), desc: t("howItWorks.step5Desc") },
+              ].map((step, i) => (
+                <div key={i} className={`flex flex-col items-center gap-6 lg:flex-row ${i % 2 === 1 ? "lg:flex-row-reverse" : ""}`}>
+                  <div className={`flex-1 ${i % 2 === 1 ? "lg:text-right" : "lg:text-left"} text-center lg:text-inherit`}>
+                    <div className="inline-flex items-center gap-2 mb-2">
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{i + 1}</span>
+                      <h3 className="font-semibold text-lg text-slate-800 dark:text-slate-300">{step.title}</h3>
+                    </div>
+                    <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400 max-w-md mx-auto lg:mx-0">{step.desc}</p>
+                  </div>
+                  <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
+                    <step.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 hidden lg:block" />
+                </div>
+              ))}
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ WHY KLAR — Authority + Social Proof ═══ */}
       <section className="relative px-4 py-24 sm:px-6 lg:px-8">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-gray-50/50 to-transparent dark:via-gray-900/20" />
         <div className="mx-auto max-w-6xl">
@@ -210,11 +239,6 @@ function LandingContent({ locale }: { locale: string }) {
               <h2 className="text-3xl font-bold sm:text-4xl inline-block bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
                 {t("features.title")}
               </h2>
-              <p className="mt-2 mx-auto max-w-xl text-sm text-gray-400 dark:text-gray-500">
-                {locale === "de"
-                  ? "KLAR ist nicht nur ein Faktenprüfer — es ist eine umfassende Plattform zur Inhaltsanalyse mit mehreren spezialisierten KI-Engines."
-                  : "KLAR is not just a fact-checker — it's a comprehensive content analysis platform with multiple specialized AI engines."}
-              </p>
               <div className="mx-auto mt-3 section-divider" />
             </div>
           </ScrollReveal>
@@ -223,7 +247,7 @@ function LandingContent({ locale }: { locale: string }) {
             {[
               { icon: Search, title: t("features.evidenceBased"), desc: t("features.evidenceBasedDesc") },
               { icon: Eye, title: t("features.transparent"), desc: t("features.transparentDesc") },
-              { icon: Globe, title: t("features.universal"), desc: t("features.universalDesc") },
+              { icon: FileText, title: t("features.universal"), desc: t("features.universalDesc") },
               { icon: Lock, title: t("features.euCompliant"), desc: t("features.euCompliantDesc") },
               { icon: Zap, title: t("features.fast"), desc: t("features.fastDesc") },
               { icon: Users, title: t("features.accessible"), desc: t("features.accessibleDesc") },
@@ -249,8 +273,8 @@ function LandingContent({ locale }: { locale: string }) {
         </div>
       </section>
 
-      {/* Analysis Capabilities — NEW */}
-      <section className="bg-gray-50 px-4 py-20 dark:bg-gray-900/50 sm:px-6 lg:px-8">
+      {/* ═══ 5 ANALYSIS ENGINES — Authority + Specificity ═══ */}
+      <section className="bg-gray-50 px-4 py-24 dark:bg-gray-900/50 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <ScrollReveal>
             <div className="text-center">
@@ -259,12 +283,10 @@ function LandingContent({ locale }: { locale: string }) {
                 {locale === "de" ? "5 KI-Engines" : "5 AI Engines"}
               </Badge>
               <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
-                {locale === "de" ? "Umfassende Inhaltsanalyse" : "Comprehensive Content Analysis"}
+                {t("engines.title")}
               </h2>
               <p className="mt-3 mx-auto max-w-2xl text-gray-500 dark:text-gray-400">
-                {locale === "de"
-                  ? "Wählen Sie zwischen fünf spezialisierten Analyse-Modi oder führen Sie eine Vollanalyse durch — alles in einem Durchgang."
-                  : "Choose between five specialized analysis modes or run a full comprehensive analysis — all in a single pass."}
+                {t("engines.subtitle")}
               </p>
               <div className="mx-auto mt-3 section-divider" />
             </div>
@@ -272,48 +294,12 @@ function LandingContent({ locale }: { locale: string }) {
 
           <ScrollReveal stagger className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              {
-                icon: FileSearch, color: "emerald",
-                title: locale === "de" ? "Faktenprüfung" : "Fact Checking",
-                desc: locale === "de"
-                  ? "Extrahiert einzelne Behauptungen und prüft jede gegen Wikipedia und Google. Jedes Urteil enthält Quelllinks und eine Begründung."
-                  : "Extracts individual claims and verifies each against Wikipedia and Google. Every verdict includes source links and reasoning.",
-              },
-              {
-                icon: Eye, color: "violet",
-                title: locale === "de" ? "Bias-Erkennung" : "Bias Detection",
-                desc: locale === "de"
-                  ? "Erkennt geladene Sprache, emotionale Appelle, einseitige Rahmung und politische Neigung mit einem 0-100 Bias-Score."
-                  : "Detects loaded language, emotional appeals, one-sided framing, and political lean with a 0-100 bias score.",
-              },
-              {
-                icon: Brain, color: "blue",
-                title: locale === "de" ? "KI-Erkennung" : "AI Detection",
-                desc: locale === "de"
-                  ? "Analysiert Satzstruktur, Vokabelvielfalt und Perplexität, um festzustellen, ob Text von Menschen oder KI geschrieben wurde."
-                  : "Analyzes sentence structure, vocabulary diversity, and perplexity to determine whether text was written by a human or AI.",
-              },
-              {
-                icon: Copy, color: "amber",
-                title: locale === "de" ? "Plagiatsprüfung" : "Plagiarism Check",
-                desc: locale === "de"
-                  ? "Vergleicht Textfragmente mit bekannten Quellen im Web und berechnet einen Originalitätsprozentsatz."
-                  : "Compares text fragments against known web sources and calculates an originality percentage.",
-              },
-              {
-                icon: BarChart3, color: "rose",
-                title: locale === "de" ? "Qualitätsbewertung" : "Quality Evaluation",
-                desc: locale === "de"
-                  ? "Bewertet Inhalt mit professionellen Frameworks: MECE, Red Team, BLUF und Pre-Mortem — mit Note A-F."
-                  : "Scores content using professional frameworks: MECE, Red Team, BLUF, and Pre-Mortem — with an A-F grade.",
-              },
-              {
-                icon: Upload, color: "teal",
-                title: locale === "de" ? "Datei-Upload" : "File Upload",
-                desc: locale === "de"
-                  ? "Laden Sie PDF-, DOCX- oder TXT-Dateien hoch — KLAR extrahiert den Text automatisch und führt alle ausgewählten Analysen durch."
-                  : "Upload PDF, DOCX, or TXT files — KLAR automatically extracts text and runs all selected analyses.",
-              },
+              { icon: FileSearch, color: "emerald", title: t("engines.factCheck"), desc: t("engines.factCheckDesc") },
+              { icon: Eye, color: "violet", title: t("engines.biasDetection"), desc: t("engines.biasDetectionDesc") },
+              { icon: Brain, color: "blue", title: t("engines.aiDetection"), desc: t("engines.aiDetectionDesc") },
+              { icon: Copy, color: "amber", title: t("engines.plagiarism"), desc: t("engines.plagiarismDesc") },
+              { icon: BarChart3, color: "rose", title: t("engines.quality"), desc: t("engines.qualityDesc") },
+              { icon: Upload, color: "teal", title: t("engines.fileUpload"), desc: t("engines.fileUploadDesc") },
             ].map(({ icon: Icon, color, title, desc }, i) => {
               const colorMap: Record<string, string> = {
                 emerald: "from-emerald-500 to-teal-600 shadow-emerald-500/20",
@@ -347,8 +333,42 @@ function LandingContent({ locale }: { locale: string }) {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8">
+      {/* ═══ WHO IS IT FOR — Bandwagon + Jobs To Be Done ═══ */}
+      <section className="bg-gray-50 px-4 py-24 dark:bg-gray-900/50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <ScrollReveal>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold sm:text-4xl inline-block bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:to-slate-400">
+                {t("whoIsItFor.title")}
+              </h2>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">{t("whoIsItFor.subtitle")}</p>
+              <div className="mx-auto mt-3 section-divider" />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal stagger className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { icon: Newspaper, title: t("whoIsItFor.journalist"), desc: t("whoIsItFor.journalistDesc"), color: "from-emerald-500 to-teal-600" },
+              { icon: GraduationCap, title: t("whoIsItFor.student"), desc: t("whoIsItFor.studentDesc"), color: "from-violet-500 to-purple-600" },
+              { icon: Briefcase, title: t("whoIsItFor.business"), desc: t("whoIsItFor.businessDesc"), color: "from-blue-500 to-indigo-600" },
+              { icon: Pen, title: t("whoIsItFor.creator"), desc: t("whoIsItFor.creatorDesc"), color: "from-amber-500 to-orange-600" },
+              { icon: Gavel, title: t("whoIsItFor.legal"), desc: t("whoIsItFor.legalDesc"), color: "from-rose-500 to-pink-600" },
+              { icon: School, title: t("whoIsItFor.education"), desc: t("whoIsItFor.educationDesc"), color: "from-teal-500 to-cyan-600" },
+            ].map(({ icon: Icon, title, desc, color }, i) => (
+              <div key={i} className="group rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg magnetic-hover">
+                <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-white shadow-lg`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-300">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{desc}</p>
+              </div>
+            ))}
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══ PRICING — Decoy Effect + Anchoring ═══ */}
+      <section id="pricing" className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <ScrollReveal>
             <div className="text-center">
@@ -364,37 +384,33 @@ function LandingContent({ locale }: { locale: string }) {
 
           <ScrollReveal stagger className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Free */}
-            <Card>
+            <Card className="border-gray-200/60 dark:border-gray-800/60">
               <CardHeader className="text-center">
                 <CardTitle>{t("pricing.free")}</CardTitle>
                 <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.freePrice")}
-                  <span className="text-base font-normal text-gray-500">
-                    {t("pricing.perMonth")}
-                  </span>
+                  <span className="text-base font-normal text-gray-500">{t("pricing.perMonth")}</span>
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
-                {[t("pricing.freeFeature1"), t("pricing.freeFeature2"), t("pricing.freeFeature3")].map(
+                {[t("pricing.freeFeature1"), t("pricing.freeFeature2"), t("pricing.freeFeature3"), t("pricing.freeFeature4"), t("pricing.freeFeature5")].map(
                   (f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Check className="h-4 w-4 text-emerald-500" />
-                      {f}
+                      <Check className="h-4 w-4 shrink-0 text-emerald-500" />{f}
                     </div>
                   )
                 )}
                 <Link href={`/${locale}/verify`} className="block pt-4">
-                  <Button variant="outline" className="w-full">
-                    {t("pricing.free")}
-                  </Button>
+                  <Button variant="outline" className="w-full">{t("pricing.free")}</Button>
                 </Link>
               </CardContent>
             </Card>
 
             {/* Pro */}
-            <Card className="relative border-gray-900 shadow-lg dark:border-white">
+            <Card className="relative border-gray-900 shadow-xl dark:border-white scale-[1.02]">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="shadow-sm">
+                  <Star className="mr-1 h-3 w-3" />
                   {locale === "de" ? "Beliebteste" : "Most popular"}
                 </Badge>
               </div>
@@ -402,17 +418,14 @@ function LandingContent({ locale }: { locale: string }) {
                 <CardTitle>{t("pricing.pro")}</CardTitle>
                 <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.proPrice")}
-                  <span className="text-base font-normal text-gray-500">
-                    {t("pricing.perMonth")}
-                  </span>
+                  <span className="text-base font-normal text-gray-500">{t("pricing.perMonth")}</span>
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
-                {[t("pricing.proFeature1"), t("pricing.proFeature2"), t("pricing.proFeature3")].map(
+                {[t("pricing.proFeature1"), t("pricing.proFeature2"), t("pricing.proFeature3"), t("pricing.proFeature4"), t("pricing.proFeature5")].map(
                   (f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Check className="h-4 w-4 text-emerald-500" />
-                      {f}
+                      <Check className="h-4 w-4 shrink-0 text-emerald-500" />{f}
                     </div>
                   )
                 )}
@@ -423,29 +436,24 @@ function LandingContent({ locale }: { locale: string }) {
             </Card>
 
             {/* Team */}
-            <Card>
+            <Card className="border-gray-200/60 dark:border-gray-800/60">
               <CardHeader className="text-center">
                 <CardTitle>{t("pricing.team")}</CardTitle>
                 <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-300">
                   {t("pricing.teamPrice")}
-                  <span className="text-base font-normal text-gray-500">
-                    {t("pricing.perUser")}{t("pricing.perMonth")}
-                  </span>
+                  <span className="text-base font-normal text-gray-500">{t("pricing.perUser")}{t("pricing.perMonth")}</span>
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
-                {[t("pricing.teamFeature1"), t("pricing.teamFeature2"), t("pricing.teamFeature3")].map(
+                {[t("pricing.teamFeature1"), t("pricing.teamFeature2"), t("pricing.teamFeature3"), t("pricing.teamFeature4"), t("pricing.teamFeature5")].map(
                   (f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Check className="h-4 w-4 text-emerald-500" />
-                      {f}
+                      <Check className="h-4 w-4 shrink-0 text-emerald-500" />{f}
                     </div>
                   )
                 )}
                 <Link href={`/${locale}/auth/signup`} className="block pt-4">
-                  <Button variant="outline" className="w-full">
-                    {t("pricing.team")}
-                  </Button>
+                  <Button variant="outline" className="w-full">{t("pricing.team")}</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -453,43 +461,44 @@ function LandingContent({ locale }: { locale: string }) {
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="bg-gray-50 px-4 py-20 dark:bg-gray-900/50 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
+      {/* ═══ TRUST & SECURITY — Authority + Safety ═══ */}
+      <section className="bg-gray-50 px-4 py-24 dark:bg-gray-900/50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
           <ScrollReveal>
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
-              {t("trust.title")}
-            </h2>
-            <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
-              {locale === "de"
-                ? "Ihre Daten bleiben in der EU. DSGVO-konform von Grund auf."
-                : "Your data stays in the EU. GDPR-compliant by design."}
-            </p>
-            <div className="mx-auto mt-3 section-divider" />
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
+                {t("trust.title")}
+              </h2>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">{t("trust.subtitle")}</p>
+              <div className="mx-auto mt-3 section-divider" />
+            </div>
           </ScrollReveal>
-          <ScrollReveal stagger className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
+          <ScrollReveal stagger className="mt-12 grid grid-cols-2 gap-5 md:grid-cols-3">
             {[
-              { label: t("trust.gdpr"), icon: Lock },
-              { label: t("trust.euData"), icon: Globe },
-              { label: t("trust.aiAct"), icon: Shield },
-              { label: t("trust.builtInGermany"), icon: Check },
+              { label: t("trust.gdpr"), desc: t("trust.gdprDesc"), icon: Shield },
+              { label: t("trust.euData"), desc: t("trust.euDataDesc"), icon: Globe },
+              { label: t("trust.aiAct"), desc: t("trust.aiActDesc"), icon: Scale },
+              { label: t("trust.builtInGermany"), desc: t("trust.builtInGermanyDesc"), icon: ShieldCheck },
+              { label: t("trust.rls"), desc: t("trust.rlsDesc"), icon: Lock },
+              { label: t("trust.noTracking"), desc: t("trust.noTrackingDesc"), icon: Eye },
             ].map((item, i) => (
               <div
                 key={i}
-                className="flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-900 magnetic-hover"
+                className="flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white/70 p-6 text-center dark:border-gray-800 dark:bg-gray-900/70 backdrop-blur-sm magnetic-hover transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
-                <item.icon className="h-6 w-6 text-slate-800 dark:text-slate-300" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {item.label}
-                </span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                  <item.icon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{item.label}</span>
+                <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Enterprise / B2B Section */}
-      <section id="enterprise" className="px-4 py-20 sm:px-6 lg:px-8">
+      {/* ═══ ENTERPRISE / B2B ═══ */}
+      <section id="enterprise" className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <ScrollReveal>
             <div className="text-center">
@@ -573,27 +582,58 @@ function LandingContent({ locale }: { locale: string }) {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-gray-900 px-4 py-20 dark:bg-gray-950 sm:px-6 lg:px-8">
+      {/* ═══ FAQ — Objection Handling + Cognitive Ease ═══ */}
+      <section className="bg-gray-50 px-4 py-24 dark:bg-gray-900/50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <ScrollReveal>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-300 sm:text-4xl">
+                {t("faq.title")}
+              </h2>
+              <div className="mx-auto mt-3 section-divider" />
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal stagger className="mt-12 space-y-4">
+            {[
+              { q: t("faq.q1"), a: t("faq.a1") },
+              { q: t("faq.q2"), a: t("faq.a2") },
+              { q: t("faq.q3"), a: t("faq.a3") },
+              { q: t("faq.q4"), a: t("faq.a4") },
+              { q: t("faq.q5"), a: t("faq.a5") },
+              { q: t("faq.q6"), a: t("faq.a6") },
+            ].map((faq, i) => (
+              <details key={i} className="group rounded-2xl border border-gray-200/60 bg-white/70 dark:border-gray-800/60 dark:bg-gray-900/70 backdrop-blur-sm overflow-hidden">
+                <summary className="flex cursor-pointer items-center justify-between p-5 text-sm font-semibold text-slate-800 dark:text-slate-300 select-none">
+                  {faq.q}
+                  <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div className="px-5 pb-5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══ FINAL CTA — Urgency + Zero-Risk ═══ */}
+      <section className="bg-gray-900 px-4 py-24 dark:bg-gray-950 sm:px-6 lg:px-8">
         <ScrollReveal variant="scale" className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            {locale === "de"
-              ? "Bereit, KI-Inhalte zu überprüfen?"
-              : "Ready to verify AI content?"}
+            {t("cta.title")}
           </h2>
           <p className="mt-4 text-lg text-gray-400">
-            {locale === "de"
-              ? "Starten Sie kostenlos — keine Registrierung für die ersten 3 Überprüfungen erforderlich."
-              : "Start for free — no signup required for your first 3 checks."}
+            {t("cta.subtitle")}
           </p>
           <Link href={`/${locale}/verify`}>
             <Button
               size="xl"
               variant="success"
-              className="mt-8 gap-2 shadow-lg"
+              className="mt-8 gap-2 shadow-lg shadow-emerald-500/25"
             >
               <FileSearch className="h-5 w-5" />
-              {locale === "de" ? "Jetzt starten" : "Get started"}
+              {t("cta.button")}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
