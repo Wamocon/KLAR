@@ -32,6 +32,16 @@ async function fetchJSON(path, opts = {}) {
   return { status: r.status, json, text, headers: r.headers };
 }
 
+// Retry wrapper for AI-powered endpoints that may 504 on Vercel
+async function fetchWithRetry(path, opts = {}, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const result = await fetchJSON(path, opts);
+    if (result.status !== 504 && result.status !== 500) return result;
+    if (attempt < retries) console.log(`    ↻ Retry ${attempt + 1} for ${path}...`);
+  }
+  return fetchJSON(path, opts); // final attempt
+}
+
 async function fetchSSE(path, body, extraHeaders = {}) {
   const url = `${BASE}${path}`;
   const r = await fetch(url, {
@@ -140,7 +150,7 @@ async function testExtensionScan() {
 
   // Test 3a: Well-known facts (should be mostly supported)
   const factualText = "The Earth orbits the Sun once every 365.25 days. Water is composed of hydrogen and oxygen, with the chemical formula H2O. The speed of light in a vacuum is approximately 299,792 kilometers per second. Mount Everest is the tallest mountain above sea level, standing at 8,849 meters.";
-  const { status: s1, json: j1 } = await fetchJSON("/api/extension/scan", {
+  const { status: s1, json: j1 } = await fetchWithRetry("/api/extension/scan", {
     method: "POST",
     headers: { Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({ text: factualText, language: "en" }),
@@ -160,7 +170,7 @@ async function testExtensionScan() {
 
   // Test 3b: Known false claims (should have low trust)
   const falseText = "The Great Wall of China is visible from the Moon with the naked eye. Albert Einstein failed mathematics in school and was a poor student. Humans only use 10 percent of their brain capacity. Lightning never strikes the same place twice, this is a well-established scientific fact.";
-  const { status: s2, json: j2 } = await fetchJSON("/api/extension/scan", {
+  const { status: s2, json: j2 } = await fetchWithRetry("/api/extension/scan", {
     method: "POST",
     headers: { Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({ text: falseText, language: "en" }),
@@ -172,7 +182,7 @@ async function testExtensionScan() {
 
   // Test 3c: Mixed true/false
   const mixedText = "Berlin is the capital of Germany and has a population of about 3.7 million people. Germany has won the FIFA World Cup five times. The Berlin Wall fell in November 1989. Germany borders France, Poland, and the Netherlands. The Euro was introduced in Germany in 2002 as a physical currency.";
-  const { status: s3, json: j3 } = await fetchJSON("/api/extension/scan", {
+  const { status: s3, json: j3 } = await fetchWithRetry("/api/extension/scan", {
     method: "POST",
     headers: { Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({ text: mixedText, language: "en" }),
@@ -494,7 +504,7 @@ async function testBenchmark() {
   // Get agent details
   const { status: s4, json: j4 } = await fetchJSON(`/api/benchmark/agent?id=${agentId}`);
   assert(s4 === 200, `Get agent → 200 (got ${s4})`);
-  assert(j4?.agent?.name === agentName, "Agent name matches");
+  assert(j4?.name === agentName, "Agent name matches");
 
   // Leaderboard
   const { status: s5, json: j5 } = await fetchJSON("/api/benchmark/leaderboard");
@@ -584,7 +594,7 @@ Artificial intelligence has made remarkable progress in recent years. The develo
 Quantum computing represents the next frontier in computational technology. Companies like IBM, Google, and various startups are developing quantum processors that leverage quantum mechanical phenomena to solve certain problems exponentially faster than classical computers. In 2019, Google claimed to have achieved quantum supremacy with their Sycamore processor.
 `.trim();
 
-  const { status, json } = await fetchJSON("/api/extension/scan", {
+  const { status, json } = await fetchWithRetry("/api/extension/scan", {
     method: "POST",
     headers: { Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({ text: longText, language: "en" }),
@@ -609,7 +619,7 @@ async function testSecurity() {
 
   // XSS attempt in text
   const xssText = "The <script>alert('xss')</script> element was invented in 1995. JavaScript was created by Brendan Eich at Netscape and first appeared in Netscape Navigator 2.0 in 1995. The language was originally called LiveScript before being renamed to JavaScript.";
-  const { status: s1, json: j1 } = await fetchJSON("/api/extension/scan", {
+  const { status: s1, json: j1 } = await fetchWithRetry("/api/extension/scan", {
     method: "POST",
     headers: { Authorization: `Bearer ${API_KEY}` },
     body: JSON.stringify({ text: xssText, language: "en" }),
