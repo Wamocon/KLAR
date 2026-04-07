@@ -460,7 +460,8 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (saveError || !savedVerification) {
-              sendEvent({ type: "error", message: "Failed to save verification" });
+              console.error("Verification save error:", saveError);
+              sendEvent({ type: "error", message: "Failed to save verification", detail: saveError?.message || "unknown" });
               controller.close();
               return;
             }
