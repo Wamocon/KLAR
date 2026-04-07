@@ -59,12 +59,24 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Check for API key auth
+  const authHeader = request.headers.get("authorization");
+  let apiKey: ApiKeyAuth | null = null;
+  if (authHeader?.startsWith("Bearer klar_")) {
+    apiKey = await authenticateApiKey(authHeader);
+  }
+
   // Auth check: verify ownership or allow anonymous access to their own reports
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = apiKey
+    ? { data: { user: { id: apiKey.userId } as { id: string } } }
+    : await supabase.auth.getUser();
+
+  // Use service client for API key auth (bypasses RLS)
+  const readClient = apiKey ? await createServiceClient() : supabase;
   
-  const { data: verification, error: vError } = await supabase
+  const { data: verification, error: vError } = await readClient
     .from("verifications")
     .select("*")
     .eq("id", id)
@@ -82,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const { data: claims } = await supabase
+  const { data: claims } = await readClient
     .from("claims")
     .select("*")
     .eq("verification_id", id)
