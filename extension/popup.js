@@ -34,13 +34,14 @@ let currentPageTitle = "";
 // ─── Detect language for links ───
 const lang = chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en";
 
-// Set all app links
-document.getElementById("getKeyLink").href = `${KLAR.API_BASE}/${lang}/settings`;
-document.getElementById("openAppBtn").href = `${KLAR.API_BASE}/${lang}/dashboard`;
-document.getElementById("linkDashboard").href = `${KLAR.API_BASE}/${lang}/dashboard`;
-document.getElementById("linkHistory").href = `${KLAR.API_BASE}/${lang}/history`;
-document.getElementById("linkVerify").href = `${KLAR.API_BASE}/${lang}/verify`;
-document.getElementById("linkSettings").href = `${KLAR.API_BASE}/${lang}/settings`;
+// Set all app links (null-safe — elements may be inside hidden screens)
+const setHref = (id, path) => { const el = document.getElementById(id); if (el) el.href = `${KLAR.API_BASE}/${lang}/${path}`; };
+setHref("getKeyLink", "settings");
+setHref("openAppBtn", "dashboard");
+setHref("linkDashboard", "dashboard");
+setHref("linkHistory", "history");
+setHref("linkVerify", "verify");
+setHref("linkSettings", "settings");
 
 // ─── Init: Check for existing key ───
 chrome.runtime.sendMessage({ type: "GET_API_KEY" }, (response) => {
@@ -163,7 +164,6 @@ function updateSelectionUI() {
       : captureMode === "url"
         ? "No page URL available"
         : "Select text on a page, then pick an action below";
-  }
   }
 
   // Enable/disable action buttons
