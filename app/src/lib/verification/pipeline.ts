@@ -101,8 +101,8 @@ export async function* runVerificationPipeline(
     return;
   }
 
-  // Cap claims to avoid Vercel 60s timeout — process most important first
-  const MAX_CLAIMS = 5;
+  // Cap claims to keep within Vercel 60s timeout — process most important first
+  const MAX_CLAIMS = 10;
   if (extractedClaims.length > MAX_CLAIMS) {
     extractedClaims = extractedClaims.slice(0, MAX_CLAIMS);
   }

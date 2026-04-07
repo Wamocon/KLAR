@@ -217,8 +217,8 @@ describe("Rate Limiter — Input Limits", () => {
     expect(checkCharLimit(5001, "free")).toBe(false);
   });
 
-  it("pro allows 10000 chars", () => {
-    expect(checkCharLimit(10000, "pro")).toBe(true);
+  it("pro allows 25000 chars", () => {
+    expect(checkCharLimit(25000, "pro")).toBe(true);
   });
 
   it("guest cannot upload files", () => {

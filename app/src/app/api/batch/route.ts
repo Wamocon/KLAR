@@ -12,7 +12,7 @@ export const maxDuration = 60;
 
 const batchSchema = z.object({
   items: z.array(z.object({
-    text: z.string().min(50).max(10000),
+    text: z.string().min(50).max(50000),
     language: z.string().optional().default("en"),
     analyses: z.array(z.enum([
       "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",

@@ -5,9 +5,19 @@ const genAI = new GoogleGenerativeAI(
   process.env.GOOGLE_GENERATIVE_AI_API_KEY!
 );
 
-// Stable Gemini 2.5 Flash model — best price-performance for high-volume fact-checking
+// Primary model — Gemini 2.5 Flash for fast, accurate fact-checking
 const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
+  generationConfig: {
+    temperature: 0.1,
+    topP: 0.95,
+    maxOutputTokens: 8192,
+  },
+});
+
+// Pro model — Gemini 2.5 Pro for complex analysis (comprehensive mode)
+const proModel = genAI.getGenerativeModel({
+  model: "gemini-2.5-pro-preview-06-05",
   generationConfig: {
     temperature: 0.1,
     topP: 0.95,
@@ -26,7 +36,8 @@ const groundedModel = genAI.getGenerativeModel({
   tools: [{ googleSearch: {} } as never],
 });
 
-const AI_TIMEOUT_MS = 15000;
+// Timeout: 55s to stay within Vercel's 60s function limit
+const AI_TIMEOUT_MS = 55000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([

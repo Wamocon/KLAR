@@ -9,7 +9,7 @@ export const maxDuration = 60;
 const batchSchema = z.object({
   items: z.array(
     z.object({
-      text: z.string().min(50).max(10000),
+      text: z.string().min(50).max(50000),
       language: z.string().optional().default("en"),
     })
   ).min(1).max(20),

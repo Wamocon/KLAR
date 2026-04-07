@@ -95,7 +95,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
     const cleanText = cleanExtractedText(article.textContent);
     return {
       title: article.title || parsedUrl.hostname,
-      content: cleanText.slice(0, 10000),
+      content: cleanText.slice(0, 50000),
       url,
       siteName: article.siteName || parsedUrl.hostname,
       excerpt: article.excerpt || null,
@@ -109,7 +109,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
     const cleanText = cleanExtractedText(jsonLdText);
     return {
       title: dom.window.document.title || parsedUrl.hostname,
-      content: cleanText.slice(0, 10000),
+      content: cleanText.slice(0, 50000),
       url,
       siteName: parsedUrl.hostname,
       excerpt: null,
@@ -130,7 +130,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
     if (scraped && scraped.length > 50) {
       return {
         title: dom.window.document.title || parsedUrl.hostname,
-        content: scraped.slice(0, 10000),
+        content: scraped.slice(0, 50000),
         url,
         siteName: parsedUrl.hostname,
         excerpt: null,
@@ -142,7 +142,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
 
   return {
     title: dom.window.document.title || parsedUrl.hostname,
-    content: combinedFallback.slice(0, 10000),
+    content: combinedFallback.slice(0, 50000),
     url,
     siteName: parsedUrl.hostname,
     excerpt: null,

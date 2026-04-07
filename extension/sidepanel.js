@@ -43,6 +43,19 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
+// ─── On open: request latest state from background (handles race condition) ───
+chrome.runtime.sendMessage({ type: "GET_LATEST_STATE" }, (state) => {
+  if (chrome.runtime.lastError) return; // background not ready
+  if (!state) return;
+  if (state.type === "KLAR_LOADING") {
+    showLoading();
+  } else if (state.type === "KLAR_RESULT") {
+    showResult(state.result);
+  } else if (state.type === "KLAR_ERROR") {
+    showError(state.error);
+  }
+});
+
 // ─── State transitions ───
 
 function showLoading() {

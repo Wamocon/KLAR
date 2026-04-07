@@ -67,9 +67,9 @@ export async function extractTextFromFile(
     throw new Error("Could not extract enough text from the file. It may be image-based or encrypted.");
   }
 
-  // Enforce the same 10k char limit as text input
-  if (text.length > 10000) {
-    text = text.slice(0, 10000);
+  // Enforce max char limit
+  if (text.length > 50000) {
+    text = text.slice(0, 50000);
   }
 
   return {

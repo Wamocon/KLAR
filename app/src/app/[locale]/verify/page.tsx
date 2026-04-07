@@ -18,7 +18,7 @@ import type {
   BiasAnalysis, AIDetectionResult, PlagiarismResult, FrameworkEvaluation,
 } from "@/types";
 
-const MAX_CHARS = 10000;
+const MAX_CHARS = 50000;
 const MIN_CHARS = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB (hard limit; plan limits enforced server-side)
 

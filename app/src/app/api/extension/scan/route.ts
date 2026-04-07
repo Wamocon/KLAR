@@ -11,7 +11,7 @@ export const maxDuration = 60;
 const getExtractUrlContent = () => import("@/lib/utils/extract-url").then(m => m.extractUrlContent);
 
 const scanSchema = z.object({
-  text: z.string().min(50).max(10000).optional(),
+  text: z.string().min(50).max(50000).optional(),
   url: z.string().url().optional(),
   language: z.string().optional().default("en"),
   analyses: z.array(z.enum([
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     try {
       const extractUrlContent = await getExtractUrlContent();
       const page = await extractUrlContent(parsed.data.url);
-      text = page.content.slice(0, 10000); // Truncate for extension
+      text = page.content.slice(0, 50000); // Truncate for extension
       sourceUrl = page.url;
       sourceTitle = page.title;
     } catch (err) {

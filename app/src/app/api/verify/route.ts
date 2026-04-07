@@ -35,7 +35,7 @@ const analysisModeSchema = z.enum([
 
 const verifySchema = z.union([
   z.object({
-    text: z.string().min(50).max(10000),
+    text: z.string().min(50).max(50000),
     language: z.string().optional().default("en"),
     mode: z.literal("text").optional().default("text"),
     analyses: z.array(analysisModeSchema).optional().default(["fact-check"]),
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     const parsed = verifySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input. Provide 'text' (50–10,000 chars) or a valid 'url'." },
+        { error: "Invalid input. Provide 'text' (50–50,000 chars) or a valid 'url'." },
         { status: 400 }
       );
     }

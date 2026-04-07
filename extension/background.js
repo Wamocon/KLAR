@@ -6,6 +6,19 @@
 
 importScripts("constants.js");
 
+// ─── Keep-alive: prevent Chrome from killing the service worker during long API calls ───
+let keepAliveInterval = null;
+function startKeepAlive() {
+  if (keepAliveInterval) return;
+  keepAliveInterval = setInterval(() => {
+    // Simple ping to keep service worker alive (Chrome kills idle workers after 30s)
+    chrome.runtime.getPlatformInfo(() => {});
+  }, 25000);
+}
+function stopKeepAlive() {
+  if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
+}
+
 // Context menu for right-click → "Verify with KLAR"
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -52,6 +65,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ success: true });
     });
     return true;
+  }
+  if (message.type === "GET_LATEST_STATE") {
+    sendResponse(latestState);
+    return false;
   }
 });
 
@@ -122,6 +139,7 @@ async function verifyText(text, tabId, analyses) {
 
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
+  startKeepAlive();
   try {
     const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
@@ -147,6 +165,8 @@ async function verifyText(text, tabId, analyses) {
     const error = err instanceof Error ? err.message : "Verification failed";
     notifyTab(tabId, { type: "KLAR_ERROR", error });
     return { error };
+  } finally {
+    stopKeepAlive();
   }
 }
 
@@ -162,6 +182,7 @@ async function verifyUrl(url, tabId, analyses) {
   await ensureContentScript(tabId);
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
+  startKeepAlive();
   try {
     const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
@@ -184,10 +205,18 @@ async function verifyUrl(url, tabId, analyses) {
     const error = err instanceof Error ? err.message : "Verification failed";
     notifyTab(tabId, { type: "KLAR_ERROR", error });
     return { error };
+  } finally {
+    stopKeepAlive();
   }
 }
 
+// ─── Persistent state store — sidepanel can request this even if it opens late ───
+let latestState = { type: "KLAR_IDLE" };
+
 function notifyTab(tabId, message) {
+  // Always store latest state so sidepanel can retrieve it on open
+  latestState = message;
+
   if (tabId) {
     chrome.tabs.sendMessage(tabId, message).catch(() => {
       // Tab may not have content script injected
@@ -195,6 +224,6 @@ function notifyTab(tabId, message) {
   }
   // Also broadcast to side panel (it listens via chrome.runtime.onMessage)
   chrome.runtime.sendMessage(message).catch(() => {
-    // Side panel may not be open
+    // Side panel may not be open yet — that's ok, it will poll latestState
   });
 }
