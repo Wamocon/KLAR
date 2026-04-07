@@ -200,6 +200,8 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  // Use admin client for API key auth (no auth session = RLS fails on writes)
+  const dbClient = apiKeyAuth ? await createServiceClient() : supabase;
   const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
   // ── Layer 0: Abuse Detection — block known abusive IPs ──
@@ -436,7 +438,7 @@ export async function POST(request: NextRequest) {
         for await (const event of runVerificationPipeline(text, language, analyses)) {
           if (event.type === "completed") {
             // Store in database
-            const { data: savedVerification, error: saveError } = await supabase
+            const { data: savedVerification, error: saveError } = await dbClient
               .from("verifications")
               .insert({
                 user_id: user?.id || null,
@@ -479,7 +481,7 @@ export async function POST(request: NextRequest) {
                 position_end: c.position_end,
               }));
 
-              await supabase.from("claims").insert(claimsToInsert);
+              await dbClient.from("claims").insert(claimsToInsert);
             }
 
             // Update monthly count (cost-weighted)
@@ -487,14 +489,14 @@ export async function POST(request: NextRequest) {
               // For cost > 1, we call increment_monthly_count multiple times
               // or use a custom RPC. For now, loop is safe since max cost is ~3.
               for (let i = 0; i < Math.ceil(requestCost); i++) {
-                await supabase.rpc("increment_monthly_count", {
+                await dbClient.rpc("increment_monthly_count", {
                   user_id_input: user.id,
                 });
               }
             }
 
             // Log audit entry
-            await supabase.from("audit_log").insert({
+            await dbClient.from("audit_log").insert({
               user_id: user?.id || null,
               action: "verification_completed",
               entity_type: "verification",
