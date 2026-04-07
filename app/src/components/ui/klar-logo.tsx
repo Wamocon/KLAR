@@ -1,5 +1,5 @@
 /**
- * KLAR Logo — magnifying glass with checkmark
+ * KLAR Logo — Evidence Scale (Scales of Truth)
  * Used in header, footer, and favicon.
  */
 export function KlarLogo({ size = 32, className = "" }: { size?: number; className?: string }) {
@@ -15,16 +15,25 @@ export function KlarLogo({ size = 32, className = "" }: { size?: number; classNa
     >
       <defs>
         <linearGradient id="klar-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#10b981" />
-          <stop offset="100%" stopColor="#0d9488" />
+          <stop offset="0%" stopColor="#008c50" />
+          <stop offset="100%" stopColor="#00e88a" />
         </linearGradient>
       </defs>
       <rect width="512" height="512" rx="112" fill="url(#klar-bg)" />
-      {/* Magnifying glass */}
-      <circle cx="228" cy="218" r="108" stroke="white" strokeWidth="32" opacity="0.95" />
-      <line x1="310" y1="300" x2="400" y2="390" stroke="white" strokeWidth="36" strokeLinecap="round" opacity="0.95" />
-      {/* Checkmark */}
-      <polyline points="180,218 215,253 280,178" stroke="white" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Scale beam (tilted — truth rises) */}
+      <line x1="128" y1="230" x2="384" y2="180" stroke="white" strokeWidth="16" strokeLinecap="round" />
+      {/* Center pillar */}
+      <line x1="256" y1="205" x2="256" y2="384" stroke="white" strokeWidth="20" strokeLinecap="round" />
+      {/* Base */}
+      <line x1="192" y1="384" x2="320" y2="384" stroke="white" strokeWidth="16" strokeLinecap="round" />
+      {/* Fulcrum */}
+      <polygon points="237,195 275,195 256,168" fill="white" />
+      {/* Left pan (claims side — heavier) */}
+      <path d="M96 230 Q128 296 160 230" stroke="white" strokeWidth="12" fill="rgba(255,255,255,0.1)" strokeLinecap="round" />
+      <circle cx="128" cy="270" r="10" fill="rgba(255,255,255,0.4)" />
+      {/* Right pan (verified — lighter, truth rises) with checkmark */}
+      <path d="M352 180 Q384 246 416 180" stroke="white" strokeWidth="12" fill="rgba(255,255,255,0.1)" strokeLinecap="round" />
+      <polyline points="360,200 376,218 404,186" stroke="white" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

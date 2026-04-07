@@ -225,6 +225,7 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
 <nav class="fixed top-[48px] left-0 right-0 z-50 h-16 flex items-center transition-all duration-400" id="nav">
   <div class="w-full max-w-[1100px] mx-auto px-5 md:px-10 flex items-center justify-between gap-4">
     <a href="#hero" class="flex items-center gap-2 hover:opacity-70 transition-opacity">
+      <svg width="28" height="28" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="navLogo" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#008c50"/><stop offset="100%" stop-color="#00e88a"/></linearGradient></defs><rect width="80" height="80" rx="18" fill="url(#navLogo)"/><line x1="20" y1="36" x2="60" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="40" y1="32" x2="40" y2="60" stroke="white" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="60" x2="50" y2="60" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polygon points="37,30 43,30 40,26" fill="white"/><path d="M14 36 Q17 46 20 36" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)" stroke-linecap="round"/><circle cx="17" cy="42" r="1.5" fill="rgba(255,255,255,0.4)"/><path d="M54 28 Q57 38 60 28" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)" stroke-linecap="round"/><polyline points="55,31 57,33.5 61,28.5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span style="font-size:1.15rem;font-weight:900;letter-spacing:-.04em;color:#008c50;">KLAR</span>
     </a>
     <div class="hidden md:flex items-center gap-3">
@@ -764,7 +765,10 @@ body{font-family:var(--font-sans);background:var(--color-bg);color:var(--color-t
   <div class="max-w-[1100px] mx-auto px-5 md:px-10">
     <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-10">
       <div>
-        <div class="text-xl font-black mb-2" style="color:#008c50;">KLAR</div>
+        <div class="flex items-center gap-2 mb-2">
+          <svg width="24" height="24" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ftLogo" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#008c50"/><stop offset="100%" stop-color="#00e88a"/></linearGradient></defs><rect width="80" height="80" rx="18" fill="url(#ftLogo)"/><line x1="20" y1="36" x2="60" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="40" y1="32" x2="40" y2="60" stroke="white" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="60" x2="50" y2="60" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polygon points="37,30 43,30 40,26" fill="white"/><path d="M14 36 Q17 46 20 36" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)" stroke-linecap="round"/><circle cx="17" cy="42" r="1.5" fill="rgba(255,255,255,0.4)"/><path d="M54 28 Q57 38 60 28" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.1)" stroke-linecap="round"/><polyline points="55,31 57,33.5 61,28.5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="text-xl font-black" style="color:#008c50;">KLAR</span>
+        </div>
         <p class="text-sm" style="color:#9a9aaa;">Knowledge Legitimacy Audit &amp; Review</p>
       </div>
       <div class="flex flex-wrap gap-8 text-sm" style="color:#9a9aaa;">
