@@ -100,6 +100,12 @@ export async function* runVerificationPipeline(
     return;
   }
 
+  // Cap claims to avoid Vercel 60s timeout — process most important first
+  const MAX_CLAIMS = 8;
+  if (extractedClaims.length > MAX_CLAIMS) {
+    extractedClaims = extractedClaims.slice(0, MAX_CLAIMS);
+  }
+
   yield { type: "claims_extracted", claims: extractedClaims };
 
   // Stage 1.5: NLP Claim Quality Analysis
@@ -118,68 +124,79 @@ export async function* runVerificationPipeline(
   let unverifiable = 0;
   let contradicted = 0;
 
-  for (let i = 0; i < extractedClaims.length; i++) {
-    const claim = extractedClaims[i];
+  // Sanitize all claims up front
+  const sanitizedClaims = extractedClaims.map((claim) => ({
+    ...claim,
+    claim_text: sanitizeClaim(claim.claim_text),
+  }));
 
-    // Sanitize each claim individually (prompt injection isolation)
-    const sanitizedClaim = {
-      ...claim,
-      claim_text: sanitizeClaim(claim.claim_text),
+  // Process claims in parallel batches of 3 for speed (fits within Vercel 60s limit)
+  const BATCH_SIZE = 3;
+  for (let batchStart = 0; batchStart < sanitizedClaims.length; batchStart += BATCH_SIZE) {
+    const batch = sanitizedClaims.slice(batchStart, batchStart + BATCH_SIZE);
+    const batchIndices = batch.map((_, j) => batchStart + j);
+
+    yield {
+      type: "status",
+      stage: "judging",
+      message: `Evaluating claims ${batchStart + 1}–${Math.min(batchStart + BATCH_SIZE, sanitizedClaims.length)} of ${sanitizedClaims.length}…`,
     };
 
-    // Find evidence (Wikipedia + Grounded Google Search + Serper fallback)
-    const sources = await findEvidence(sanitizedClaim, language);
+    // Parallel: find evidence + judge for all claims in this batch
+    const batchResults = await Promise.all(
+      batch.map(async (sanitizedClaim) => {
+        const sources = await findEvidence(sanitizedClaim, language);
+        const judgment = await judgeClaim(sanitizedClaim, sources);
+        const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
+        const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);
+        return { judgment, crossRef, hallucinationCheck, sources };
+      })
+    );
 
-    // Judge the claim
-    yield { type: "status", stage: "judging", message: `Evaluating claim ${i + 1} of ${extractedClaims.length}…` };
+    // Yield results sequentially for proper SSE ordering
+    for (let j = 0; j < batchResults.length; j++) {
+      const idx = batchIndices[j];
+      const { judgment, crossRef, hallucinationCheck } = batchResults[j];
 
-    const judgment = await judgeClaim(sanitizedClaim, sources);
+      yield { type: "cross_reference", index: idx, result: crossRef };
+      yield { type: "hallucination_check", index: idx, analysis: hallucinationCheck };
 
-    // Stage 3.5: Cross-reference validation
-    const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
-    yield { type: "cross_reference", index: i, result: crossRef };
+      // Adjust confidence based on cross-reference and hallucination signals
+      let adjustedConfidence = judgment.confidence;
 
-    // Stage 3.6: Hallucination detection
-    const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);
-    yield { type: "hallucination_check", index: i, analysis: hallucinationCheck };
+      if (crossRef.sourceConsensus === "strong") {
+        adjustedConfidence = Math.min(1, adjustedConfidence + 0.1);
+      } else if (crossRef.sourceConsensus === "none") {
+        adjustedConfidence = Math.max(0, adjustedConfidence - 0.1);
+      }
 
-    // Adjust confidence based on cross-reference and hallucination signals
-    let adjustedConfidence = judgment.confidence;
+      if (hallucinationCheck.riskLevel === "critical") {
+        adjustedConfidence = Math.max(0, adjustedConfidence - 0.2);
+      } else if (hallucinationCheck.riskLevel === "high") {
+        adjustedConfidence = Math.max(0, adjustedConfidence - 0.1);
+      }
 
-    // Boost confidence for strong cross-reference consensus
-    if (crossRef.sourceConsensus === "strong") {
-      adjustedConfidence = Math.min(1, adjustedConfidence + 0.1);
-    } else if (crossRef.sourceConsensus === "none") {
-      adjustedConfidence = Math.max(0, adjustedConfidence - 0.1);
+      const enhancedJudgment: JudgmentResult = {
+        ...judgment,
+        confidence: Math.round(adjustedConfidence * 100) / 100,
+      };
+
+      judgments.push(enhancedJudgment);
+
+      switch (enhancedJudgment.verdict) {
+        case "supported":
+          supported++;
+          break;
+        case "unverifiable":
+          unverifiable++;
+          break;
+        case "contradicted":
+          contradicted++;
+          break;
+      }
+
+      yield { type: "claim_judged", index: idx, result: enhancedJudgment };
     }
-
-    // Reduce confidence for high hallucination risk
-    if (hallucinationCheck.riskLevel === "critical") {
-      adjustedConfidence = Math.max(0, adjustedConfidence - 0.2);
-    } else if (hallucinationCheck.riskLevel === "high") {
-      adjustedConfidence = Math.max(0, adjustedConfidence - 0.1);
-    }
-
-    const enhancedJudgment: JudgmentResult = {
-      ...judgment,
-      confidence: Math.round(adjustedConfidence * 100) / 100,
-    };
-
-    judgments.push(enhancedJudgment);
-
-    switch (enhancedJudgment.verdict) {
-      case "supported":
-        supported++;
-        break;
-      case "unverifiable":
-        unverifiable++;
-        break;
-      case "contradicted":
-        contradicted++;
-        break;
-    }
-
-    yield { type: "claim_judged", index: i, result: enhancedJudgment };
   }
 
   // ── Post fact-check analyses (use collected sources) ──

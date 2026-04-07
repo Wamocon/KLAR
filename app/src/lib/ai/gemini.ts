@@ -26,7 +26,7 @@ const groundedModel = genAI.getGenerativeModel({
   tools: [{ googleSearch: {} } as never],
 });
 
-const AI_TIMEOUT_MS = 30000;
+const AI_TIMEOUT_MS = 20000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
