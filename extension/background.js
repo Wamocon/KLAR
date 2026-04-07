@@ -4,7 +4,7 @@
  * Handles context menus, API communication, and extension state.
  */
 
-const API_BASE = "https://klar-app.vercel.app";
+importScripts("constants.js");
 
 // Context menu for right-click → "Verify with KLAR"
 chrome.runtime.onInstalled.addListener(() => {
@@ -68,21 +68,21 @@ async function verifyText(text, tabId) {
     return { error: "No API key" };
   }
 
-  if (text.length < 50) {
-    notifyTab(tabId, { type: "KLAR_ERROR", error: "Text too short. Select at least 50 characters." });
+  if (text.length < KLAR.MIN_TEXT_LENGTH) {
+    notifyTab(tabId, { type: "KLAR_ERROR", error: `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` });
     return { error: "Text too short" };
   }
 
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
   try {
-    const response = await fetch(`${API_BASE}/api/extension/scan`, {
+    const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ text: text.slice(0, 5000), analyses: ["fact-check"] }),
+      body: JSON.stringify({ text: text.slice(0, KLAR.MAX_TEXT_LENGTH), analyses: ["fact-check"] }),
     });
 
     if (!response.ok) {
@@ -110,7 +110,7 @@ async function verifyUrl(url, tabId) {
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
   try {
-    const response = await fetch(`${API_BASE}/api/extension/scan`, {
+    const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -140,4 +140,8 @@ function notifyTab(tabId, message) {
       // Tab may not have content script injected
     });
   }
+  // Also broadcast to side panel (it listens via chrome.runtime.onMessage)
+  chrome.runtime.sendMessage(message).catch(() => {
+    // Side panel may not be open
+  });
 }

@@ -49,7 +49,7 @@ function showResult(result) {
   panel.querySelector(".klar-loading").style.display = "none";
   panel.querySelector(".klar-error").style.display = "none";
 
-  const score = Math.round((result.trust_score || 0) * 100);
+  const score = Math.round(result.trust_score || 0);
   const scoreColor = score >= 80 ? "#22c55e" : score >= 50 ? "#eab308" : "#ef4444";
 
   const resultDiv = panel.querySelector(".klar-result");
@@ -66,13 +66,13 @@ function showResult(result) {
     </div>
     ${result.claims && result.claims.length > 0 ? `
       <div class="klar-claims">
-        ${result.claims.slice(0, 5).map((c) => `
+        ${result.claims.slice(0, KLAR.MAX_VISIBLE_CLAIMS).map((c) => `
           <div class="klar-claim klar-claim-${c.verdict}">
             <span class="klar-claim-verdict">${c.verdict}</span>
             <span class="klar-claim-text">${escapeHtml(c.text)}</span>
           </div>
         `).join("")}
-        ${result.claims.length > 5 ? `<p class="klar-more">+${result.claims.length - 5} more claims</p>` : ""}
+        ${result.claims.length > KLAR.MAX_VISIBLE_CLAIMS ? `<p class="klar-more">+${result.claims.length - KLAR.MAX_VISIBLE_CLAIMS} more claims</p>` : ""}
       </div>
     ` : ""}
     <div class="klar-time">${result.processing_time_ms ? `${(result.processing_time_ms / 1000).toFixed(1)}s` : ""}</div>
@@ -85,9 +85,37 @@ function showError(error) {
   panel.querySelector(".klar-loading").style.display = "none";
   panel.querySelector(".klar-result").style.display = "none";
 
+  const errorInfo = categorizeError(error);
   const errorDiv = panel.querySelector(".klar-error");
   errorDiv.style.display = "block";
-  errorDiv.textContent = error;
+  errorDiv.innerHTML = `
+    <div class="klar-error-icon">${errorInfo.icon}</div>
+    <div class="klar-error-title">${escapeHtml(errorInfo.title)}</div>
+    <div class="klar-error-message">${escapeHtml(errorInfo.message)}</div>
+  `;
+}
+
+function categorizeError(error) {
+  const msg = (error || "").toLowerCase();
+  if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
+    return { icon: "📡", title: "No internet connection", message: "Check your network and try again." };
+  }
+  if (msg.includes("timeout") || msg.includes("timed out")) {
+    return { icon: "⏱️", title: "Request timed out", message: "The server took too long. Try with shorter text." };
+  }
+  if (msg.includes("rate limit")) {
+    return { icon: "🚦", title: "Rate limit reached", message: "Too many requests. Wait a moment and retry." };
+  }
+  if (msg.includes("api key")) {
+    return { icon: "🔑", title: "API key issue", message: "Open the KLAR popup to configure your key." };
+  }
+  if (msg.includes("text too short")) {
+    return { icon: "📝", title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
+  }
+  if (msg.includes("http 5") || msg.includes("internal server")) {
+    return { icon: "🔧", title: "Server error", message: "KLAR is having issues. Try again shortly." };
+  }
+  return { icon: "⚠️", title: "Verification failed", message: error || "An unexpected error occurred." };
 }
 
 function escapeHtml(str) {

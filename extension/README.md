@@ -4,7 +4,7 @@ Manifest V3 browser extension for verifying AI-generated content directly on any
 
 ## Setup
 
-1. Get an API key from [KLAR Settings](https://klar.tools/en/settings)
+1. Get an API key from [KLAR Settings](https://klar-app.vercel.app/en/settings)
 2. Open `chrome://extensions`
 3. Enable "Developer mode"
 4. Click "Load unpacked" and select this `extension/` directory

@@ -68,14 +68,14 @@ export async function POST(request: NextRequest) {
   // Check monthly quota BEFORE processing — each batch item counts as 1 verification
   const { data: userProfile } = await supabaseAdmin
     .from("profiles")
-    .select("monthly_verifications, plan")
+    .select("monthly_verification_count, plan")
     .eq("id", apiKeyAuth.userId)
     .single();
 
   if (userProfile) {
     const planLimits: Record<string, number> = { free: 10, pro: 500, team: 2000, enterprise: 10000 };
     const limit = planLimits[userProfile.plan] ?? 10;
-    const remaining = limit - (userProfile.monthly_verifications ?? 0);
+    const remaining = limit - (userProfile.monthly_verification_count ?? 0);
     if (parsed.data.items.length > remaining) {
       return NextResponse.json(
         { error: `Batch of ${parsed.data.items.length} items exceeds your remaining monthly quota of ${remaining}.` },

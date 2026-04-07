@@ -43,8 +43,8 @@ verifyBtn.addEventListener("click", async () => {
     func: () => window.getSelection()?.toString() || "",
   }, (results) => {
     const selectedText = results?.[0]?.result;
-    if (!selectedText || selectedText.length < 50) {
-      statusEl.textContent = "Select at least 50 characters on the page first";
+    if (!selectedText || selectedText.length < KLAR.MIN_TEXT_LENGTH) {
+      statusEl.textContent = `Select at least ${KLAR.MIN_TEXT_LENGTH} characters on the page first`;
       statusEl.className = "status status-error";
       return;
     }
