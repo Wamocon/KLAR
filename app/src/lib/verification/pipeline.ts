@@ -101,7 +101,7 @@ export async function* runVerificationPipeline(
   }
 
   // Cap claims to avoid Vercel 60s timeout — process most important first
-  const MAX_CLAIMS = 8;
+  const MAX_CLAIMS = 5;
   if (extractedClaims.length > MAX_CLAIMS) {
     extractedClaims = extractedClaims.slice(0, MAX_CLAIMS);
   }
@@ -130,8 +130,8 @@ export async function* runVerificationPipeline(
     claim_text: sanitizeClaim(claim.claim_text),
   }));
 
-  // Process claims in parallel batches of 3 for speed (fits within Vercel 60s limit)
-  const BATCH_SIZE = 3;
+  // Process claims in parallel batches for speed (fits within Vercel 60s limit)
+  const BATCH_SIZE = 5;
   for (let batchStart = 0; batchStart < sanitizedClaims.length; batchStart += BATCH_SIZE) {
     const batch = sanitizedClaims.slice(batchStart, batchStart + BATCH_SIZE);
     const batchIndices = batch.map((_, j) => batchStart + j);

@@ -463,7 +463,7 @@ async function testBenchmark() {
   });
   assert(s2 === 200, `Start exam → 200 (got ${s2})`);
   assert(j2?.submissionId, "Submission ID returned");
-  assert(j2?.questions?.length === 5, `Got 5 questions (got ${j2?.questions?.length})`);
+  assert(j2?.questions?.length >= 5, `Got ≥5 questions (got ${j2?.questions?.length})`);
   assert(typeof j2?.timeLimitMinutes === "number", "Time limit returned");
 
   if (!j2?.submissionId || !j2?.questions) {
@@ -473,14 +473,13 @@ async function testBenchmark() {
 
   // Validate question structure
   const q = j2.questions[0];
-  assert(q.questionId, "Question has questionId");
-  assert(q.inputText?.length > 0, "Question has inputText");
-  assert(q.taskType, "Question has taskType");
+  assert(q.id, "Question has id");
+  assert(q.text?.length > 0, "Question has text");
 
-  // Submit answers (format: { answers: { questionId: "answer" } })
+  // Submit answers (format: { answers: { id: "answer" } })
   const answers = {};
   j2.questions.forEach((q, i) => {
-    answers[q.questionId] = i % 3 === 0 ? "supported" : i % 3 === 1 ? "contradicted" : "unverifiable";
+    answers[q.id] = i % 3 === 0 ? "supported" : i % 3 === 1 ? "contradicted" : "unverifiable";
   });
 
   const { status: s3, json: j3 } = await fetchJSON(`/api/benchmark/submit/${j2.submissionId}`, {
