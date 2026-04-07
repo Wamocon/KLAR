@@ -6,8 +6,14 @@ import { updateSession } from "./lib/supabase/middleware";
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  // Redirect /en/lp or /de/lp to /lp (landing page is locale-independent)
   const { pathname } = request.nextUrl;
+
+  // Skip middleware entirely for the landing page
+  if (pathname === "/lp") {
+    return NextResponse.next();
+  }
+
+  // Redirect /en/lp or /de/lp to /lp (landing page is locale-independent)
   if (/^\/(en|de)\/lp\/?$/.test(pathname)) {
     return NextResponse.redirect(new URL("/lp", request.url));
   }
