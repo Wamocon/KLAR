@@ -8,6 +8,8 @@ import { dispatchWebhook } from "@/lib/webhooks/dispatch";
 import { z } from "zod/v4";
 import type { AnalysisMode } from "@/types";
 
+export const maxDuration = 60;
+
 const batchSchema = z.object({
   items: z.array(z.object({
     text: z.string().min(50).max(10000),
@@ -99,32 +101,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create batch job" }, { status: 500 });
   }
 
-  // Respond immediately with job ID — processing happens async
   const jobId = batchJob.id;
 
-  // Process in background (non-blocking)
-  processBatchItems(
-    jobId,
-    parsed.data.items,
-    apiKeyAuth.userId,
-    apiKeyAuth.orgId,
-    apiKeyAuth.keyId
-  ).catch(async () => {
-    // Mark job as failed on unhandled error
-    const admin = await createServiceClient();
-    admin
+  // Process synchronously — Vercel terminates after response, so async background won't work
+  try {
+    await processBatchItems(
+      jobId,
+      parsed.data.items,
+      apiKeyAuth.userId,
+      apiKeyAuth.orgId,
+      apiKeyAuth.keyId
+    );
+  } catch {
+    await supabaseAdmin
       .from("batch_jobs")
       .update({ status: "failed" })
-      .eq("id", jobId)
-      .then();
-  });
+      .eq("id", jobId);
+  }
+
+  // Fetch the final job state
+  const { data: finalJob } = await supabaseAdmin
+    .from("batch_jobs")
+    .select("status, completed_items, failed_items, completed_at")
+    .eq("id", jobId)
+    .single();
 
   return NextResponse.json({
     job_id: jobId,
     total_items: parsed.data.items.length,
-    status: "processing",
+    completed_items: finalJob?.completed_items ?? 0,
+    failed_items: finalJob?.failed_items ?? 0,
+    status: finalJob?.status ?? "processing",
     poll_url: `/api/batch?id=${jobId}`,
-  }, { status: 202 });
+  }, { status: 200 });
 }
 
 // GET: Poll batch job status
