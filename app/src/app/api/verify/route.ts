@@ -200,8 +200,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  // Use admin client for API key auth (no auth session = RLS fails on writes)
-  const dbClient = apiKeyAuth ? await createServiceClient() : supabase;
   const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
   // ── Layer 0: Abuse Detection — block known abusive IPs ──
@@ -247,6 +245,9 @@ export async function POST(request: NextRequest) {
   } = apiKeyAuth
     ? { data: { user: { id: apiKeyAuth.userId } as { id: string } } }
     : await supabase.auth.getUser();
+
+  // Use admin client for API key auth (no auth session = RLS fails on writes)
+  const dbClient = apiKeyAuth ? await createServiceClient() : supabase;
 
   let plan: UserPlan | "guest" = apiKeyAuth ? apiKeyAuth.plan : "guest";
   let monthlyUsed = 0;
