@@ -1,11 +1,17 @@
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./lib/supabase/middleware";
 
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
+  // Redirect /en/lp or /de/lp to /lp (landing page is locale-independent)
+  const { pathname } = request.nextUrl;
+  if (/^\/(en|de)\/lp\/?$/.test(pathname)) {
+    return NextResponse.redirect(new URL("/lp", request.url));
+  }
+
   // Update Supabase session first
   const supabaseResponse = await updateSession(request);
 
