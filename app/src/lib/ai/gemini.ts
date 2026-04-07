@@ -15,16 +15,6 @@ const model = genAI.getGenerativeModel({
   },
 });
 
-// Pro model — Gemini 2.5 Pro for complex analysis (comprehensive mode)
-const proModel = genAI.getGenerativeModel({
-  model: "gemini-2.5-pro-preview-06-05",
-  generationConfig: {
-    temperature: 0.1,
-    topP: 0.95,
-    maxOutputTokens: 8192,
-  },
-});
-
 // Grounded model — uses Google Search for real-time web grounding
 const groundedModel = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
@@ -36,8 +26,11 @@ const groundedModel = genAI.getGenerativeModel({
   tools: [{ googleSearch: {} } as never],
 });
 
-// Timeout: 55s to stay within Vercel's 60s function limit
-const AI_TIMEOUT_MS = 55000;
+// Per-call timeouts — tuned to fit multiple calls within Vercel's 60s limit
+// extractClaims gets more time (large text), judgeClaim gets less (small prompt)
+const EXTRACT_TIMEOUT_MS = 30000; // 30s for claim extraction
+const JUDGE_TIMEOUT_MS = 20000;   // 20s per judgment call
+const GROUNDED_TIMEOUT_MS = 15000; // 15s for grounded search
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -49,6 +42,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function extractClaims(text: string): Promise<ExtractedClaim[]> {
+  // Truncate to 15K chars for extraction — Gemini processes this much in <20s
+  // The full text is still available for other analyses (bias, AI detection, etc.)
+  const truncatedText = text.length > 15000 ? text.slice(0, 15000) : text;
+
   const prompt = `You are a factual claim extraction system. Analyze the following text and extract every distinct factual claim that can be verified against external sources.
 
 Rules:
@@ -61,7 +58,7 @@ Rules:
 
 Text to analyze:
 """
-${text}
+${truncatedText}
 """
 
 Respond with a JSON array of objects, each with:
@@ -93,7 +90,7 @@ Respond with a JSON array of objects, each with:
         },
       },
     },
-  }), AI_TIMEOUT_MS);
+  }), EXTRACT_TIMEOUT_MS);
 
   const response = result.response;
   const jsonText = response.text();
@@ -157,7 +154,7 @@ Respond with a JSON object containing:
         required: ["verdict", "confidence", "reasoning"],
       },
     },
-  }), AI_TIMEOUT_MS);
+  }), JUDGE_TIMEOUT_MS);
 
   const response = result.response;
   const jsonText = response.text();
@@ -198,7 +195,7 @@ export async function groundedFactCheck(
 
     const result = await withTimeout(
       groundedModel.generateContent(prompt),
-      AI_TIMEOUT_MS
+      GROUNDED_TIMEOUT_MS
     );
 
     const response = result.response;

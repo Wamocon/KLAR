@@ -29,6 +29,10 @@ export async function* runVerificationPipeline(
   analyses: AnalysisMode[] = ["fact-check"]
 ): AsyncGenerator<PipelineEvent> {
   const startTime = Date.now();
+  // Hard deadline: leave 5s buffer before Vercel's 60s limit for DB writes + response
+  const PIPELINE_DEADLINE_MS = 55000;
+  const isOverDeadline = () => (Date.now() - startTime) > PIPELINE_DEADLINE_MS;
+
   const isComprehensive = analyses.includes("comprehensive");
   const runFactCheck = isComprehensive || analyses.includes("fact-check");
   const runBias = isComprehensive || analyses.includes("bias-check");
@@ -102,7 +106,7 @@ export async function* runVerificationPipeline(
   }
 
   // Cap claims to keep within Vercel 60s timeout — process most important first
-  const MAX_CLAIMS = 10;
+  const MAX_CLAIMS = 5;
   if (extractedClaims.length > MAX_CLAIMS) {
     extractedClaims = extractedClaims.slice(0, MAX_CLAIMS);
   }
@@ -144,13 +148,28 @@ export async function* runVerificationPipeline(
     };
 
     // Parallel: find evidence + judge for all claims in this batch
+    // Each claim is wrapped in try/catch for resilience — a single failure won't crash the pipeline
     const batchResults = await Promise.all(
       batch.map(async (sanitizedClaim) => {
-        const sources = await findEvidence(sanitizedClaim, language);
-        const judgment = await judgeClaim(sanitizedClaim, sources);
-        const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
-        const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);
-        return { judgment, crossRef, hallucinationCheck, sources };
+        try {
+          const sources = await findEvidence(sanitizedClaim, language);
+          const judgment = await judgeClaim(sanitizedClaim, sources);
+          const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
+          const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);
+          return { judgment, crossRef, hallucinationCheck, sources, failed: false };
+        } catch {
+          // Graceful degradation: return "unverifiable" for failed claims
+          const fallbackJudgment: JudgmentResult = {
+            claim: sanitizedClaim,
+            verdict: "unverifiable",
+            confidence: 0,
+            reasoning: "Could not verify this claim within the time limit.",
+            sources: [],
+          };
+          const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, []);
+          const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, []);
+          return { judgment: fallbackJudgment, crossRef, hallucinationCheck, sources: [], failed: true };
+        }
       })
     );
 
@@ -198,19 +217,25 @@ export async function* runVerificationPipeline(
 
       yield { type: "claim_judged", index: idx, result: enhancedJudgment };
     }
+
+    // Check deadline before processing next batch
+    if (isOverDeadline()) {
+      yield { type: "status", stage: "deadline", message: `Processed ${judgments.length} of ${sanitizedClaims.length} claims before time limit.` };
+      break;
+    }
   }
 
-  // ── Post fact-check analyses (use collected sources) ──
+  // ── Post fact-check analyses (use collected sources, skip if over deadline) ──
 
   const allSources = judgments.flatMap((j) => j.sources);
 
-  if (runBias) {
+  if (runBias && !isOverDeadline()) {
     yield { type: "status", stage: "bias-check", message: "Detecting bias patterns…" };
     const biasResult = detectBias(text, allSources);
     yield { type: "bias_analysis", result: biasResult };
   }
 
-  if (runPlagiarism) {
+  if (runPlagiarism && !isOverDeadline()) {
     yield { type: "status", stage: "plagiarism", message: "Checking for plagiarism…" };
     const plagiarismResult = detectPlagiarism(text, allSources);
     yield { type: "plagiarism_check", result: plagiarismResult };

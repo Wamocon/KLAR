@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = scanSchema.safeParse(body);
   if (!parsed.success) {
-    return corsResponse({ error: "Provide text (50-5000 chars) or a valid URL" }, 400);
+    return corsResponse({ error: "Provide text (50+ chars) or a valid URL" }, 400);
   }
 
   let text: string;
