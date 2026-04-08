@@ -21,7 +21,7 @@ function createPanel() {
     <div class="klar-panel-body">
       <div class="klar-loading" style="display:none;">
         <div class="klar-spinner"></div>
-        <span>${escapeHtml(verifyingText)}</span>
+        <span class="klar-loading-status">${escapeHtml(verifyingText)}</span>
       </div>
       <div class="klar-result" style="display:none;"></div>
       <div class="klar-error" style="display:none;"></div>
@@ -36,12 +36,31 @@ function createPanel() {
   return klarPanel;
 }
 
-function showLoading() {
+function showLoading(statusMessage) {
   const panel = createPanel();
   panel.style.display = "block";
-  panel.querySelector(".klar-loading").style.display = "flex";
+  const loadingDiv = panel.querySelector(".klar-loading");
+  loadingDiv.style.display = "flex";
   panel.querySelector(".klar-result").style.display = "none";
   panel.querySelector(".klar-error").style.display = "none";
+  // Update status text if provided
+  const statusEl = loadingDiv.querySelector(".klar-loading-status");
+  if (statusEl) {
+    statusEl.textContent = statusMessage || "Analyzing…";
+  }
+}
+
+function showProgress(data) {
+  const panel = createPanel();
+  panel.style.display = "block";
+  const loadingDiv = panel.querySelector(".klar-loading");
+  loadingDiv.style.display = "flex";
+  panel.querySelector(".klar-result").style.display = "none";
+  panel.querySelector(".klar-error").style.display = "none";
+  const statusEl = loadingDiv.querySelector(".klar-loading-status");
+  if (statusEl) {
+    statusEl.textContent = data.message || `Verifying ${data.completed || 0} of ${data.total || "?"} claims…`;
+  }
 }
 
 function showResult(result) {
@@ -293,7 +312,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return;
   }
   if (message.type === "KLAR_LOADING") {
-    showLoading();
+    showLoading(message.message);
+  } else if (message.type === "KLAR_PROGRESS") {
+    showProgress(message);
   } else if (message.type === "KLAR_RESULT") {
     showResult(message.result);
   } else if (message.type === "KLAR_ERROR") {

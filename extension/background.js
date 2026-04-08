@@ -222,9 +222,18 @@ async function openSidePanel(tabId) {
   }
 }
 
-// ─── Core Verification Functions ───
+// ─── Core Verification: Two-phase architecture ───
+// Phase 1: Extract claims (single fast request)
+// Phase 2: Judge each claim individually (parallel requests, 2 at a time)
+// This bypasses Vercel's 60s limit — each request is well under the limit.
 
-async function verifyText(text, tabId, analyses) {
+const JUDGE_CONCURRENCY = 2; // Max parallel judge requests
+
+/**
+ * Run the two-phase verification pipeline.
+ * Works for both text and URL modes.
+ */
+async function runTwoPhaseVerification(tabId, extractBody, analyses) {
   const apiKey = await getApiKey();
   if (!apiKey) {
     const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured. Open the extension popup to set up.";
@@ -232,45 +241,159 @@ async function verifyText(text, tabId, analyses) {
     return { error: "No API key" };
   }
 
-  if (text.length < KLAR.MIN_TEXT_LENGTH) {
-    const msg = chrome.i18n.getMessage("textTooShortError", [String(KLAR.MIN_TEXT_LENGTH)]) || `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.`;
-    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "text_too_short" });
-    return { error: "Text too short" };
-  }
-
-  // Open side panel first so user immediately sees loading state
   await openSidePanel(tabId);
-  // Small delay to let panel initialize before sending loading state
   await delay(300);
-
   await ensureContentScript(tabId);
-  notifyTab(tabId, { type: "KLAR_LOADING" });
+  notifyTab(tabId, { type: "KLAR_LOADING", stage: "extracting", message: "Extracting factual claims…" });
 
   startKeepAlive();
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`,
+  };
+
   try {
-    const response = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/scan`, {
+    // ── Phase 1: Extract claims ──
+    const extractRes = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/extract`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        text: text.slice(0, KLAR.MAX_TEXT_LENGTH),
-        analyses: analyses || ["fact-check"],
-      }),
+      headers,
+      body: JSON.stringify({ ...extractBody, analyses: analyses || ["fact-check"] }),
     });
 
-    const data = await response.json().catch(() => ({}));
+    const extractData = await extractRes.json().catch(() => ({}));
 
-    if (!response.ok) {
-      const errorCode = data.error_code || "server_error";
-      const errorMsg = data.error || `Server returned ${response.status}`;
-      notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: response.status });
+    if (!extractRes.ok) {
+      const errorCode = extractData.error_code || "server_error";
+      const errorMsg = extractData.error || `Server returned ${extractRes.status}`;
+      notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: extractRes.status });
       return { error: errorMsg };
     }
 
-    notifyTab(tabId, { type: "KLAR_RESULT", result: data });
-    return data;
+    const claims = extractData.claims || [];
+
+    if (claims.length === 0) {
+      // No claims, but maybe we have analysis-only results
+      if (extractData.ai_detection || extractData.bias || extractData.plagiarism || extractData.framework) {
+        const analysisResult = {
+          trust_score: 0,
+          total_claims: 0,
+          supported: 0,
+          contradicted: 0,
+          unverifiable: 0,
+          claims: [],
+          source_url: extractData.source_url,
+          source_title: extractData.source_title,
+          language: extractData.language,
+          ...(extractData.ai_detection && { ai_detection: extractData.ai_detection }),
+          ...(extractData.bias && { bias: extractData.bias }),
+          ...(extractData.plagiarism && { plagiarism: extractData.plagiarism }),
+          ...(extractData.framework && { framework: extractData.framework }),
+        };
+        notifyTab(tabId, { type: "KLAR_RESULT", result: analysisResult });
+        return analysisResult;
+      }
+      notifyTab(tabId, { type: "KLAR_ERROR", error: "No factual claims found in this text.", errorCode: "no_claims" });
+      return { error: "No claims" };
+    }
+
+    // Notify: claims found, starting verification
+    notifyTab(tabId, {
+      type: "KLAR_PROGRESS",
+      stage: "judging",
+      message: `Found ${claims.length} claims — verifying…`,
+      total: claims.length,
+      completed: 0,
+    });
+
+    // ── Phase 2: Judge each claim (parallel, limited concurrency) ──
+    const language = extractData.language || "en";
+    const judgedClaims = [];
+    let supported = 0, contradicted = 0, unverifiable = 0;
+
+    for (let i = 0; i < claims.length; i += JUDGE_CONCURRENCY) {
+      const batch = claims.slice(i, i + JUDGE_CONCURRENCY);
+
+      const batchResults = await Promise.all(
+        batch.map(async (claim) => {
+          try {
+            const res = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/judge`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ claim, language }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              // Claim failed — mark as unverifiable rather than crashing
+              return {
+                text: claim.claim_text,
+                verdict: "unverifiable",
+                confidence: 0,
+                reasoning: data.error || "Could not verify this claim",
+                sources: [],
+              };
+            }
+            return {
+              text: data.claim_text,
+              verdict: data.verdict,
+              confidence: data.confidence,
+              reasoning: data.reasoning,
+              recommendation: data.recommendation,
+              sources: data.sources || [],
+              position_start: data.position_start,
+              position_end: data.position_end,
+            };
+          } catch {
+            return {
+              text: claim.claim_text,
+              verdict: "unverifiable",
+              confidence: 0,
+              reasoning: "Request failed — could not verify this claim",
+              sources: [],
+            };
+          }
+        })
+      );
+
+      for (const r of batchResults) {
+        judgedClaims.push(r);
+        if (r.verdict === "supported") supported++;
+        else if (r.verdict === "contradicted") contradicted++;
+        else unverifiable++;
+      }
+
+      // Progressive update
+      notifyTab(tabId, {
+        type: "KLAR_PROGRESS",
+        stage: "judging",
+        message: `Verified ${judgedClaims.length} of ${claims.length} claims…`,
+        total: claims.length,
+        completed: judgedClaims.length,
+        partialClaims: judgedClaims,
+      });
+    }
+
+    // ── Final result ──
+    const totalClaims = judgedClaims.length;
+    const trustScore = totalClaims > 0 ? Math.round((supported / totalClaims) * 100) : 0;
+
+    const finalResult = {
+      trust_score: trustScore,
+      total_claims: totalClaims,
+      supported,
+      contradicted,
+      unverifiable,
+      claims: judgedClaims,
+      source_url: extractData.source_url,
+      source_title: extractData.source_title,
+      language,
+      ...(extractData.ai_detection && { ai_detection: extractData.ai_detection }),
+      ...(extractData.bias && { bias: extractData.bias }),
+      ...(extractData.plagiarism && { plagiarism: extractData.plagiarism }),
+      ...(extractData.framework && { framework: extractData.framework }),
+    };
+
+    notifyTab(tabId, { type: "KLAR_RESULT", result: finalResult });
+    return finalResult;
   } catch (err) {
     const error = err instanceof Error ? err.message : "Verification failed";
     const isTimeout = error.includes("timed out") || error.includes("timeout");
@@ -286,54 +409,17 @@ async function verifyText(text, tabId, analyses) {
   }
 }
 
+async function verifyText(text, tabId, analyses) {
+  if (text.length < KLAR.MIN_TEXT_LENGTH) {
+    const msg = `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.`;
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "text_too_short" });
+    return { error: "Text too short" };
+  }
+  return runTwoPhaseVerification(tabId, { text: text.slice(0, KLAR.MAX_TEXT_LENGTH) }, analyses);
+}
+
 async function verifyUrl(url, tabId, analyses) {
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured.";
-    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "no_api_key" });
-    return { error: "No API key" };
-  }
-
-  await openSidePanel(tabId);
-  await delay(300);
-  await ensureContentScript(tabId);
-  notifyTab(tabId, { type: "KLAR_LOADING" });
-
-  startKeepAlive();
-  try {
-    const response = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/scan`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({ url, analyses: analyses || ["fact-check"] }),
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const errorCode = data.error_code || "server_error";
-      const errorMsg = data.error || `Server returned ${response.status}`;
-      notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: response.status });
-      return { error: errorMsg };
-    }
-
-    notifyTab(tabId, { type: "KLAR_RESULT", result: data });
-    return data;
-  } catch (err) {
-    const error = err instanceof Error ? err.message : "Verification failed";
-    const isTimeout = error.includes("timed out") || error.includes("timeout");
-    const isNetwork = error.includes("Failed to fetch") || error.includes("NetworkError");
-    notifyTab(tabId, {
-      type: "KLAR_ERROR",
-      error,
-      errorCode: isTimeout ? "timeout" : isNetwork ? "network" : "unknown",
-    });
-    return { error };
-  } finally {
-    stopKeepAlive();
-  }
+  return runTwoPhaseVerification(tabId, { url }, analyses);
 }
 
 // ─── Persistent state store — sidepanel can request this even if it opens late ───

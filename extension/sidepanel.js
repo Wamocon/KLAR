@@ -35,7 +35,9 @@ chrome.storage.local.get(["klarHistory"], (data) => {
 // ─── Message listener (from background service worker) ───
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "KLAR_LOADING") {
-    showLoading();
+    showLoading(message.message);
+  } else if (message.type === "KLAR_PROGRESS") {
+    showLoadingProgress(message);
   } else if (message.type === "KLAR_RESULT") {
     showResult(message.result);
     addToHistory(message.result);
@@ -49,7 +51,9 @@ chrome.runtime.sendMessage({ type: "GET_LATEST_STATE" }, (state) => {
   if (chrome.runtime.lastError) return; // background not ready
   if (!state) return;
   if (state.type === "KLAR_LOADING") {
-    showLoading();
+    showLoading(state.message);
+  } else if (state.type === "KLAR_PROGRESS") {
+    showLoadingProgress(state);
   } else if (state.type === "KLAR_RESULT") {
     showResult(state.result);
   } else if (state.type === "KLAR_ERROR") {
@@ -59,11 +63,24 @@ chrome.runtime.sendMessage({ type: "GET_LATEST_STATE" }, (state) => {
 
 // ─── State transitions ───
 
-function showLoading() {
+function showLoading(statusMessage) {
   emptyEl.style.display = "none";
   resultEl.classList.add("hidden");
   errorEl.style.display = "none";
   loadingEl.style.display = "flex";
+  // Update loading status text if available
+  const statusEl = loadingEl.querySelector(".loading-text");
+  const subEl = loadingEl.querySelector(".loading-sub");
+  if (statusEl) {
+    statusEl.textContent = statusMessage || "Analyzing content…";
+  }
+  if (subEl) {
+    subEl.textContent = statusMessage ? "" : "This may take 10–30 seconds";
+  }
+}
+
+function showLoadingProgress(data) {
+  showLoading(data.message || `Verifying ${data.completed || 0} of ${data.total || "?"} claims…`);
 }
 
 function showError(error, errorCode) {
