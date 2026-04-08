@@ -193,9 +193,15 @@ export async function POST(request: NextRequest) {
       ...(frameworkEvaluation && { framework: frameworkEvaluation }),
     }, 200);
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Verification failed";
+    const isQuota = message.includes("quota") || message.includes("429") || message.includes("RESOURCE_EXHAUSTED");
+    const isTimeout = message.includes("timed out") || message.includes("timeout") || message.includes("deadline");
     return corsResponse(
-      { error: err instanceof Error ? err.message : "Verification failed" },
-      500
+      {
+        error: message,
+        error_code: isQuota ? "quota_exceeded" : isTimeout ? "timeout" : "server_error",
+      },
+      isQuota ? 429 : isTimeout ? 504 : 500
     );
   }
 }

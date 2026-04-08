@@ -413,10 +413,18 @@ function categorizeError(error, errorCode) {
       retryable: false,
     };
   }
-  if (msg.includes("server returned 5") || code === "pipeline_error") {
+  if (msg.includes("quota") || msg.includes("resource_exhausted") || code === "quota_exceeded") {
+    return {
+      title: "AI quota reached",
+      message: "Too many requests — the AI service is temporarily busy.",
+      hint: "Wait 30 seconds, then try again.",
+      retryable: true,
+    };
+  }
+  if (msg.includes("server returned 5") || code === "pipeline_error" || code === "server_error") {
     return {
       title: "Server error",
-      message: "The KLAR server encountered an internal error.",
+      message: error || "The KLAR server encountered an internal error.",
       hint: "This is usually temporary. Try again in a few seconds.",
       retryable: true,
     };

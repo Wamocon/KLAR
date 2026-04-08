@@ -270,8 +270,11 @@ function categorizeError(error) {
   if (msg.includes("prompt manipulation")) {
     return { icon: "🛡️", title: "Content blocked", message: "Text flagged as potential prompt injection.", hint: "Try selecting a smaller, cleaner portion of text." };
   }
+  if (msg.includes("quota") || msg.includes("resource_exhausted")) {
+    return { icon: "⏳", title: "AI quota reached", message: "Too many requests — the AI service is temporarily busy.", hint: "Wait 30 seconds, then try again." };
+  }
   if (msg.includes("http 5") || msg.includes("server") || msg.includes("pipeline")) {
-    return { icon: "🔧", title: "Server error", message: "KLAR had a temporary issue.", hint: "Try again in a few seconds." };
+    return { icon: "🔧", title: "Server error", message: error || "KLAR had a temporary issue.", hint: "Try again in a few seconds." };
   }
   return { icon: "!", title: "Verification failed", message: error || "An unexpected error occurred." };
 }
