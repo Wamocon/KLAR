@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { runVerificationPipeline } from "@/lib/verification/pipeline";
+import { logger } from "@/lib/logger";
 
 // Allow up to 60s for AI processing (Gemini calls + evidence search)
 export const maxDuration = 60;
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
   const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
   // ── Layer 0: Abuse Detection — block known abusive IPs ──
-  if (isAbusiveIP(clientIP)) {
+  if (await isAbusiveIP(clientIP)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429, headers: { "Retry-After": "300" } }
@@ -299,11 +300,12 @@ export async function POST(request: NextRequest) {
   const rateLimitKey = apiKeyAuth
     ? `apikey:${apiKeyAuth.keyId}`
     : user ? `user:${user.id}` : `ip:${clientIP}`;
+  let anonQuotaRemaining = PLAN_CONFIGS.guest.monthlyLimit;
 
   // ── Layer 2: Burst Protection (per-minute / per-hour sliding window) ──
-  const burstCheck = checkBurstLimit(rateLimitKey, plan);
+  const burstCheck = await checkBurstLimit(rateLimitKey, plan);
   if (!burstCheck.allowed) {
-    recordViolation(clientIP);
+    await recordViolation(clientIP);
     const retryAfterSec = Math.ceil(burstCheck.retryAfterMs / 1000);
     return NextResponse.json(
       { error: "Too many requests. Please slow down.", retryAfter: retryAfterSec },
@@ -312,7 +314,7 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Layer 3: Concurrency Guard ──
-  if (!acquireConcurrencySlot(rateLimitKey, plan)) {
+  if (!(await acquireConcurrencySlot(rateLimitKey, plan))) {
     return NextResponse.json(
       { error: "A verification is already in progress. Please wait for it to complete." },
       { status: 429 }
@@ -329,7 +331,7 @@ export async function POST(request: NextRequest) {
 
   if (user) {
     if (monthlyUsed + requestCost > monthlyLimit) {
-      releaseConcurrencySlot(rateLimitKey);
+      await releaseConcurrencySlot(rateLimitKey);
       return NextResponse.json(
         {
           error: "Monthly verification limit reached. Upgrade your plan for more verifications.",
@@ -340,10 +342,11 @@ export async function POST(request: NextRequest) {
     }
   } else {
     // Anonymous quota check
-    const anonCheck = checkAnonymousQuota(clientIP, requestCost);
+    const anonCheck = await checkAnonymousQuota(clientIP, requestCost);
+    anonQuotaRemaining = anonCheck.remaining;
     if (!anonCheck.allowed) {
-      releaseConcurrencySlot(rateLimitKey);
-      recordViolation(clientIP);
+      await releaseConcurrencySlot(rateLimitKey);
+      await recordViolation(clientIP);
       return NextResponse.json(
         {
           error: "Guest verification limit reached. Sign up for free to get 10 verifications per month.",
@@ -356,7 +359,7 @@ export async function POST(request: NextRequest) {
 
   // ── Layer 6: Plan-Based Input Limits ──
   if (!checkCharLimit(text.length, plan)) {
-    releaseConcurrencySlot(rateLimitKey);
+    await releaseConcurrencySlot(rateLimitKey);
     const maxChars = PLAN_CONFIGS[plan].maxChars;
     return NextResponse.json(
       { error: `Text exceeds the ${maxChars.toLocaleString()} character limit for your plan. Upgrade for higher limits.` },
@@ -367,7 +370,7 @@ export async function POST(request: NextRequest) {
   if (fileSize > 0) {
     const fileSizeCheck = checkFileLimit(fileSize, plan);
     if (!fileSizeCheck.allowed) {
-      releaseConcurrencySlot(rateLimitKey);
+      await releaseConcurrencySlot(rateLimitKey);
       const maxMB = Math.round(fileSizeCheck.maxSize / (1024 * 1024));
       const msg = fileSizeCheck.maxSize === 0
         ? "File uploads are not available on the guest plan. Sign up for free to upload files."
@@ -380,7 +383,7 @@ export async function POST(request: NextRequest) {
   try {
     text = sanitizeInput(text);
   } catch (err) {
-    releaseConcurrencySlot(rateLimitKey);
+    await releaseConcurrencySlot(rateLimitKey);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Invalid input content" },
       { status: 400 }
@@ -392,6 +395,10 @@ export async function POST(request: NextRequest) {
   const threatLevel = getOverallThreatLevel(adversarialDetections);
 
   // Create streaming response
+  const requestId = crypto.randomUUID();
+  const log = logger.child({ requestId, userId: user?.id, plan, ip: clientIP, path: "/api/verify" });
+  log.info("verification_started", { textLength: text.length, analyses, mode: fileFilename ? "file" : sourceUrl ? "url" : "text" });
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -405,7 +412,7 @@ export async function POST(request: NextRequest) {
       sendEvent({
         type: "usage_info",
         plan,
-        used: user ? monthlyUsed : (PLAN_CONFIGS.guest.monthlyLimit - (PLAN_CONFIGS.guest.monthlyLimit)),
+        used: user ? monthlyUsed : (PLAN_CONFIGS.guest.monthlyLimit - anonQuotaRemaining),
         limit: monthlyLimit,
         cost: requestCost,
         analyses,
@@ -447,8 +454,14 @@ export async function POST(request: NextRequest) {
 
       try {
         let verificationId = "";
+        let totalTokensUsed = 0;
         
         for await (const event of runVerificationPipeline(text, language, analyses)) {
+          if (event.type === "token_usage") {
+            totalTokensUsed = (event as { type: string; tokens: { totalTokens: number } }).tokens.totalTokens || 0;
+            sendEvent(event);
+            continue;
+          }
           if (event.type === "completed") {
             // Store in database
             const { data: savedVerification, error: saveError } = await dbClient
@@ -468,15 +481,15 @@ export async function POST(request: NextRequest) {
                 trust_score: event.verification.trust_score,
                 status: "completed",
                 processing_time_ms: event.verification.processing_time_ms,
+                total_tokens: totalTokensUsed || null,
               })
               .select("id")
               .single();
 
             if (saveError || !savedVerification) {
-              console.error("Verification save error:", saveError);
+              log.error("verification_save_failed", { saveError: saveError?.message });
               sendEvent({ type: "error", message: "Failed to save verification", detail: saveError?.message || "unknown" });
-              controller.close();
-              return;
+              return; // let finally{} close the stream
             }
 
             verificationId = savedVerification.id;
@@ -553,6 +566,13 @@ export async function POST(request: NextRequest) {
               }).catch(() => { /* fire-and-forget */ });
             }
 
+            log.info("verification_completed", {
+              verificationId,
+              trustScore: event.verification.trust_score,
+              totalClaims: event.verification.total_claims,
+              duration: event.verification.processing_time_ms,
+            });
+
             sendEvent({
               type: "completed",
               verification: {
@@ -568,6 +588,7 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (error) {
+        log.error("verification_pipeline_error", {}, error);
         sendEvent({
           type: "error",
           message:
@@ -576,7 +597,7 @@ export async function POST(request: NextRequest) {
               : "Verification pipeline failed",
         });
       } finally {
-        releaseConcurrencySlot(rateLimitKey);
+        await releaseConcurrencySlot(rateLimitKey);
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       }

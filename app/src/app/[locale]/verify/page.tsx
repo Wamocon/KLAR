@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import type {
   PipelineEvent, JudgmentResult, ExtractedClaim, AnalysisMode,
   BiasAnalysis, AIDetectionResult, PlagiarismResult, FrameworkEvaluation,
+  TokenUsageInfo,
 } from "@/types";
 
 const MAX_CHARS = 50000;
@@ -111,6 +112,10 @@ export default function VerifyPage() {
   const [plagiarismResult, setPlagiarismResult] = useState<PlagiarismResult | null>(null);
   const [frameworkResult, setFrameworkResult] = useState<FrameworkEvaluation | null>(null);
 
+  // Token transparency
+  const [tokenUsage, setTokenUsage] = useState<TokenUsageInfo | null>(null);
+  const [tokenEstimate, setTokenEstimate] = useState<{ input: number; total: number } | null>(null);
+
   // Usage / quota state
   const [usage, setUsage] = useState<{
     plan: string; used: number; limit: number; remaining: number;
@@ -201,6 +206,8 @@ export default function VerifyPage() {
     setAIDetectionResult(null);
     setPlagiarismResult(null);
     setFrameworkResult(null);
+    setTokenUsage(null);
+    setTokenEstimate(null);
     setStageMessage(
       inputMode === "url"
         ? locale === "de" ? "Seite wird abgerufen…" : "Fetching page content…"
@@ -288,6 +295,12 @@ export default function VerifyPage() {
                 break;
               case "framework_evaluation":
                 setFrameworkResult(event.result);
+                break;
+              case "token_estimate":
+                setTokenEstimate({ input: event.estimatedInputTokens, total: event.estimatedTotalTokens });
+                break;
+              case "token_usage":
+                setTokenUsage(event.tokens);
                 break;
               case "completed":
                 router.push(`/${locale}/report/${event.verification.id}`);
@@ -852,6 +865,22 @@ export default function VerifyPage() {
                       {judgments.length} / {claimsExtracted.length}{" "}
                       {locale === "de" ? "Behauptungen bewertet" : "claims evaluated"}
                     </p>
+                    {/* Token Usage Transparency */}
+                    {(tokenEstimate || tokenUsage) && (
+                      <div className="mt-2 flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
+                        <span className="inline-flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          {tokenUsage
+                            ? `${tokenUsage.totalTokens.toLocaleString()} tokens used`
+                            : tokenEstimate
+                              ? `~${tokenEstimate.total.toLocaleString()} tokens est.`
+                              : ""}
+                        </span>
+                        {tokenUsage && (
+                          <span>({tokenUsage.promptTokens.toLocaleString()} in / {tokenUsage.completionTokens.toLocaleString()} out)</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -865,6 +894,11 @@ export default function VerifyPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-700 dark:text-gray-300">{j.claim.claim_text}</p>
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{j.reasoning}</p>
+                          {j.recommendation && (
+                            <p className="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                              {locale === "de" ? "Empfehlung" : "Recommendation"}: {j.recommendation}
+                            </p>
+                          )}
                         </div>
                         <Badge variant={
                           j.verdict === "supported" ? "success"

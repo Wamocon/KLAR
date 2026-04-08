@@ -165,6 +165,7 @@ export interface Verification {
   trust_score: number;
   status: VerificationStatus;
   processing_time_ms: number;
+  total_tokens: number | null;
   created_at: string;
 }
 
@@ -239,7 +240,19 @@ export interface JudgmentResult {
   verdict: ClaimVerdict;
   confidence: number;
   reasoning: string;
+  recommendation?: string;
   sources: ClaimSource[];
+}
+
+// ═══════════════════════════════════════════
+// Token Usage types (transparency)
+// ═══════════════════════════════════════════
+
+export interface TokenUsageInfo {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCost?: number;
 }
 
 // ═══════════════════════════════════════════
@@ -343,6 +356,8 @@ export type PipelineEvent =
   | { type: "ai_detection"; result: import("@/lib/analysis/ai-detector").AIDetectionResult }
   | { type: "plagiarism_check"; result: import("@/lib/analysis/plagiarism-detector").PlagiarismResult }
   | { type: "framework_evaluation"; result: import("@/lib/analysis/framework-evaluator").FrameworkEvaluation }
+  | { type: "token_estimate"; estimatedInputTokens: number; estimatedTotalTokens: number }
+  | { type: "token_usage"; tokens: TokenUsageInfo }
   | { type: "completed"; verification: Verification; claims: Claim[] }
   | { type: "error"; message: string };
 

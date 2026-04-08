@@ -1,4 +1,4 @@
-import { extractClaims, judgeClaim } from "@/lib/ai/gemini";
+import { extractClaims, judgeClaim, TokenTracker, estimateTokens } from "@/lib/ai/gemini";
 import { findEvidence } from "@/lib/evidence/search";
 import { sanitizeClaim } from "@/lib/security/sanitize";
 import { analyzeClaimQuality } from "@/lib/nlp/claim-quality";
@@ -23,15 +23,31 @@ export interface VerificationResult {
   claims: Omit<Claim, "id" | "verification_id" | "created_at">[];
 }
 
+export interface PipelineOptions {
+  /** Maximum number of claims to process (default: 8) */
+  maxClaims?: number;
+  /** Parallel batch size for claim processing (default: 5) */
+  batchSize?: number;
+  /** Pipeline deadline in ms before giving up (default: 55000) */
+  deadlineMs?: number;
+  /** Fast mode: skip grounded search, use tighter AI timeouts (for extension) */
+  fast?: boolean;
+}
+
 export async function* runVerificationPipeline(
   text: string,
   language: string = "en",
-  analyses: AnalysisMode[] = ["fact-check"]
+  analyses: AnalysisMode[] = ["fact-check"],
+  options: PipelineOptions = {}
 ): AsyncGenerator<PipelineEvent> {
   const startTime = Date.now();
-  // Hard deadline: leave 5s buffer before Vercel's 60s limit for DB writes + response
-  const PIPELINE_DEADLINE_MS = 55000;
+  // Hard deadline: configurable, default leaves 5s buffer before Vercel's 60s limit
+  const PIPELINE_DEADLINE_MS = options.deadlineMs ?? 55000;
   const isOverDeadline = () => (Date.now() - startTime) > PIPELINE_DEADLINE_MS;
+
+  // Per-request token tracker (thread-safe — no global state)
+  const tracker = new TokenTracker();
+  const estimatedInputTokens = estimateTokens(text);
 
   const isComprehensive = analyses.includes("comprehensive");
   const runFactCheck = isComprehensive || analyses.includes("fact-check");
@@ -39,6 +55,13 @@ export async function* runVerificationPipeline(
   const runAIDetection = isComprehensive || analyses.includes("ai-detection");
   const runPlagiarism = isComprehensive || analyses.includes("plagiarism");
   const runFrameworks = isComprehensive || analyses.includes("framework-eval");
+
+  // Emit estimated token usage upfront for transparency
+  yield {
+    type: "token_estimate",
+    estimatedInputTokens,
+    estimatedTotalTokens: estimatedInputTokens * 3, // rough multiplier for full pipeline
+  };
 
   // ── Pre-analysis: AI Detection & Bias (run on raw text before claim extraction) ──
 
@@ -78,6 +101,7 @@ export async function* runVerificationPipeline(
       trust_score: 0,
       status: "completed",
       processing_time_ms: processingTime,
+      total_tokens: null,
     };
     yield { type: "completed", verification: verification as Verification, claims: [] };
     return;
@@ -88,7 +112,11 @@ export async function* runVerificationPipeline(
 
   let extractedClaims: ExtractedClaim[];
   try {
-    extractedClaims = await extractClaims(text);
+    const maxExtractClaims = options.maxClaims ?? 10;
+    extractedClaims = await extractClaims(text, language, tracker, {
+      maxClaims: maxExtractClaims,
+      timeoutMs: options.fast ? 15000 : 30000,
+    });
   } catch (error) {
     yield {
       type: "error",
@@ -105,8 +133,8 @@ export async function* runVerificationPipeline(
     return;
   }
 
-  // Cap claims to keep within Vercel 60s timeout — process most important first
-  const MAX_CLAIMS = 5;
+  // Cap claims — configurable; pipeline exits early if over deadline
+  const MAX_CLAIMS = options.maxClaims ?? 8;
   if (extractedClaims.length > MAX_CLAIMS) {
     extractedClaims = extractedClaims.slice(0, MAX_CLAIMS);
   }
@@ -135,8 +163,8 @@ export async function* runVerificationPipeline(
     claim_text: sanitizeClaim(claim.claim_text),
   }));
 
-  // Process claims in parallel batches for speed (fits within Vercel 60s limit)
-  const BATCH_SIZE = 5;
+  // Process claims in parallel batches for speed (configurable batch size)
+  const BATCH_SIZE = options.batchSize ?? 5;
   for (let batchStart = 0; batchStart < sanitizedClaims.length; batchStart += BATCH_SIZE) {
     const batch = sanitizedClaims.slice(batchStart, batchStart + BATCH_SIZE);
     const batchIndices = batch.map((_, j) => batchStart + j);
@@ -152,8 +180,10 @@ export async function* runVerificationPipeline(
     const batchResults = await Promise.all(
       batch.map(async (sanitizedClaim) => {
         try {
-          const sources = await findEvidence(sanitizedClaim, language);
-          const judgment = await judgeClaim(sanitizedClaim, sources);
+          const sources = await findEvidence(sanitizedClaim, language, { fast: options.fast });
+          const judgment = await judgeClaim(sanitizedClaim, sources, language, tracker, {
+            timeoutMs: options.fast ? 12000 : 20000,
+          });
           const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
           const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);
           return { judgment, crossRef, hallucinationCheck, sources, failed: false };
@@ -258,6 +288,7 @@ export async function* runVerificationPipeline(
     trust_score: trustScore,
     status: "completed",
     processing_time_ms: processingTime,
+    total_tokens: null,
   };
 
   const claims: Omit<Claim, "id" | "verification_id" | "created_at">[] =
@@ -267,10 +298,18 @@ export async function* runVerificationPipeline(
       verdict: j.verdict,
       confidence: j.confidence,
       reasoning: j.reasoning,
+      recommendation: j.recommendation || undefined,
       sources: j.sources,
       position_start: j.claim.position_start,
       position_end: j.claim.position_end,
     }));
+
+  // Emit final token usage for transparency
+  const tokenUsage = tracker.getSession();
+  yield {
+    type: "token_usage",
+    tokens: tokenUsage,
+  };
 
   yield {
     type: "completed",

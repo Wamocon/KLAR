@@ -217,7 +217,7 @@
     </div>
     <div class="input-group">
       <input type="password" id="apiKeyInput" placeholder="klar_xxxxxxxx_..." autocomplete="off" spellcheck="false">
-      <button class="toggle-vis" id="toggleVis">👁</button>
+      <button class="toggle-vis" id="toggleVis">Show</button>
     </div>
     <button class="btn btn-primary" id="saveKeyBtn">
       <span class="spinner-sm" id="saveSpinner"></span>
@@ -230,13 +230,13 @@
     <!-- Capture Mode Toggle -->
     <div class="capture-toggle" id="captureToggle">
       <button class="capture-btn active" id="captureSelection" title="Analyze selected text">
-        <span class="capture-icon">✂</span> Selection
+        <span class="capture-icon">SEL</span> Selection
       </button>
       <button class="capture-btn" id="capturePage" title="Analyze entire visible page">
-        <span class="capture-icon">📄</span> Full Page
+        <span class="capture-icon">PG</span> Full Page
       </button>
       <button class="capture-btn" id="captureUrl" title="Analyze page via URL (server-side)">
-        <span class="capture-icon">🌐</span> URL
+        <span class="capture-icon">URL</span> URL
       </button>
     </div>
 
@@ -256,42 +256,42 @@
     <div class="section-label">Analyze</div>
     <div class="actions-grid" id="actionsGrid">
       <button class="action-btn" data-analysis="fact-check" disabled>
-        <div class="action-icon green">✓</div>
+        <div class="action-icon green">FC</div>
         <div class="action-info">
           <div class="action-name">Fact Check</div>
           <div class="action-desc">Verify claims</div>
         </div>
       </button>
       <button class="action-btn" data-analysis="bias-check" disabled>
-        <div class="action-icon blue">⚖</div>
+        <div class="action-icon blue">B</div>
         <div class="action-info">
           <div class="action-name">Bias Check</div>
           <div class="action-desc">Detect slant</div>
         </div>
       </button>
       <button class="action-btn" data-analysis="ai-detection" disabled>
-        <div class="action-icon purple">🤖</div>
+        <div class="action-icon purple">AI</div>
         <div class="action-info">
           <div class="action-name">AI Detection</div>
           <div class="action-desc">Human or AI?</div>
         </div>
       </button>
       <button class="action-btn" data-analysis="plagiarism" disabled>
-        <div class="action-icon orange">📋</div>
+        <div class="action-icon orange">PL</div>
         <div class="action-info">
           <div class="action-name">Plagiarism</div>
           <div class="action-desc">Check originality</div>
         </div>
       </button>
       <button class="action-btn" data-analysis="framework-eval" disabled>
-        <div class="action-icon teal">🧪</div>
+        <div class="action-icon teal">FW</div>
         <div class="action-info">
           <div class="action-name">Framework</div>
           <div class="action-desc">MECE/Red Team</div>
         </div>
       </button>
       <button class="action-btn full-width" data-analysis="comprehensive" disabled>
-        <div class="action-icon pink">🔬</div>
+        <div class="action-icon pink">ALL</div>
         <div class="action-info">
           <div class="action-name">Full Analysis</div>
           <div class="action-desc">All checks at once</div>
@@ -303,16 +303,16 @@
     <div class="section-label">Quick Links</div>
     <div class="quick-links">
       <a class="quick-link" id="linkDashboard" target="_blank" rel="noopener">
-        <span class="quick-link-icon">📊</span> Dashboard
+        <span class="quick-link-icon">DB</span> Dashboard
       </a>
       <a class="quick-link" id="linkHistory" target="_blank" rel="noopener">
-        <span class="quick-link-icon">📜</span> History
+        <span class="quick-link-icon">HI</span> History
       </a>
       <a class="quick-link" id="linkVerify" target="_blank" rel="noopener">
-        <span class="quick-link-icon">🔍</span> Verify
+        <span class="quick-link-icon">VE</span> Verify
       </a>
       <a class="quick-link" id="linkSettings" target="_blank" rel="noopener">
-        <span class="quick-link-icon">⚙</span> Settings
+        <span class="quick-link-icon">ST</span> Settings
       </a>
     </div>
 

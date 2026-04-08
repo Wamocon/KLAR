@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   ArrowLeft, CheckCircle2, XCircle, HelpCircle, ExternalLink,
   ChevronDown, ChevronUp, Clock, FileSearch, Share2, Check, Globe,
-  PenLine, Download,
+  PenLine, Download, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -289,12 +289,18 @@ export default function ReportPage() {
           <Card className="border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
             <CardContent className="flex items-center gap-3 p-5">
               <Clock className="h-5 w-5 text-gray-400" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-slate-800 dark:text-slate-300">
                   {(verification.processing_time_ms / 1000).toFixed(1)} {t("seconds")}
                 </p>
                 <p className="text-xs text-gray-500">{t("processingTime")}</p>
               </div>
+              {verification.total_tokens && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>{verification.total_tokens.toLocaleString()} tokens</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -385,6 +391,17 @@ export default function ReportPage() {
                       <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">{t("reasoning")}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{claim.reasoning}</p>
                     </div>
+                    {/* Actionable Recommendation */}
+                    {(claim as unknown as { recommendation?: string }).recommendation && (
+                      <div className="rounded-xl bg-blue-50/80 dark:bg-blue-900/10 border border-blue-200/60 dark:border-blue-800/30 p-3">
+                        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                          {locale === "de" ? "Empfehlung" : "Recommendation"}
+                        </h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                          {(claim as unknown as { recommendation: string }).recommendation}
+                        </p>
+                      </div>
+                    )}
                     {claim.sources && claim.sources.length > 0 && (
                       <div>
                         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{t("sources")} ({claim.sources.length})</h4>

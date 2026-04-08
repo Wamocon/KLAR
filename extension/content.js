@@ -83,7 +83,7 @@ function showResult(result) {
               <div class="klar-claim-sources">
                 ${c.sources.slice(0, 3).map((s) => `
                   <a class="klar-source-link" href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(s.title || s.url)}">
-                    <span class="klar-source-icon">🔗</span>
+                    <span class="klar-source-icon">SRC</span>
                     <span class="klar-source-title">${escapeHtml(s.title || new URL(s.url).hostname)}</span>
                   </a>
                 `).join("")}
@@ -103,7 +103,7 @@ function showResult(result) {
     sections.push(`
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
-          <span class="klar-analysis-icon">⚖️</span>
+          <span class="klar-analysis-icon klar-icon-bias">B</span>
           <span class="klar-analysis-title">Bias Analysis</span>
           <span class="klar-analysis-badge" style="color:${biasColor}">${escapeHtml(b.biasLevel || "unknown")}</span>
         </div>
@@ -133,7 +133,7 @@ function showResult(result) {
     sections.push(`
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
-          <span class="klar-analysis-icon">🤖</span>
+          <span class="klar-analysis-icon klar-icon-ai">AI</span>
           <span class="klar-analysis-title">AI Detection</span>
           <span class="klar-analysis-badge" style="color:${aiColor}">${escapeHtml(ai.verdict || "unknown")}</span>
         </div>
@@ -163,7 +163,7 @@ function showResult(result) {
     sections.push(`
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
-          <span class="klar-analysis-icon">📋</span>
+          <span class="klar-analysis-icon klar-icon-plag">PL</span>
           <span class="klar-analysis-title">Plagiarism Check</span>
           <span class="klar-analysis-badge" style="color:${origColor}">${p.originalityPercent}% original</span>
         </div>
@@ -195,7 +195,7 @@ function showResult(result) {
     sections.push(`
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
-          <span class="klar-analysis-icon">🔬</span>
+          <span class="klar-analysis-icon klar-icon-fw">FW</span>
           <span class="klar-analysis-title">Framework Eval</span>
           <span class="klar-analysis-badge" style="color:${fwColor}">Grade ${escapeHtml(fw.overallGrade || "?")}</span>
         </div>
@@ -243,30 +243,37 @@ function showError(error) {
     <div class="klar-error-icon">${errorInfo.icon}</div>
     <div class="klar-error-title">${escapeHtml(errorInfo.title)}</div>
     <div class="klar-error-message">${escapeHtml(errorInfo.message)}</div>
+    ${errorInfo.hint ? `<div class="klar-error-hint">${escapeHtml(errorInfo.hint)}</div>` : ""}
   `;
 }
 
 function categorizeError(error) {
   const msg = (error || "").toLowerCase();
   if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
-    return { icon: "📡", title: chrome.i18n.getMessage("noInternet") || "No internet connection", message: chrome.i18n.getMessage("noInternetDesc") || "Check your network and try again." };
+    return { icon: "📡", title: "Connection failed", message: "Could not reach the KLAR server.", hint: "Check your internet connection and try again." };
   }
   if (msg.includes("timeout") || msg.includes("timed out")) {
-    return { icon: "⏱️", title: chrome.i18n.getMessage("requestTimeout") || "Request timed out", message: chrome.i18n.getMessage("requestTimeoutDesc") || "The server took too long. Try with shorter text." };
+    return { icon: "⏱️", title: "Analysis timed out", message: "The server took too long to respond.", hint: "Try again — performance varies. If it persists, select a shorter text passage." };
   }
   if (msg.includes("rate limit")) {
-    return { icon: "🚦", title: chrome.i18n.getMessage("rateLimitReached") || "Rate limit reached", message: chrome.i18n.getMessage("rateLimitDesc") || "Too many requests. Wait a moment and retry." };
+    return { icon: "🚦", title: "Rate limit reached", message: "Too many requests. Wait a moment and retry." };
   }
   if (msg.includes("api key")) {
-    return { icon: "🔑", title: chrome.i18n.getMessage("apiKeyIssue") || "API key issue", message: chrome.i18n.getMessage("apiKeyIssueDesc") || "Open the KLAR popup to configure your key." };
+    return { icon: "🔑", title: "API key required", message: "Open the KLAR popup to configure your key." };
   }
   if (msg.includes("text too short")) {
-    return { icon: "📝", title: chrome.i18n.getMessage("textTooShort") || "Text too short", message: chrome.i18n.getMessage("textTooShortDesc", [String(KLAR.MIN_TEXT_LENGTH)]) || `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
+    return { icon: "📝", title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
   }
-  if (msg.includes("http 5") || msg.includes("internal server")) {
-    return { icon: "🔧", title: chrome.i18n.getMessage("serverError") || "Server error", message: chrome.i18n.getMessage("serverErrorDesc") || "KLAR is having issues. Try again shortly." };
+  if (msg.includes("no factual claims")) {
+    return { icon: "🔍", title: "No claims found", message: "No verifiable facts in this text.", hint: "Try selecting text with specific facts, numbers, or dates." };
   }
-  return { icon: "⚠️", title: chrome.i18n.getMessage("verificationFailed") || "Verification failed", message: error || chrome.i18n.getMessage("unexpectedError") || "An unexpected error occurred." };
+  if (msg.includes("prompt manipulation")) {
+    return { icon: "🛡️", title: "Content blocked", message: "Text flagged as potential prompt injection.", hint: "Try selecting a smaller, cleaner portion of text." };
+  }
+  if (msg.includes("http 5") || msg.includes("server") || msg.includes("pipeline")) {
+    return { icon: "🔧", title: "Server error", message: "KLAR had a temporary issue.", hint: "Try again in a few seconds." };
+  }
+  return { icon: "!", title: "Verification failed", message: error || "An unexpected error occurred." };
 }
 
 function escapeHtml(str) {

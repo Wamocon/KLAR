@@ -176,7 +176,7 @@ function updateSelectionUI() {
 toggleVis.addEventListener("click", () => {
   const isPassword = apiKeyInput.type === "password";
   apiKeyInput.type = isPassword ? "text" : "password";
-  toggleVis.textContent = isPassword ? "🙈" : "👁";
+  toggleVis.textContent = isPassword ? "Hide" : "Show";
 });
 
 // ─── Save & Validate key (server-side) ───
@@ -198,38 +198,26 @@ saveKeyBtn.addEventListener("click", async () => {
   saveBtnText.textContent = "Validating...";
 
   try {
-    const res = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        text: "KLAR API key validation request. This is a minimum length text used solely for verifying that the provided API key is valid and has the correct scopes.",
-      }),
+    // Use the lightweight validate endpoint — no pipeline execution needed
+    const result = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "VALIDATE_KEY", apiKey: key }, resolve);
     });
 
-    if (res.status === 401) {
-      toast("error", "Invalid API key — not found on server");
-      return;
-    }
-    if (res.status === 403) {
-      toast("error", "Key missing 'verify' scope");
+    if (!result || !result.valid) {
+      const msg = result?.message || "Invalid API key";
+      toast("error", msg);
       return;
     }
 
-    // 200 or 429 both mean key is valid
+    // Key is valid — save it
     currentApiKey = key;
     chrome.runtime.sendMessage({ type: "SET_API_KEY", apiKey: key }, () => {
-      toast("ok", "API key verified & saved ✓");
+      const planLabel = result.plan ? ` (${result.plan} plan)` : "";
+      toast("ok", `API key verified & saved${planLabel}`);
       setTimeout(() => showMainScreen(), 600);
     });
   } catch (err) {
-    if (err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
-      toast("error", "Unable to connect to KLAR. Please check your internet connection and try again.");
-    } else {
-      toast("error", err.message || "Something went wrong. Please try again.");
-    }
+    toast("error", err.message || "Something went wrong. Please try again.");
   } finally {
     saveKeyBtn.disabled = false;
     saveSpinner.style.display = "none";
@@ -270,6 +258,7 @@ actionsGrid.addEventListener("click", async (e) => {
       type: "VERIFY_URL",
       url: currentPageUrl,
       tabId: tab.id,
+      analyses,
     });
   } else {
     chrome.runtime.sendMessage({

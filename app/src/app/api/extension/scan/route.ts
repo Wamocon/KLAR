@@ -74,17 +74,18 @@ export async function POST(request: NextRequest) {
     try {
       const extractUrlContent = await getExtractUrlContent();
       const page = await extractUrlContent(parsed.data.url);
-      text = page.content.slice(0, 50000); // Truncate for extension
+      text = page.content.slice(0, 5000); // Truncate aggressively for extension — 5K is enough for meaningful analysis
       sourceUrl = page.url;
       sourceTitle = page.title;
     } catch (err) {
       return corsResponse(
-        { error: err instanceof Error ? err.message : "Failed to fetch URL" },
+        { error: err instanceof Error ? err.message : "Failed to fetch URL", error_code: "url_fetch_failed" },
         400
       );
     }
   } else {
-    text = parsed.data.text!;
+    // For full-page captures from the extension, truncate to 5K to stay within time budget
+    text = parsed.data.text!.slice(0, 5000);
   }
 
   // Sanitize
@@ -110,7 +111,8 @@ export async function POST(request: NextRequest) {
     for await (const event of runVerificationPipeline(
       text,
       parsed.data.language,
-      parsed.data.analyses as AnalysisMode[]
+      parsed.data.analyses as AnalysisMode[],
+      { maxClaims: 3, batchSize: 3, deadlineMs: 50000, fast: true }
     )) {
       if (event.type === "completed") {
         const completedEvent = event as unknown as {
@@ -133,10 +135,37 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Even without fact-check claims, return analysis-only results if available
+    if (!result && (biasAnalysis || aiDetection || plagiarismCheck || frameworkEvaluation)) {
+      return corsResponse({
+        trust_score: 0,
+        total_claims: 0,
+        supported: 0,
+        contradicted: 0,
+        unverifiable: 0,
+        processing_time_ms: 0,
+        language: parsed.data.language,
+        source_url: sourceUrl,
+        source_title: sourceTitle,
+        claims: [],
+        ...(biasAnalysis && { bias: biasAnalysis }),
+        ...(aiDetection && { ai_detection: aiDetection }),
+        ...(plagiarismCheck && { plagiarism: plagiarismCheck }),
+        ...(frameworkEvaluation && { framework: frameworkEvaluation }),
+      }, 200);
+    }
+
     if (!result) {
+      // Provide a machine-readable error code alongside the message for better client handling
+      const isNoClaims = pipelineError?.includes("No factual claims");
+      const isTimeout = pipelineError?.includes("timed out");
+      const isExtraction = pipelineError?.includes("extract") || pipelineError?.includes("parse");
       return corsResponse(
-        { error: pipelineError || "Verification failed — no claims could be extracted from this text" },
-        pipelineError?.includes("No factual claims") ? 422 : 500
+        {
+          error: pipelineError || "Verification failed — no claims could be extracted from this text",
+          error_code: isNoClaims ? "no_claims" : isTimeout ? "timeout" : isExtraction ? "extraction_failed" : "pipeline_error",
+        },
+        isNoClaims ? 422 : isTimeout ? 504 : 500
       );
     }
 

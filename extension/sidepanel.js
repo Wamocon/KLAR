@@ -16,6 +16,7 @@ const resultEl = document.getElementById("result");
 const errorEl = document.getElementById("error");
 const errorTitleEl = document.getElementById("errorTitle");
 const errorMsgEl = document.getElementById("errorMessage");
+const retryBtn = document.getElementById("retryBtn");
 const historyEl = document.getElementById("history");
 const historyListEl = document.getElementById("historyList");
 
@@ -39,7 +40,7 @@ chrome.runtime.onMessage.addListener((message) => {
     showResult(message.result);
     addToHistory(message.result);
   } else if (message.type === "KLAR_ERROR") {
-    showError(message.error);
+    showError(message.error, message.errorCode);
   }
 });
 
@@ -52,7 +53,7 @@ chrome.runtime.sendMessage({ type: "GET_LATEST_STATE" }, (state) => {
   } else if (state.type === "KLAR_RESULT") {
     showResult(state.result);
   } else if (state.type === "KLAR_ERROR") {
-    showError(state.error);
+    showError(state.error, state.errorCode);
   }
 });
 
@@ -65,15 +66,68 @@ function showLoading() {
   loadingEl.style.display = "flex";
 }
 
-function showError(error) {
+function showError(error, errorCode) {
   loadingEl.style.display = "none";
   emptyEl.style.display = "none";
   resultEl.classList.add("hidden");
   errorEl.style.display = "block";
-  const info = categorizeError(error);
+  const info = categorizeError(error, errorCode);
   errorTitleEl.textContent = info.title;
   errorMsgEl.textContent = info.message;
+
+  // Show retry button for retryable errors
+  if (info.retryable) {
+    retryBtn.style.display = "inline-block";
+  } else {
+    retryBtn.style.display = "none";
+  }
+
+  // Add hint if present
+  const existingHint = errorEl.querySelector(".error-hint");
+  if (existingHint) existingHint.remove();
+  if (info.hint) {
+    const hintEl = document.createElement("div");
+    hintEl.className = "error-hint";
+    hintEl.textContent = info.hint;
+    errorEl.appendChild(hintEl);
+  }
 }
+
+// ─── Retry: re-trigger the last verification from the active tab ───
+retryBtn.addEventListener("click", async () => {
+  retryBtn.style.display = "none";
+  showLoading();
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+    // Ask background to re-verify the last captured content
+    // The popup may be closed, so we trigger from content script context
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => window.getSelection()?.toString() || "",
+    });
+    const selectedText = results?.[0]?.result || "";
+    if (selectedText.length >= KLAR.MIN_TEXT_LENGTH) {
+      chrome.runtime.sendMessage({
+        type: "VERIFY_TEXT",
+        text: selectedText,
+        tabId: tab.id,
+        analyses: ["fact-check"],
+      });
+    } else if (tab.url && tab.url.startsWith("http")) {
+      chrome.runtime.sendMessage({
+        type: "VERIFY_URL",
+        url: tab.url,
+        tabId: tab.id,
+        analyses: ["fact-check"],
+      });
+    } else {
+      showError("Select text on a page or navigate to a website to retry.", "no_content");
+    }
+  } catch {
+    showError("Could not retry — try selecting text and using the popup.", "retry_failed");
+  }
+});
 
 // ─── Main result renderer ───
 
@@ -127,7 +181,7 @@ function showResult(result) {
     sections.push(`
       <div class="analysis-card">
         <div class="analysis-header">
-          <span class="analysis-icon">⚖️</span>
+          <span class="analysis-icon analysis-icon-bias"></span>
           <span class="analysis-title">Bias Analysis</span>
           <span class="analysis-badge" style="color:${color}">${esc(b.biasLevel || "unknown")}</span>
         </div>
@@ -158,7 +212,7 @@ function showResult(result) {
     sections.push(`
       <div class="analysis-card">
         <div class="analysis-header">
-          <span class="analysis-icon">🤖</span>
+          <span class="analysis-icon analysis-icon-ai"></span>
           <span class="analysis-title">AI Detection</span>
           <span class="analysis-badge" style="color:${color}">${esc(ai.verdict || "unknown")}</span>
         </div>
@@ -188,7 +242,7 @@ function showResult(result) {
     sections.push(`
       <div class="analysis-card">
         <div class="analysis-header">
-          <span class="analysis-icon">📋</span>
+          <span class="analysis-icon analysis-icon-plag"></span>
           <span class="analysis-title">Plagiarism Check</span>
           <span class="analysis-badge" style="color:${color}">${p.originalityPercent}% original</span>
         </div>
@@ -221,7 +275,7 @@ function showResult(result) {
     sections.push(`
       <div class="analysis-card">
         <div class="analysis-header">
-          <span class="analysis-icon">🔬</span>
+          <span class="analysis-icon analysis-icon-fw"></span>
           <span class="analysis-title">Framework Evaluation</span>
           <span class="analysis-badge" style="color:${color}">Grade ${esc(fw.overallGrade || "?")}</span>
         </div>
@@ -234,7 +288,7 @@ function showResult(result) {
                   <span class="fw-name">${esc(f.framework)}</span>
                   <div class="bar-track bar-track-sm" style="flex:1"><div class="bar-fill" style="width:${f.score}%;background:${c}"></div></div>
                   <span class="fw-score" style="color:${c}">${f.score}</span>
-                  <span class="fw-pass">${f.passed ? "✓" : "✗"}</span>
+                  <span class="fw-pass ${f.passed ? 'pass' : 'fail'}">${f.passed ? "Pass" : "Fail"}</span>
                 </div>`;
             }).join("")}
           </div>
@@ -278,7 +332,7 @@ function renderSources(sources) {
         const typeLabel = s.source_type === "wikipedia" ? "Wiki" : s.source_type === "academic" ? "Academic" : "";
         return `
           <a class="source-pill" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.snippet || s.title || "")}">
-            🔗 <span class="source-pill-text">${esc(s.title || domain)}</span>
+            <span class="source-pill-text">${esc(s.title || domain)}</span>
             ${typeLabel ? `<span class="source-type">${typeLabel}</span>` : ""}
           </a>`;
       }).join("")}
@@ -298,33 +352,80 @@ function invertColor(score) {
 
 // ─── Error categorizer ───
 
-function categorizeError(error) {
+function categorizeError(error, errorCode) {
   const msg = (error || "").toLowerCase();
-  if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
-    return { title: "No internet connection", message: "Check your network and try again." };
+  const code = errorCode || "";
+
+  if (code === "no_api_key" || msg.includes("api key")) {
+    return { title: "API key required", message: "Open the KLAR popup and enter your API key.", retryable: false };
   }
-  if (msg.includes("timeout") || msg.includes("timed out")) {
-    return { title: "Request timed out", message: "The server took too long. Try with shorter text or fewer analyses." };
+  if (code === "text_too_short" || msg.includes("text too short")) {
+    return { title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters to verify.`, retryable: false };
+  }
+  if (code === "no_claims" || msg.includes("no factual claims")) {
+    return {
+      title: "No verifiable claims found",
+      message: "The selected text doesn't contain checkable facts.",
+      hint: "Try selecting text with specific facts, statistics, dates, or names.",
+      retryable: true,
+    };
+  }
+  if (code === "timeout" || msg.includes("timed out") || msg.includes("timeout")) {
+    return {
+      title: "Request timed out",
+      message: "The analysis took too long to complete.",
+      hint: "Try selecting shorter text (1-2 paragraphs work best) or using a single analysis mode instead of comprehensive.",
+      retryable: true,
+    };
+  }
+  if (code === "network" || msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
+    return {
+      title: "Connection failed",
+      message: "Could not reach the KLAR server.",
+      hint: "Check your internet connection and try again.",
+      retryable: true,
+    };
+  }
+  if (code === "extraction_failed" || msg.includes("failed to extract") || msg.includes("claim extraction") || msg.includes("failed to parse")) {
+    return {
+      title: "Analysis failed",
+      message: "Could not extract claims from this text.",
+      hint: "The AI model may be temporarily overloaded. Try again in a moment, or select different text.",
+      retryable: true,
+    };
   }
   if (msg.includes("rate limit")) {
-    return { title: "Rate limit reached", message: "Too many requests. Wait a moment and retry." };
+    return { title: "Rate limit reached", message: "Too many requests. Wait a moment and retry.", retryable: true };
   }
-  if (msg.includes("api key")) {
-    return { title: "API key issue", message: "Open the KLAR popup to configure your API key." };
+  if (msg.includes("failed to fetch url") || msg.includes("restricted network") || msg.includes("could not extract meaningful content")) {
+    return {
+      title: "Cannot read this page",
+      message: "The server couldn't fetch or parse this URL.",
+      hint: "Try using 'Selection' or 'Full Page' capture mode instead of URL mode.",
+      retryable: true,
+    };
   }
-  if (msg.includes("text too short")) {
-    return { title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
+  if (msg.includes("prompt manipulation")) {
+    return {
+      title: "Content blocked",
+      message: "The text was flagged as containing prompt injection patterns.",
+      hint: "If this is legitimate content, try selecting a smaller portion without meta-instructions.",
+      retryable: false,
+    };
   }
-  if (msg.includes("no factual claims")) {
-    return { title: "No verifiable claims found", message: "The selected text doesn't contain factual claims. Try selecting text with specific facts, numbers, or dates." };
+  if (msg.includes("server returned 5") || code === "pipeline_error") {
+    return {
+      title: "Server error",
+      message: "The KLAR server encountered an internal error.",
+      hint: "This is usually temporary. Try again in a few seconds.",
+      retryable: true,
+    };
   }
-  if (msg.includes("failed to extract") || msg.includes("claim extraction")) {
-    return { title: "Extraction failed", message: "Could not analyze this text. Try selecting a different passage." };
-  }
-  if (msg.includes("failed to fetch url") || msg.includes("restricted network")) {
-    return { title: "Cannot access page", message: "The server couldn't reach this URL. Try using Selection or Full Page mode instead." };
-  }
-  return { title: "Verification failed", message: error || "An unexpected error occurred. Please try again." };
+  return {
+    title: "Verification failed",
+    message: error || "An unexpected error occurred.",
+    retryable: true,
+  };
 }
 
 // ─── History ───

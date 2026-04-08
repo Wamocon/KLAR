@@ -4,8 +4,11 @@
  * Multi-layer rate limiting with tier-based quotas, burst protection,
  * cost-weighted analysis tracking, and abuse detection.
  *
+ * Uses Upstash Redis when available (production), falls back to in-memory
+ * Maps for local development. All public API unchanged.
+ *
  * Layers:
- *  1. IP-based burst limiter (sliding window, in-memory)
+ *  1. IP-based burst limiter (sliding window, Redis or in-memory)
  *  2. Tier-based monthly quota (DB-backed via Supabase profile)
  *  3. Cost-weighted analysis budgets (comprehensive costs more)
  *  4. Anonymous fingerprint tracking (IP + UA hash)
@@ -13,6 +16,15 @@
  */
 
 import type { AnalysisMode, UserPlan } from "@/types";
+import {
+  redisBurstCheck,
+  redisAcquireConcurrency,
+  redisReleaseConcurrency,
+  redisCheckAnonymousQuota,
+  redisIsAbusiveIP,
+  redisRecordViolation,
+  isRedisAvailable,
+} from "./redis-rate-limiter";
 
 // ═══════════════════════════════════════════
 // PLAN CONFIGURATION
@@ -138,9 +150,25 @@ function cleanupBurstLimiter() {
 
 /**
  * Check burst rate limits (per-minute and per-hour).
+ * Uses Redis when available, falls back to in-memory sliding window.
  * Returns { allowed, retryAfterMs } — if not allowed, retryAfterMs indicates when to retry.
  */
-export function checkBurstLimit(
+export async function checkBurstLimit(
+  key: string,
+  plan: UserPlan | "guest"
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const config = PLAN_CONFIGS[plan];
+
+  // Try Redis first (horizontally scalable)
+  if (isRedisAvailable()) {
+    return redisBurstCheck(key, config.perMinuteLimit, config.perHourLimit);
+  }
+
+  // Fallback: in-memory sliding window
+  return checkBurstLimitInMemory(key, plan);
+}
+
+function checkBurstLimitInMemory(
   key: string,
   plan: UserPlan | "guest"
 ): { allowed: boolean; retryAfterMs: number } {
@@ -179,19 +207,30 @@ export function checkBurstLimit(
 
 /**
  * Prevent multiple simultaneous verifications from the same user/IP.
+ * Uses Redis SET NX when available for cross-instance safety.
  * Returns false if the user already has an active request (and their plan disallows concurrency).
  */
-export function acquireConcurrencySlot(
+export async function acquireConcurrencySlot(
   key: string,
   plan: UserPlan | "guest"
-): boolean {
+): Promise<boolean> {
   if (PLAN_CONFIGS[plan].allowConcurrent) return true;
+
+  // Try Redis first
+  if (isRedisAvailable()) {
+    return redisAcquireConcurrency(key);
+  }
+
+  // Fallback: in-memory
   if (activeRequests.has(key)) return false;
   activeRequests.add(key);
   return true;
 }
 
-export function releaseConcurrencySlot(key: string): void {
+export async function releaseConcurrencySlot(key: string): Promise<void> {
+  if (isRedisAvailable()) {
+    await redisReleaseConcurrency(key);
+  }
   activeRequests.delete(key);
 }
 
@@ -204,9 +243,25 @@ let lastAnonCleanup = Date.now();
 
 /**
  * Track anonymous/guest usage by IP fingerprint.
+ * Uses Redis when available for cross-instance tracking.
  * Returns { allowed, remaining, resetAt }.
  */
-export function checkAnonymousQuota(
+export async function checkAnonymousQuota(
+  ip: string,
+  cost: number = 1
+): Promise<{ allowed: boolean; remaining: number; resetAt: Date }> {
+  const limit = PLAN_CONFIGS.guest.monthlyLimit;
+
+  // Try Redis first
+  if (isRedisAvailable()) {
+    return redisCheckAnonymousQuota(ip, cost, limit);
+  }
+
+  // Fallback: in-memory
+  return checkAnonymousQuotaInMemory(ip, cost);
+}
+
+function checkAnonymousQuotaInMemory(
   ip: string,
   cost: number = 1
 ): { allowed: boolean; remaining: number; resetAt: Date } {
@@ -251,14 +306,17 @@ interface AbuseRecord {
 const abuseTracker = new Map<string, AbuseRecord>();
 
 /**
- * Score a request for abuse signals:
- * - Hitting rate limits repeatedly
- * - Sending identical content
- * - Extremely rapid requests
- *
- * Returns true if the IP should be temporarily blocked.
+ * Check if an IP should be temporarily blocked.
+ * Uses Redis when available for cross-instance abuse tracking.
  */
-export function isAbusiveIP(ip: string): boolean {
+export async function isAbusiveIP(ip: string): Promise<boolean> {
+  if (isRedisAvailable()) {
+    return redisIsAbusiveIP(ip);
+  }
+  return isAbusiveIPInMemory(ip);
+}
+
+function isAbusiveIPInMemory(ip: string): boolean {
   const record = abuseTracker.get(ip);
   if (!record) return false;
   if (record.blockedUntil > Date.now()) return true;
@@ -273,8 +331,16 @@ export function isAbusiveIP(ip: string): boolean {
 /**
  * Record a rate-limit violation. After 5 violations within an hour,
  * temporarily block the IP for escalating durations.
+ * Uses Redis when available.
  */
-export function recordViolation(ip: string): void {
+export async function recordViolation(ip: string): Promise<void> {
+  if (isRedisAvailable()) {
+    return redisRecordViolation(ip);
+  }
+  recordViolationInMemory(ip);
+}
+
+function recordViolationInMemory(ip: string): void {
   const now = Date.now();
   const record = abuseTracker.get(ip) || { violations: 0, blockedUntil: 0, lastViolation: 0 };
 

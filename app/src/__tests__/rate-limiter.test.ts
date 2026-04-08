@@ -71,104 +71,104 @@ describe("Rate Limiter — Cost Calculation", () => {
 });
 
 describe("Rate Limiter — Burst Protection", () => {
-  it("allows first request for any plan", () => {
-    const result = checkBurstLimit("burst-test-1-" + Date.now(), "free");
+  it("allows first request for any plan", async () => {
+    const result = await checkBurstLimit("burst-test-1-" + Date.now(), "free");
     expect(result.allowed).toBe(true);
   });
 
-  it("blocks guest after 1 request per minute", () => {
+  it("blocks guest after 1 request per minute", async () => {
     const key = "burst-guest-" + Date.now();
-    const r1 = checkBurstLimit(key, "guest");
+    const r1 = await checkBurstLimit(key, "guest");
     expect(r1.allowed).toBe(true);
 
-    const r2 = checkBurstLimit(key, "guest");
+    const r2 = await checkBurstLimit(key, "guest");
     expect(r2.allowed).toBe(false);
     expect(r2.retryAfterMs).toBeGreaterThan(0);
   });
 
-  it("allows free plan 2 requests per minute", () => {
+  it("allows free plan 2 requests per minute", async () => {
     const key = "burst-free-" + Date.now();
-    expect(checkBurstLimit(key, "free").allowed).toBe(true);
-    expect(checkBurstLimit(key, "free").allowed).toBe(true);
-    expect(checkBurstLimit(key, "free").allowed).toBe(false);
+    expect((await checkBurstLimit(key, "free")).allowed).toBe(true);
+    expect((await checkBurstLimit(key, "free")).allowed).toBe(true);
+    expect((await checkBurstLimit(key, "free")).allowed).toBe(false);
   });
 
-  it("pro plan allows 5 requests per minute", () => {
+  it("pro plan allows 5 requests per minute", async () => {
     const key = "burst-pro-" + Date.now();
     for (let i = 0; i < 5; i++) {
-      expect(checkBurstLimit(key, "pro").allowed).toBe(true);
+      expect((await checkBurstLimit(key, "pro")).allowed).toBe(true);
     }
-    expect(checkBurstLimit(key, "pro").allowed).toBe(false);
+    expect((await checkBurstLimit(key, "pro")).allowed).toBe(false);
   });
 });
 
 describe("Rate Limiter — Concurrency Guard", () => {
-  it("blocks concurrent requests for guest/free", () => {
+  it("blocks concurrent requests for guest/free", async () => {
     const key = "conc-test-" + Date.now();
-    expect(acquireConcurrencySlot(key, "free")).toBe(true);
-    expect(acquireConcurrencySlot(key, "free")).toBe(false);
-    releaseConcurrencySlot(key);
-    expect(acquireConcurrencySlot(key, "free")).toBe(true);
-    releaseConcurrencySlot(key);
+    expect(await acquireConcurrencySlot(key, "free")).toBe(true);
+    expect(await acquireConcurrencySlot(key, "free")).toBe(false);
+    await releaseConcurrencySlot(key);
+    expect(await acquireConcurrencySlot(key, "free")).toBe(true);
+    await releaseConcurrencySlot(key);
   });
 
-  it("allows concurrent requests for pro/team", () => {
+  it("allows concurrent requests for pro/team", async () => {
     const key = "conc-pro-" + Date.now();
-    expect(acquireConcurrencySlot(key, "pro")).toBe(true);
-    expect(acquireConcurrencySlot(key, "pro")).toBe(true);
+    expect(await acquireConcurrencySlot(key, "pro")).toBe(true);
+    expect(await acquireConcurrencySlot(key, "pro")).toBe(true);
   });
 });
 
 describe("Rate Limiter — Anonymous Quota", () => {
-  it("allows 3 requests for a new IP", () => {
+  it("allows 3 requests for a new IP", async () => {
     const ip = "192.168.1." + Date.now();
-    expect(checkAnonymousQuota(ip).allowed).toBe(true);
-    expect(checkAnonymousQuota(ip).allowed).toBe(true);
-    expect(checkAnonymousQuota(ip).allowed).toBe(true);
-    expect(checkAnonymousQuota(ip).allowed).toBe(false);
+    expect((await checkAnonymousQuota(ip)).allowed).toBe(true);
+    expect((await checkAnonymousQuota(ip)).allowed).toBe(true);
+    expect((await checkAnonymousQuota(ip)).allowed).toBe(true);
+    expect((await checkAnonymousQuota(ip)).allowed).toBe(false);
   });
 
-  it("tracks remaining count correctly", () => {
+  it("tracks remaining count correctly", async () => {
     const ip = "10.0.0." + Date.now();
-    const r1 = checkAnonymousQuota(ip);
+    const r1 = await checkAnonymousQuota(ip);
     expect(r1.remaining).toBe(2);
 
-    const r2 = checkAnonymousQuota(ip);
+    const r2 = await checkAnonymousQuota(ip);
     expect(r2.remaining).toBe(1);
   });
 
-  it("cost-weighted requests consume more quota", () => {
+  it("cost-weighted requests consume more quota", async () => {
     const ip = "172.16.0." + Date.now();
     // Cost 2 request eats 2 of 3 quota
-    const r1 = checkAnonymousQuota(ip, 2);
+    const r1 = await checkAnonymousQuota(ip, 2);
     expect(r1.allowed).toBe(true);
     expect(r1.remaining).toBe(1);
 
     // Cost 2 would exceed remaining 1
-    const r2 = checkAnonymousQuota(ip, 2);
+    const r2 = await checkAnonymousQuota(ip, 2);
     expect(r2.allowed).toBe(false);
   });
 });
 
 describe("Rate Limiter — Abuse Detection", () => {
-  it("new IP is not abusive", () => {
-    expect(isAbusiveIP("1.2.3." + Date.now())).toBe(false);
+  it("new IP is not abusive", async () => {
+    expect(await isAbusiveIP("1.2.3." + Date.now())).toBe(false);
   });
 
-  it("blocks IP after 5 violations", () => {
+  it("blocks IP after 5 violations", async () => {
     const ip = "abuse-test-" + Date.now();
     for (let i = 0; i < 5; i++) {
-      recordViolation(ip);
+      await recordViolation(ip);
     }
-    expect(isAbusiveIP(ip)).toBe(true);
+    expect(await isAbusiveIP(ip)).toBe(true);
   });
 
-  it("escalates block duration with more violations", () => {
+  it("escalates block duration with more violations", async () => {
     const ip = "abuse-escalate-" + Date.now();
     for (let i = 0; i < 10; i++) {
-      recordViolation(ip);
+      await recordViolation(ip);
     }
-    expect(isAbusiveIP(ip)).toBe(true);
+    expect(await isAbusiveIP(ip)).toBe(true);
   });
 });
 

@@ -5,9 +5,12 @@ const genAI = new GoogleGenerativeAI(
   process.env.GOOGLE_GENERATIVE_AI_API_KEY!
 );
 
+// Model name — configurable via env var for zero-downtime upgrades
+const AI_MODEL = process.env.KLAR_AI_MODEL || "gemini-2.5-flash";
+
 // Primary model — Gemini 2.5 Flash for fast, accurate fact-checking
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: AI_MODEL,
   generationConfig: {
     temperature: 0.1,
     topP: 0.95,
@@ -17,7 +20,7 @@ const model = genAI.getGenerativeModel({
 
 // Grounded model — uses Google Search for real-time web grounding
 const groundedModel = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: AI_MODEL,
   generationConfig: {
     temperature: 0.1,
     topP: 0.95,
@@ -27,10 +30,46 @@ const groundedModel = genAI.getGenerativeModel({
 });
 
 // Per-call timeouts — tuned to fit multiple calls within Vercel's 60s limit
-// extractClaims gets more time (large text), judgeClaim gets less (small prompt)
 const EXTRACT_TIMEOUT_MS = 30000; // 30s for claim extraction
 const JUDGE_TIMEOUT_MS = 20000;   // 20s per judgment call
 const GROUNDED_TIMEOUT_MS = 15000; // 15s for grounded search
+
+// Token usage tracking — request-scoped for thread safety
+// Each concurrent request gets its own TokenTracker instance
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export class TokenTracker {
+  private _session: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+  private _last: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+
+  track(response: { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } }) {
+    const meta = response.usageMetadata;
+    if (meta) {
+      const usage: TokenUsage = {
+        promptTokens: meta.promptTokenCount || 0,
+        completionTokens: meta.candidatesTokenCount || 0,
+        totalTokens: meta.totalTokenCount || 0,
+      };
+      this._last = usage;
+      this._session.promptTokens += usage.promptTokens;
+      this._session.completionTokens += usage.completionTokens;
+      this._session.totalTokens += usage.totalTokens;
+    }
+  }
+
+  getSession(): TokenUsage { return { ...this._session }; }
+  getLast(): TokenUsage { return { ...this._last }; }
+  reset(): void { this._session = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }; }
+}
+
+// Estimate tokens before sending (rough: ~4 chars per token for English)
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -41,20 +80,48 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-export async function extractClaims(text: string): Promise<ExtractedClaim[]> {
-  // Truncate to 15K chars for extraction — Gemini processes this much in <20s
-  // The full text is still available for other analyses (bias, AI detection, etc.)
-  const truncatedText = text.length > 15000 ? text.slice(0, 15000) : text;
+export interface ExtractOptions {
+  /** Maximum claims to extract (default: 10) */
+  maxClaims?: number;
+  /** Timeout in ms (default: EXTRACT_TIMEOUT_MS) */
+  timeoutMs?: number;
+}
 
-  const prompt = `You are a factual claim extraction system. Analyze the following text and extract every distinct factual claim that can be verified against external sources.
+export async function extractClaims(
+  text: string,
+  language: string = "en",
+  tracker?: TokenTracker,
+  options?: ExtractOptions
+): Promise<ExtractedClaim[]> {
+  const maxClaims = options?.maxClaims ?? 10;
+  const timeoutMs = options?.timeoutMs ?? EXTRACT_TIMEOUT_MS;
+  // Truncate text — shorter text = faster AI response
+  const truncatedText = text.length > 20000 ? text.slice(0, 20000) : text;
 
-Rules:
-- Extract ONLY factual claims (statements presented as facts)
-- SKIP opinions, questions, subjective statements, and stylistic elements
+  const langInstruction = language === "de"
+    ? "The text is in German. Extract claims in their original German wording but ensure they are factually verifiable statements."
+    : language !== "en"
+      ? `The text is in ${language}. Extract claims in their original language but ensure they are factually verifiable statements.`
+      : "";
+
+  const prompt = `You are an expert factual claim extraction system used by journalists, researchers, and businesses to verify content accuracy.
+
+Your task: Analyze the following text and extract every distinct, verifiable factual claim. Prioritize claims that are:
+1. Most likely to be false or misleading (statistics, dates, names, amounts)
+2. Most impactful if wrong (health claims, legal claims, financial claims)
+3. Most specific (exact numbers, proper nouns, named entities)
+
+${langInstruction}
+
+Extraction Rules:
+- Extract ONLY factual claims (statements presented as facts that can be checked against external sources)
+- SKIP opinions, questions, subjective statements, meta-commentary, and stylistic elements
 - Each claim should be a single, atomic, verifiable statement
+- For compound claims ("X happened in 2020 and Y happened in 2021"), split into separate claims
 - Include the original sentence each claim comes from
 - Track the character position (start/end) of each claim in the original text
-- Respond ONLY with valid JSON, no markdown
+- Extract UP TO ${maxClaims} claims, prioritized by importance and verifiability
+- Respond ONLY with valid JSON
 
 Text to analyze:
 """
@@ -62,7 +129,7 @@ ${truncatedText}
 """
 
 Respond with a JSON array of objects, each with:
-- "claim_text": the extracted factual claim as a clear statement
+- "claim_text": the extracted factual claim as a clear, standalone statement
 - "original_sentence": the full original sentence containing the claim
 - "position_start": character index where the claim starts in the original text
 - "position_end": character index where the claim ends in the original text`;
@@ -90,9 +157,10 @@ Respond with a JSON array of objects, each with:
         },
       },
     },
-  }), EXTRACT_TIMEOUT_MS);
+  }), timeoutMs);
 
   const response = result.response;
+  tracker?.track(response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } });
   const jsonText = response.text();
 
   try {
@@ -105,36 +173,53 @@ Respond with a JSON array of objects, each with:
   }
 }
 
+export interface JudgeOptions {
+  /** Timeout in ms (default: JUDGE_TIMEOUT_MS) */
+  timeoutMs?: number;
+}
+
 export async function judgeClaim(
   claim: ExtractedClaim,
-  sources: ClaimSource[]
+  sources: ClaimSource[],
+  language: string = "en",
+  tracker?: TokenTracker,
+  judgeOptions?: JudgeOptions
 ): Promise<JudgmentResult> {
+  const judgeTimeout = judgeOptions?.timeoutMs ?? JUDGE_TIMEOUT_MS;
   const sourcesText = sources
     .map(
       (s, i) =>
-        `Source ${i + 1} [${s.source_type}]: "${s.title}"\nURL: ${s.url}\nContent: ${s.snippet}`
+        `Source ${i + 1} [${s.source_type}${s.credibility_score ? `, credibility: ${s.credibility_score}` : ""}]: "${s.title}"\nURL: ${s.url}\nContent: ${s.snippet}`
     )
     .join("\n\n");
 
-  const prompt = `You are a factual claim verification judge. Compare the following claim against the provided evidence sources and determine if the claim is supported, contradicted, or unverifiable.
+  const langNote = language !== "en"
+    ? `The claim may be in ${language === "de" ? "German" : language}. Evaluate it regardless of language — sources in any language are valid evidence.`
+    : "";
+
+  const prompt = `You are a senior fact-checking judge used by journalists and researchers. Compare the following claim against the provided evidence sources and determine if the claim is supported, contradicted, or unverifiable.
+
+${langNote}
 
 CLAIM: "${claim.claim_text}"
 
 EVIDENCE SOURCES:
 ${sourcesText || "No evidence sources found."}
 
-Rules:
-- "supported": The evidence clearly confirms the claim, or the claim is very close to what the evidence states
-- "contradicted": The evidence clearly contradicts the claim or shows it is factually wrong
-- "unverifiable": The evidence is insufficient, ambiguous, or no relevant sources were found
+Evaluation Rules:
+- "supported": The evidence clearly confirms the claim. Minor wording differences are acceptable if the factual core matches.
+- "contradicted": The evidence clearly contradicts the claim — wrong numbers, incorrect dates, false attributions, or factually incorrect statements.
+- "unverifiable": The evidence is insufficient, ambiguous, or no relevant sources were found. Be honest — if you can't verify it, say so.
 - Be conservative: if evidence is partial or unclear, use "unverifiable"
-- Provide a clear, concise reasoning for your verdict
+- Provide a clear, concise reasoning explaining WHY you reached this verdict (cite specific source evidence)
+- Provide a specific, actionable recommendation for how to fix or improve the claim if it's contradicted or unverifiable
 - Rate your confidence from 0.0 to 1.0
 
 Respond with a JSON object containing:
 - "verdict": one of "supported", "contradicted", "unverifiable"
 - "confidence": a number between 0.0 and 1.0
-- "reasoning": a clear explanation of why you reached this verdict (2-3 sentences)`;
+- "reasoning": a clear explanation citing specific evidence (2-3 sentences)
+- "recommendation": a specific action to fix/improve the claim (1-2 sentences). For supported claims, say "No changes needed." For contradicted, suggest the correct information. For unverifiable, suggest how to verify.`;
 
   const result = await withTimeout(model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -150,13 +235,15 @@ Respond with a JSON object containing:
           },
           confidence: { type: SchemaType.NUMBER },
           reasoning: { type: SchemaType.STRING },
+          recommendation: { type: SchemaType.STRING },
         },
-        required: ["verdict", "confidence", "reasoning"],
+        required: ["verdict", "confidence", "reasoning", "recommendation"],
       },
     },
-  }), JUDGE_TIMEOUT_MS);
+  }), judgeTimeout);
 
   const response = result.response;
+  tracker?.track(response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } });
   const jsonText = response.text();
 
   try {
@@ -166,6 +253,7 @@ Respond with a JSON object containing:
       verdict: judgment.verdict,
       confidence: Math.min(1, Math.max(0, judgment.confidence)),
       reasoning: judgment.reasoning,
+      recommendation: judgment.recommendation || undefined,
       sources,
     };
   } catch {
@@ -174,6 +262,7 @@ Respond with a JSON object containing:
       verdict: "unverifiable",
       confidence: 0,
       reasoning: "Failed to process AI judgment for this claim.",
+      recommendation: "Please retry the analysis or verify this claim manually.",
       sources,
     };
   }
@@ -184,7 +273,8 @@ Respond with a JSON object containing:
  * Returns the grounded answer + structured source citations from the web.
  */
 export async function groundedFactCheck(
-  claimText: string
+  claimText: string,
+  tracker?: TokenTracker
 ): Promise<{
   answer: string;
   sources: ClaimSource[];
@@ -201,6 +291,7 @@ export async function groundedFactCheck(
     const response = result.response;
     const candidate = response.candidates?.[0];
     const answer = response.text();
+    tracker?.track(response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } });
 
     const sources: ClaimSource[] = [];
     const searchQueries: string[] = [];

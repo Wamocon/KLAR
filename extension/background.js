@@ -2,6 +2,8 @@
  * KLAR Extension — Background Service Worker
  *
  * Handles context menus, API communication, and extension state.
+ * Implements retry-with-backoff, AbortController timeouts, and
+ * structured error propagation for reliable verification.
  */
 
 importScripts("constants.js");
@@ -10,10 +12,10 @@ importScripts("constants.js");
 let keepAliveInterval = null;
 function startKeepAlive() {
   if (keepAliveInterval) return;
+  // Ping every 20s — Chrome kills idle workers after 30s
   keepAliveInterval = setInterval(() => {
-    // Simple ping to keep service worker alive (Chrome kills idle workers after 30s)
     chrome.runtime.getPlatformInfo(() => {});
-  }, 25000);
+  }, 20000);
 }
 function stopKeepAlive() {
   if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
@@ -51,7 +53,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message.type === "VERIFY_URL") {
-    verifyUrl(message.url, message.tabId).then(sendResponse);
+    // FIX: Forward analyses from the message (was being dropped before)
+    verifyUrl(message.url, message.tabId, message.analyses).then(sendResponse);
+    return true;
+  }
+  if (message.type === "VALIDATE_KEY") {
+    validateApiKey(message.apiKey).then(sendResponse);
     return true;
   }
   if (message.type === "GET_API_KEY") {
@@ -80,26 +87,124 @@ async function getApiKey() {
   });
 }
 
+// ─── Retry-capable fetch with AbortController timeout ───
+
+/**
+ * Fetch with automatic retry and timeout.
+ * Uses AbortController for clean cancellation on timeout.
+ * Retries on 5xx, 429 (with Retry-After), and network errors.
+ * Does NOT retry on 4xx client errors (except 429).
+ */
+async function fetchWithRetry(url, options, { retries = KLAR.MAX_RETRIES, timeoutMs = KLAR.FETCH_TIMEOUT_MS } = {}) {
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timer);
+
+      // Don't retry client errors (except 429 rate limit)
+      if (response.status === 429 && attempt < retries) {
+        const retryAfter = parseInt(response.headers.get("Retry-After") || "3", 10);
+        await delay(retryAfter * 1000);
+        continue;
+      }
+
+      // Retry on server errors (5xx) — likely transient cold-start or AI timeout
+      if (response.status >= 500 && attempt < retries) {
+        await delay(KLAR.RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+
+      return response;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err;
+
+      // AbortController timeout → convert to readable error
+      if (err.name === "AbortError") {
+        lastError = new Error("Request timed out — the server took too long to respond");
+      }
+
+      // Network error → retry with backoff
+      if (attempt < retries) {
+        await delay(KLAR.RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error("Request failed after retries");
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ─── API Key Validation (lightweight — no pipeline) ───
+
+async function validateApiKey(apiKey) {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(`${KLAR.API_BASE}/api/extension/validate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      return { valid: false, error: "invalid_key", message: "Invalid API key — not found on server" };
+    }
+    if (response.status === 403) {
+      return { valid: false, error: "missing_scope", message: "API key does not have 'verify' scope" };
+    }
+    if (response.ok && data.valid) {
+      return { valid: true, plan: data.plan || "free" };
+    }
+
+    return { valid: false, error: "unknown", message: data.error || "Validation failed" };
+  } catch (err) {
+    if (err.name === "AbortError") {
+      return { valid: false, error: "timeout", message: "Server took too long — check your connection" };
+    }
+    const isNetwork = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
+    return {
+      valid: false,
+      error: isNetwork ? "network" : "unknown",
+      message: isNetwork
+        ? "Cannot reach KLAR server. Check your internet connection."
+        : (err.message || "Validation failed"),
+    };
+  }
+}
+
 /**
  * Ensure the content script is injected into the target tab.
- * Pings first; if no response, injects programmatically.
- * Waits briefly after injection to let the listener register.
  */
 async function ensureContentScript(tabId) {
   if (!tabId) return false;
   try {
     await chrome.tabs.sendMessage(tabId, { type: "KLAR_PING" });
-    return true; // already injected
+    return true;
   } catch {
-    // Content script missing (tab was open before extension load/reload)
     try {
       await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] });
       await chrome.scripting.executeScript({ target: { tabId }, files: ["constants.js", "content.js"] });
-      // Wait for listener to register before sending messages
       await new Promise((r) => setTimeout(r, 150));
       return true;
     } catch {
-      return false; // restricted page (chrome://, about:, etc.)
+      return false;
     }
   }
 }
@@ -113,35 +218,37 @@ async function openSidePanel(tabId) {
       await chrome.sidePanel.open({ tabId });
     }
   } catch {
-    // Side panel API may not be available or tab is restricted
+    // Side panel API may not be available
   }
 }
+
+// ─── Core Verification Functions ───
 
 async function verifyText(text, tabId, analyses) {
   const apiKey = await getApiKey();
   if (!apiKey) {
     const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured. Open the extension popup to set up.";
-    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "no_api_key" });
     return { error: "No API key" };
   }
 
   if (text.length < KLAR.MIN_TEXT_LENGTH) {
     const msg = chrome.i18n.getMessage("textTooShortError", [String(KLAR.MIN_TEXT_LENGTH)]) || `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.`;
-    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "text_too_short" });
     return { error: "Text too short" };
   }
 
   // Open side panel first so user immediately sees loading state
   await openSidePanel(tabId);
+  // Small delay to let panel initialize before sending loading state
+  await delay(300);
 
-  // Ensure content script is available to receive results
   await ensureContentScript(tabId);
-
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
   startKeepAlive();
   try {
-    const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
+    const response = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -153,17 +260,26 @@ async function verifyText(text, tabId, analyses) {
       }),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${response.status}`);
+      const errorCode = data.error_code || "server_error";
+      const errorMsg = data.error || `Server returned ${response.status}`;
+      notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: response.status });
+      return { error: errorMsg };
     }
 
-    const result = await response.json();
-    notifyTab(tabId, { type: "KLAR_RESULT", result });
-    return result;
+    notifyTab(tabId, { type: "KLAR_RESULT", result: data });
+    return data;
   } catch (err) {
     const error = err instanceof Error ? err.message : "Verification failed";
-    notifyTab(tabId, { type: "KLAR_ERROR", error });
+    const isTimeout = error.includes("timed out") || error.includes("timeout");
+    const isNetwork = error.includes("Failed to fetch") || error.includes("NetworkError");
+    notifyTab(tabId, {
+      type: "KLAR_ERROR",
+      error,
+      errorCode: isTimeout ? "timeout" : isNetwork ? "network" : "unknown",
+    });
     return { error };
   } finally {
     stopKeepAlive();
@@ -174,17 +290,18 @@ async function verifyUrl(url, tabId, analyses) {
   const apiKey = await getApiKey();
   if (!apiKey) {
     const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured.";
-    notifyTab(tabId, { type: "KLAR_ERROR", error: msg });
+    notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "no_api_key" });
     return { error: "No API key" };
   }
 
   await openSidePanel(tabId);
+  await delay(300);
   await ensureContentScript(tabId);
   notifyTab(tabId, { type: "KLAR_LOADING" });
 
   startKeepAlive();
   try {
-    const response = await fetch(`${KLAR.API_BASE}/api/extension/scan`, {
+    const response = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/scan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -193,17 +310,26 @@ async function verifyUrl(url, tabId, analyses) {
       body: JSON.stringify({ url, analyses: analyses || ["fact-check"] }),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${response.status}`);
+      const errorCode = data.error_code || "server_error";
+      const errorMsg = data.error || `Server returned ${response.status}`;
+      notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: response.status });
+      return { error: errorMsg };
     }
 
-    const result = await response.json();
-    notifyTab(tabId, { type: "KLAR_RESULT", result });
-    return result;
+    notifyTab(tabId, { type: "KLAR_RESULT", result: data });
+    return data;
   } catch (err) {
     const error = err instanceof Error ? err.message : "Verification failed";
-    notifyTab(tabId, { type: "KLAR_ERROR", error });
+    const isTimeout = error.includes("timed out") || error.includes("timeout");
+    const isNetwork = error.includes("Failed to fetch") || error.includes("NetworkError");
+    notifyTab(tabId, {
+      type: "KLAR_ERROR",
+      error,
+      errorCode: isTimeout ? "timeout" : isNetwork ? "network" : "unknown",
+    });
     return { error };
   } finally {
     stopKeepAlive();
@@ -214,16 +340,13 @@ async function verifyUrl(url, tabId, analyses) {
 let latestState = { type: "KLAR_IDLE" };
 
 function notifyTab(tabId, message) {
-  // Always store latest state so sidepanel can retrieve it on open
   latestState = message;
 
   if (tabId) {
-    chrome.tabs.sendMessage(tabId, message).catch(() => {
-      // Tab may not have content script injected
-    });
+    chrome.tabs.sendMessage(tabId, message).catch(() => {});
   }
-  // Also broadcast to side panel (it listens via chrome.runtime.onMessage)
-  chrome.runtime.sendMessage(message).catch(() => {
-    // Side panel may not be open yet — that's ok, it will poll latestState
-  });
+  // Broadcast to side panel with small delay for reliability
+  setTimeout(() => {
+    chrome.runtime.sendMessage(message).catch(() => {});
+  }, 50);
 }

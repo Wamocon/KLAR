@@ -15,7 +15,7 @@
   "verifySelected": { "message": "Verify Selected Text" },
   "getApiKey": { "message": "Get your API key →" },
   "apiKeySaved": { "message": "API key saved!" },
-  "apiKeyConfigured": { "message": "API key configured ✓" },
+  "apiKeyConfigured": { "message": "API key configured" },
   "enterApiKey": { "message": "Please enter an API key" },
   "invalidKeyFormat": { "message": "Invalid key format. Keys start with klar_" },
   "selectMinChars": { "message": "Select at least $MIN$ characters on the page first", "placeholders": { "MIN": { "content": "$1" } } },

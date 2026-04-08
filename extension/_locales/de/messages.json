@@ -15,7 +15,7 @@
   "verifySelected": { "message": "Markierten Text überprüfen" },
   "getApiKey": { "message": "API-Schlüssel erhalten →" },
   "apiKeySaved": { "message": "API-Schlüssel gespeichert!" },
-  "apiKeyConfigured": { "message": "API-Schlüssel konfiguriert ✓" },
+  "apiKeyConfigured": { "message": "API-Schlüssel konfiguriert" },
   "enterApiKey": { "message": "Bitte geben Sie einen API-Schlüssel ein" },
   "invalidKeyFormat": { "message": "Ungültiges Format. Schlüssel beginnen mit klar_" },
   "selectMinChars": { "message": "Markieren Sie mindestens $MIN$ Zeichen auf der Seite", "placeholders": { "MIN": { "content": "$1" } } },
