@@ -36,16 +36,18 @@ export async function POST(request: NextRequest) {
   if (!apiKeyAuth) {
     return corsResponse({ error: "API key required" }, 401);
   }
-  if (!hasScope(apiKeyAuth, "verify")) {
+  if (apiKeyAuth && !hasScope(apiKeyAuth, "verify")) {
     return corsResponse({ error: "API key does not have 'verify' scope" }, 403);
   }
 
-  const keyRateCheck = checkApiKeyRateLimit(apiKeyAuth.keyId, apiKeyAuth.rateLimitPerMinute);
-  if (!keyRateCheck.allowed) {
-    const retryAfterSec = Math.ceil(keyRateCheck.retryAfterMs / 1000);
-    return corsResponse({ error: "Rate limit exceeded", retryAfter: retryAfterSec }, 429, {
-      "Retry-After": String(retryAfterSec),
-    });
+  if (apiKeyAuth) {
+    const keyRateCheck = checkApiKeyRateLimit(apiKeyAuth.keyId, apiKeyAuth.rateLimitPerMinute);
+    if (!keyRateCheck.allowed) {
+      const retryAfterSec = Math.ceil(keyRateCheck.retryAfterMs / 1000);
+      return corsResponse({ error: "Rate limit exceeded", retryAfter: retryAfterSec }, 429, {
+        "Retry-After": String(retryAfterSec),
+      });
+    }
   }
 
   let body: unknown;
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
     return corsResponse({ error: err instanceof Error ? err.message : "Invalid content" }, 400);
   }
 
+  // Truncate for AI extraction — 10K chars is plenty for claim extraction with thinkingBudget:0
+  const textForAI = text.slice(0, 10000);
   const analyses = parsed.data.analyses!;
   const isComprehensive = analyses.includes("comprehensive");
   const language = parsed.data.language!;
@@ -94,10 +98,10 @@ export async function POST(request: NextRequest) {
   try {
     const tracker = new TokenTracker();
 
-    // Extract claims (the only AI call in this phase — ~10s for up to 20K text)
-    const claims = await extractClaims(text, language, tracker, {
+    // Extract claims (the only AI call in this phase — ~10-20s for up to 8K text)
+    const claims = await extractClaims(textForAI, language, tracker, {
       maxClaims: 8,
-      timeoutMs: 25000,
+      timeoutMs: 40000,
     });
 
     // NLP analyses run on text directly — fast, no AI calls

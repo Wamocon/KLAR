@@ -97,6 +97,7 @@ async function getApiKey() {
  */
 async function fetchWithRetry(url, options, { retries = KLAR.MAX_RETRIES, timeoutMs = KLAR.FETCH_TIMEOUT_MS } = {}) {
   let lastError;
+  console.log("[KLAR] fetchWithRetry:", url, "timeout:", timeoutMs, "retries:", retries);
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
@@ -254,17 +255,22 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
 
   try {
     // ── Phase 1: Extract claims ──
+    console.log("[KLAR] Phase 1: Calling /extract with", JSON.stringify(extractBody).length, "bytes to", KLAR.API_BASE);
+    const extractStart = Date.now();
     const extractRes = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/extract`, {
       method: "POST",
       headers,
       body: JSON.stringify({ ...extractBody, analyses: analyses || ["fact-check"] }),
     });
+    console.log("[KLAR] Phase 1 response:", extractRes.status, "in", Date.now() - extractStart, "ms");
 
     const extractData = await extractRes.json().catch(() => ({}));
+    console.log("[KLAR] Phase 1 claims:", extractData.claims?.length || 0);
 
     if (!extractRes.ok) {
       const errorCode = extractData.error_code || "server_error";
       const errorMsg = extractData.error || `Server returned ${extractRes.status}`;
+      console.error("[KLAR] Phase 1 error:", errorCode, errorMsg);
       notifyTab(tabId, { type: "KLAR_ERROR", error: errorMsg, errorCode, status: extractRes.status });
       return { error: errorMsg };
     }
@@ -393,9 +399,11 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
     };
 
     notifyTab(tabId, { type: "KLAR_RESULT", result: finalResult });
+    console.log("[KLAR] Done! Trust score:", trustScore, "Claims:", totalClaims);
     return finalResult;
   } catch (err) {
     const error = err instanceof Error ? err.message : "Verification failed";
+    console.error("[KLAR] Pipeline error:", error);
     const isTimeout = error.includes("timed out") || error.includes("timeout");
     const isNetwork = error.includes("Failed to fetch") || error.includes("NetworkError");
     notifyTab(tabId, {

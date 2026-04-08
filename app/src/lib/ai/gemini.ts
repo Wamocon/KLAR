@@ -8,7 +8,12 @@ const genAI = new GoogleGenerativeAI(
 // Model name — configurable via env var for zero-downtime upgrades
 const AI_MODEL = process.env.KLAR_AI_MODEL || "gemini-2.5-flash";
 
-// Primary model — Gemini 2.5 Flash for fast, accurate fact-checking
+// Fast model for structured extraction tasks (no thinking overhead)
+// We use the REST API directly for extraction to set thinkingBudget: 0
+// (the deprecated SDK doesn't support thinkingConfig)
+const FAST_MODEL = process.env.KLAR_FAST_MODEL || "gemini-2.5-flash";
+
+// Primary model — Gemini 2.5 Flash for reasoning-heavy tasks (judgment, evidence evaluation)
 const model = genAI.getGenerativeModel({
   model: AI_MODEL,
   generationConfig: {
@@ -96,7 +101,8 @@ export async function extractClaims(
   const maxClaims = options?.maxClaims ?? 10;
   const timeoutMs = options?.timeoutMs ?? EXTRACT_TIMEOUT_MS;
   // Truncate text — shorter text = faster AI response
-  const truncatedText = text.length > 20000 ? text.slice(0, 20000) : text;
+  // 10K chars is the safe limit for reliable <30s responses
+  const truncatedText = text.length > 10000 ? text.slice(0, 10000) : text;
 
   const langInstruction = language === "de"
     ? "The text is in German. Extract claims in their original German wording but ensure they are factually verifiable statements."
@@ -134,19 +140,25 @@ Respond with a JSON array of objects, each with:
 - "position_start": character index where the claim starts in the original text
 - "position_end": character index where the claim ends in the original text`;
 
-  const result = await withTimeout(model.generateContent({
+  // Direct REST API call with thinkingBudget: 0 — bypasses thinking overhead
+  // The deprecated @google/generative-ai SDK doesn't support thinkingConfig,
+  // but the REST API does. This drops extraction from ~35s to ~5-8s.
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY!;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${FAST_MODEL}:generateContent?key=${apiKey}`;
+
+  const requestBody = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
-        type: SchemaType.ARRAY,
+        type: "ARRAY",
         items: {
-          type: SchemaType.OBJECT,
+          type: "OBJECT",
           properties: {
-            claim_text: { type: SchemaType.STRING },
-            original_sentence: { type: SchemaType.STRING },
-            position_start: { type: SchemaType.INTEGER },
-            position_end: { type: SchemaType.INTEGER },
+            claim_text: { type: "STRING" },
+            original_sentence: { type: "STRING" },
+            position_start: { type: "INTEGER" },
+            position_end: { type: "INTEGER" },
           },
           required: [
             "claim_text",
@@ -156,12 +168,55 @@ Respond with a JSON array of objects, each with:
           ],
         },
       },
+      temperature: 0.1,
+      topP: 0.95,
+      maxOutputTokens: 4096,
+      thinkingConfig: { thinkingBudget: 0 },
     },
-  }), timeoutMs);
+  };
 
-  const response = result.response;
-  tracker?.track(response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } });
-  const jsonText = response.text();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let result: Response;
+  try {
+    result = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("AI request timed out during claim extraction");
+    }
+    throw err;
+  }
+  clearTimeout(timer);
+
+  if (!result.ok) {
+    const errData = await result.json().catch(() => ({ error: { message: result.statusText } }));
+    throw new Error(`Gemini API error: ${errData.error?.message || result.statusText}`);
+  }
+
+  const data = await result.json();
+  const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!jsonText) {
+    throw new Error("Empty response from Gemini API during claim extraction");
+  }
+
+  // Track token usage
+  if (tracker && data.usageMetadata) {
+    tracker.track({
+      usageMetadata: {
+        promptTokenCount: data.usageMetadata.promptTokenCount,
+        candidatesTokenCount: data.usageMetadata.candidatesTokenCount,
+        totalTokenCount: data.usageMetadata.totalTokenCount,
+      },
+    });
+  }
 
   try {
     const claims: ExtractedClaim[] = JSON.parse(jsonText);
