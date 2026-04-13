@@ -24,7 +24,7 @@ export async function searchWeb(query: string): Promise<ClaimSource[]> {
       },
       body: JSON.stringify({
         q: query,
-        num: 3,
+        num: 5,
       }),
       signal: AbortSignal.timeout(8000),
     });
@@ -34,7 +34,7 @@ export async function searchWeb(query: string): Promise<ClaimSource[]> {
     const data = await response.json();
     const results: SerperResult[] = data?.organic || [];
 
-    return results.slice(0, 3).map((r) => ({
+    return results.slice(0, 5).map((r) => ({
       title: r.title,
       url: r.link,
       snippet: r.snippet || "",

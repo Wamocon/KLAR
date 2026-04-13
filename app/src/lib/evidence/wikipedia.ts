@@ -22,7 +22,7 @@ export async function searchWikipedia(
       list: "search",
       srsearch: query,
       srnamespace: "0",
-      srlimit: "3",
+      srlimit: "2",
       srprop: "snippet",
       format: "json",
       origin: "*",
@@ -55,7 +55,7 @@ export async function searchWikidata(query: string): Promise<ClaimSource[]> {
       action: "wbsearchentities",
       search: query,
       language: "en",
-      limit: "2",
+      limit: "1",
       format: "json",
       origin: "*",
     });

@@ -318,11 +318,16 @@ export async function* runVerificationPipeline(
       const reasoning = (j.reasoning || "").toLowerCase();
       const relevantSources = j.sources.filter((s, i) => {
         if (reasoning.includes(`source ${i + 1}`)) return true;
-        const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+        const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 5);
         if (titleWords.some(w => reasoning.includes(w))) return true;
-        if (j.verdict !== "unverifiable") return true;
+        try {
+          const domain = new URL(s.url).hostname.replace("www.", "").split(".")[0];
+          if (domain.length > 4 && reasoning.includes(domain)) return true;
+        } catch { /* invalid URL */ }
         return false;
       });
+      // If filter removed everything, keep top 3 by position (first sources are most relevant from search)
+      const finalSources = relevantSources.length > 0 ? relevantSources : j.sources.slice(0, 3);
       return {
         claim_text: j.claim.claim_text,
         original_sentence: j.claim.original_sentence,
@@ -330,7 +335,7 @@ export async function* runVerificationPipeline(
         confidence: j.confidence,
         reasoning: j.reasoning,
         recommendation: j.recommendation || undefined,
-        sources: relevantSources,
+        sources: finalSources,
         position_start: j.claim.position_start,
         position_end: j.claim.position_end,
       };

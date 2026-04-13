@@ -93,18 +93,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Filter sources to only include those the AI actually referenced in its reasoning
-    // This prevents showing irrelevant search results (e.g. "Zimbabwe" for a pricing claim)
+    // This prevents showing irrelevant search results (e.g. "Lufthansa" for a laptop repair claim)
     const reasoning = (judgment.reasoning || "").toLowerCase();
     const relevantSources = judgment.sources.filter((s, i) => {
       // Keep source if the AI mentioned it by index ("Source 1", "Source 2" etc.)
       if (reasoning.includes(`source ${i + 1}`)) return true;
-      // Keep source if the title or domain appears in the reasoning
-      const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      // Keep source if a significant title word (>5 chars, not generic) appears in the reasoning
+      const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 5);
       if (titleWords.some(w => reasoning.includes(w))) return true;
-      // For supported/contradicted verdicts, keep all sources (they were relevant enough for a verdict)
-      if (judgment.verdict !== "unverifiable") return true;
+      // Keep source if the domain name appears in the reasoning
+      try {
+        const domain = new URL(s.url).hostname.replace("www.", "").split(".")[0];
+        if (domain.length > 4 && reasoning.includes(domain)) return true;
+      } catch { /* invalid URL */ }
       return false;
     });
+
+    // If filter removed everything but we have a non-unverifiable verdict, keep top 3 by relevance
+    const finalSources = relevantSources.length > 0 ? relevantSources : judgment.sources.slice(0, 3);
 
     return corsResponse({
       claim_text: sanitizedClaim.claim_text,
@@ -113,7 +119,7 @@ export async function POST(request: NextRequest) {
       confidence: Math.round(adjustedConfidence * 100) / 100,
       reasoning: judgment.reasoning,
       recommendation: judgment.recommendation,
-      sources: relevantSources.map(s => ({
+      sources: finalSources.map(s => ({
         title: s.title,
         url: s.url,
         snippet: s.snippet,

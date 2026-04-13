@@ -262,18 +262,19 @@ EVIDENCE SOURCES:
 ${sourcesText || "No evidence sources found."}
 
 Evaluation Rules:
+- FIRST: Check if each source is actually relevant to this specific claim. Ignore sources that do not relate to the claim's subject matter (e.g., a Wikipedia article about a city is not evidence for a claim about laptop repair prices in that city).
 - "supported": The evidence clearly confirms the claim. Minor wording differences are acceptable if the factual core matches.
 - "contradicted": The evidence clearly contradicts the claim — wrong numbers, incorrect dates, false attributions, or factually incorrect statements.
-- "unverifiable": The evidence is insufficient, ambiguous, or no relevant sources were found. Be honest — if you can't verify it, say so.
+- "unverifiable": The evidence is insufficient, ambiguous, or no relevant sources address this claim. Be honest — if none of the sources actually address the specific claim, say so.
 - Be conservative: if evidence is partial or unclear, use "unverifiable"
-- Provide a clear, concise reasoning explaining WHY you reached this verdict (cite specific source evidence)
+- In your reasoning, explicitly reference which Source numbers you relied on (e.g., "Source 2 states that..."). Do NOT reference sources that are irrelevant to the claim.
 - Provide a specific, actionable recommendation for how to fix or improve the claim if it's contradicted or unverifiable
 - Rate your confidence from 0.0 to 1.0
 
 Respond with a JSON object containing:
 - "verdict": one of "supported", "contradicted", "unverifiable"
 - "confidence": a number between 0.0 and 1.0
-- "reasoning": a clear explanation citing specific evidence (2-3 sentences)
+- "reasoning": a clear explanation citing specific source numbers you relied on (2-3 sentences). Do not cite sources that are not relevant.
 - "recommendation": a specific action to fix/improve the claim (1-2 sentences). For supported claims, say "No changes needed." For contradicted, suggest the correct information. For unverifiable, suggest how to verify.`;
 
   const result = await withTimeout(model.generateContent({

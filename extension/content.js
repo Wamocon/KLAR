@@ -123,7 +123,7 @@ function showResult(result) {
         ${result.claims.slice(0, KLAR.MAX_VISIBLE_CLAIMS).map((c) => `
           <div class="klar-claim klar-claim-${escapeHtml(c.verdict)}">
             <div class="klar-claim-header">
-              <span class="klar-claim-verdict">${escapeHtml(c.verdict)}</span>
+              <span class="klar-claim-verdict">${c.verdict === "unverifiable" ? "unconfirmed" : escapeHtml(c.verdict)}</span>
               ${c.confidence != null ? `<span class="klar-claim-conf">${Math.round(c.confidence * 100)}%</span>` : ""}
             </div>
             <div class="klar-claim-text">${escapeHtml(c.text)}</div>

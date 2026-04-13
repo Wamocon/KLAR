@@ -229,10 +229,11 @@ function showResult(result) {
 
     for (const c of result.claims) {
       const v = esc(c.verdict || "unverifiable");
+      const label = v === "unverifiable" ? "unconfirmed" : v;
       sections.push(`
         <div class="claim-card ${v}">
           <div class="claim-header">
-            <span class="claim-badge">${v}</span>
+            <span class="claim-badge">${label}</span>
             ${c.confidence != null ? `<span class="claim-conf">${Math.round(c.confidence * 100)}% confidence</span>` : ""}
           </div>
           <div class="claim-text">${esc(c.text)}</div>
