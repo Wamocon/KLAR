@@ -91,25 +91,30 @@ function showResult(result) {
       </div>
     `);
 
-    // ── Dynamic verdict summary ──
+    // ── Smart analysis summary ──
     const sup = result.supported || 0;
     const con = result.contradicted || 0;
     const unv = result.unverifiable || 0;
     const total = sup + con + unv;
+    const claims = result.claims || [];
+    const contradictedClaims = claims.filter(c => c.verdict === "contradicted");
+    const supportedClaims = claims.filter(c => c.verdict === "supported");
+    const trunc = (s, max = 70) => s && s.length > max ? s.slice(0, max).replace(/\s+\S*$/, "") + "\u2026" : s;
     let verdictText;
     const verifiable = sup + con;
     if (verifiable === 0) {
-      verdictText = `\u2753 Could not verify \u2014 none of the ${total} claims could be confirmed or denied by available sources.`;
-    } else if (score >= 80) {
-      verdictText = `\u2705 Highly trustworthy \u2014 ${sup} of ${total} claims backed by independent sources. No contradictions found.`;
-    } else if (score >= 60) {
-      verdictText = `\ud83d\udfe2 Mostly reliable \u2014 ${sup} verified, ${con} contradicted. ${unv} unconfirmed but not necessarily wrong.`;
-    } else if (score >= 40) {
-      verdictText = `\u26a0\ufe0f Mixed reliability \u2014 ${sup} supported but ${con} contradicted. ${unv} unconfirmed. Verify key facts.`;
-    } else if (score >= 20) {
-      verdictText = `\ud83d\udfe0 Low reliability \u2014 ${con} contradicted, only ${sup} supported. Cross-check carefully.`;
+      verdictText = `\u2753 Checked ${total} claims \u2014 couldn\u2019t find sources to confirm or deny any. Common for recent/niche topics.`;
+    } else if (con === 0 && sup > 0) {
+      verdictText = sup === total
+        ? `\u2705 All ${sup} claims checked out against independent sources.`
+        : `\u2705 ${sup} claim${sup !== 1 ? "s" : ""} verified, nothing contradicted. ${unv} couldn\u2019t be checked.`;
+    } else if (sup === 0 && con > 0) {
+      const topBad = trunc(contradictedClaims[0]?.text || "");
+      verdictText = `\ud83d\uded1 ${con} claim${con !== 1 ? "s" : ""} contradicted${topBad ? `: "${topBad}"` : ""}. Do not rely on this without checking.`;
     } else {
-      verdictText = `\ud83d\uded1 Unreliable \u2014 ${con} contradicted, very few supported. Do not share without verification.`;
+      const topBad = trunc(contradictedClaims[0]?.text || "");
+      const icon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\u26a0\ufe0f" : "\ud83d\udfe0";
+      verdictText = `${icon} ${sup} verified, but "${topBad}" was contradicted.${con > 1 ? ` (+${con - 1} more)` : ""}${unv > 0 ? ` ${unv} unverified.` : ""} Check flagged claims.`;
     }
     sections.push(`<div class="klar-verdict">${verdictText}</div>`);
 

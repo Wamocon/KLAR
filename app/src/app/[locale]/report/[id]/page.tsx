@@ -285,29 +285,82 @@ export default function ReportPage() {
           </CardContent>
         </Card>
 
-        {/* Verdict Summary */}
+        {/* Smart Analysis Summary */}
         {(() => {
           const score = verification.trust_score;
           const sup = verification.supported_count;
           const con = verification.contradicted_count;
           const unv = verification.unverifiable_count;
           const total = verification.total_claims;
-          const tier = (sup + con === 0) ? "allUnconfirmed" : score >= 80 ? "high" : score >= 60 ? "good" : score >= 40 ? "mixed" : score >= 20 ? "low" : "veryLow";
-          const bgColor = tier === "allUnconfirmed" ? "bg-slate-50 dark:bg-slate-900/15 border-slate-200/60 dark:border-slate-800/30"
-            : score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200/60 dark:border-emerald-800/30"
-            : score >= 60 ? "bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/40 dark:border-emerald-800/20"
-            : score >= 40 ? "bg-amber-50 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/30"
-            : score >= 20 ? "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30"
-            : "bg-red-50 dark:bg-red-900/15 border-red-200/60 dark:border-red-800/30";
-          const textColor = tier === "allUnconfirmed" ? "text-slate-700 dark:text-slate-300"
-            : score >= 60 ? "text-emerald-800 dark:text-emerald-300"
-            : score >= 40 ? "text-amber-800 dark:text-amber-300"
-            : "text-red-800 dark:text-red-300";
+          const verifiable = sup + con;
+
+          // Pick key claims for contextual summary
+          const contradictedClaims = claims.filter(c => c.verdict === "contradicted");
+          const supportedClaims = claims.filter(c => c.verdict === "supported");
+          const trunc = (s: string, max = 90) => s && s.length > max ? s.slice(0, max).replace(/\s+\S*$/, "") + "…" : s;
+
+          const isDE = locale === "de";
+          let summaryTitle: string;
+          let summaryBody: string;
+          let bgColor: string;
+          let textColor: string;
+
+          if (verifiable === 0) {
+            bgColor = "bg-slate-50 dark:bg-slate-900/15 border-slate-200/60 dark:border-slate-800/30";
+            textColor = "text-slate-700 dark:text-slate-300";
+            summaryTitle = isDE ? "Konnte nicht verifiziert werden" : "Could not verify";
+            summaryBody = isDE
+              ? `Wir haben ${total} Behauptungen geprüft, konnten aber keine Quellen finden, die diese bestätigen oder widerlegen. Das ist häufig bei ganz neuen Nachrichten oder Nischenthemen.`
+              : `We checked ${total} claims but couldn\u2019t find sources to confirm or deny any of them. This is common for very recent news, niche topics, or highly specific product details.`;
+          } else if (con === 0 && sup > 0) {
+            bgColor = "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200/60 dark:border-emerald-800/30";
+            textColor = "text-emerald-800 dark:text-emerald-300";
+            summaryTitle = isDE ? "Sieht zuverlässig aus" : "Looks reliable";
+            if (sup === total) {
+              summaryBody = isDE
+                ? `Alle ${sup} Behauptungen wurden durch unabhängige Quellen bestätigt. Dieser Inhalt erscheint faktisch korrekt.`
+                : `All ${sup} claims checked out against independent sources. This content appears factually accurate.`;
+            } else {
+              const topGood = trunc(supportedClaims[0]?.claim_text || "");
+              summaryBody = isDE
+                ? `${sup} von ${total} Behauptungen sind durch Quellen belegt${topGood ? ` — z.B. „${topGood}"` : ""}. ${unv} Behauptung${unv !== 1 ? "en" : ""} konnte${unv !== 1 ? "n" : ""} nicht geprüft werden, aber nichts wurde widerlegt.`
+                : `${sup} of ${total} claims are backed by sources${topGood ? ` — e.g. "${topGood}"` : ""}. ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be checked but nothing was contradicted.`;
+            }
+          } else if (sup === 0 && con > 0) {
+            bgColor = "bg-red-50 dark:bg-red-900/15 border-red-200/60 dark:border-red-800/30";
+            textColor = "text-red-800 dark:text-red-300";
+            summaryTitle = isDE ? "Wichtige Fakten sind falsch" : "Key facts are wrong";
+            const topBad = trunc(contradictedClaims[0]?.claim_text || "");
+            summaryBody = isDE
+              ? `${con} Behauptung${con !== 1 ? "en wurden" : " wurde"} durch Quellen widerlegt${topBad ? `: „${topBad}"` : ""}. Verlassen Sie sich nicht auf diesen Inhalt ohne eigene Prüfung.`
+              : `${con} claim${con !== 1 ? "s were" : " was"} directly contradicted by sources${topBad ? `: "${topBad}"` : ""}. Do not rely on this content without independent verification.`;
+          } else {
+            // Mixed
+            const topBad = trunc(contradictedClaims[0]?.claim_text || "");
+            const moreStr = con > 1 ? (isDE ? ` (+${con - 1} weitere widerlegt)` : ` (+${con - 1} more contradicted)`) : "";
+            if (score >= 60) {
+              bgColor = "bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/40 dark:border-emerald-800/20";
+              textColor = "text-emerald-800 dark:text-emerald-300";
+              summaryTitle = isDE ? "Überwiegend korrekt" : "Mostly checks out";
+            } else if (score >= 40) {
+              bgColor = "bg-amber-50 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/30";
+              textColor = "text-amber-800 dark:text-amber-300";
+              summaryTitle = isDE ? "Einige Fakten stimmen nicht" : "Some facts don\u2019t check out";
+            } else {
+              bgColor = "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30";
+              textColor = "text-orange-800 dark:text-orange-300";
+              summaryTitle = isDE ? "Mehrere Fakten sind falsch" : "Several facts are wrong";
+            }
+            summaryBody = isDE
+              ? `Wir haben ${total} Behauptungen geprüft. ${sup} bestätigt, aber „${topBad}" wurde durch Quellen widerlegt${moreStr}.${unv > 0 ? ` ${unv} Behauptung${unv !== 1 ? "en" : ""} konnte${unv !== 1 ? "n" : ""} nicht verifiziert werden.` : ""} Prüfen Sie die rot markierten Behauptungen.`
+              : `We verified ${total} claims. ${sup} checked out, but "${topBad}" was contradicted by sources${moreStr}.${unv > 0 ? ` ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be verified.` : ""} Double-check the red-flagged claims before trusting this.`;
+          }
+
           return (
             <div className={`mb-8 rounded-2xl border p-5 ${bgColor}`}>
-              <h3 className={`text-sm font-semibold mb-1.5 ${textColor}`}>{t("verdict.label")}</h3>
+              <h3 className={`text-sm font-semibold mb-1.5 ${textColor}`}>{summaryTitle}</h3>
               <p className={`text-sm leading-relaxed ${textColor} opacity-90`}>
-                {t(`verdict.${tier}`, { supported: sup, total, contradicted: con, unverifiable: unv })}
+                {summaryBody}
               </p>
             </div>
           );

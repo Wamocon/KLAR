@@ -165,7 +165,7 @@ function showResult(result) {
       <div class="score-card">
         <span class="score-ring" style="color:${color}">${score}%</span>
         <span class="score-label">Trust Score</span>
-        <div class="score-desc">Percentage of claims verified as accurate by independent sources. Higher is better.</div>
+        <div class="score-desc">Ratio of supported vs. contradicted claims. Unconfirmed claims are excluded from this score.</div>
         <div class="claims-bar">
           <span class="cb-s">${result.supported || 0} supported</span>
           <span class="cb-c">${result.contradicted || 0} contradicted</span>
@@ -174,36 +174,54 @@ function showResult(result) {
       </div>
     `);
 
-    // ── Dynamic verdict summary ──
+    // ── Smart analysis summary ──
     const sup = result.supported || 0;
     const con = result.contradicted || 0;
     const unv = result.unverifiable || 0;
     const total = sup + con + unv;
-    let verdictText, verdictIcon, verdictBg;
+    const claims = result.claims || [];
+
+    // Extract key claims for the summary
+    const contradictedClaims = claims.filter(c => c.verdict === "contradicted");
+    const supportedClaims = claims.filter(c => c.verdict === "supported");
+    const truncate = (s, max = 80) => s && s.length > max ? s.slice(0, max).replace(/\s+\S*$/, "") + "…" : s;
+
+    let summaryIcon, summaryBg, summaryTitle, summaryBody;
     const verifiable = sup + con;
+
     if (verifiable === 0) {
-      verdictIcon = "\u2753"; verdictBg = "rgba(100,116,139,0.1)";
-      verdictText = `Could not verify \u2014 none of the ${total} claims could be confirmed or denied by available sources. This is common for very recent news or niche topics.`;
-    } else if (score >= 80) {
-      verdictIcon = "\u2705"; verdictBg = "rgba(16,185,129,0.1)";
-      verdictText = `Highly trustworthy \u2014 ${sup} of ${total} claims are backed by independent sources. No claims were contradicted. This content appears factually reliable.`;
-    } else if (score >= 60) {
-      verdictIcon = "\ud83d\udfe2"; verdictBg = "rgba(16,185,129,0.08)";
-      verdictText = `Mostly reliable \u2014 ${sup} claims verified, ${con} contradicted. ${unv} could not be independently confirmed but are not necessarily wrong.`;
-    } else if (score >= 40) {
-      verdictIcon = "\u26a0\ufe0f"; verdictBg = "rgba(234,179,8,0.1)";
-      verdictText = `Mixed reliability \u2014 ${sup} claims supported but ${con} contradicted by sources. ${unv} remain unconfirmed. Verify key facts before sharing.`;
-    } else if (score >= 20) {
-      verdictIcon = "\ud83d\udfe0"; verdictBg = "rgba(249,115,22,0.1)";
-      verdictText = `Low reliability \u2014 ${con} claims directly contradicted by sources. Only ${sup} supported. Cross-check this content carefully.`;
+      // All unconfirmed
+      summaryIcon = "\u2753"; summaryBg = "rgba(100,116,139,0.1)";
+      summaryTitle = "Could not verify";
+      summaryBody = `We checked ${total} claims but couldn\u2019t find sources to confirm or deny any of them. This is common for very recent news, niche topics, or highly specific product details.`;
+    } else if (con === 0 && sup > 0) {
+      // All verifiable claims are supported
+      summaryIcon = "\u2705"; summaryBg = "rgba(16,185,129,0.1)";
+      summaryTitle = "Looks reliable";
+      const topClaim = truncate(supportedClaims[0]?.text || "");
+      summaryBody = sup === total
+        ? `All ${sup} claims checked out against independent sources. This content appears factually accurate.`
+        : `${sup} of ${total} claims are backed by sources${topClaim ? ` \u2014 e.g. "${topClaim}"` : ""}. ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be checked but nothing was contradicted.`;
+    } else if (sup === 0 && con > 0) {
+      // All verifiable claims are contradicted
+      summaryIcon = "\ud83d\uded1"; summaryBg = "rgba(239,68,68,0.1)";
+      summaryTitle = "Key facts are wrong";
+      const topBad = truncate(contradictedClaims[0]?.text || "");
+      summaryBody = `${con} claim${con !== 1 ? "s were" : " was"} directly contradicted by sources${topBad ? `: "${topBad}"` : ""}. None of the verifiable claims checked out. Do not rely on this content without independent verification.`;
     } else {
-      verdictIcon = "\ud83d\uded1"; verdictBg = "rgba(239,68,68,0.1)";
-      verdictText = `Unreliable \u2014 ${con} claims contradicted and very few are supported. Do not share without independent verification.`;
+      // Mixed — some supported, some contradicted
+      summaryIcon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\u26a0\ufe0f" : "\ud83d\udfe0";
+      summaryBg = score >= 60 ? "rgba(16,185,129,0.08)" : score >= 40 ? "rgba(234,179,8,0.1)" : "rgba(249,115,22,0.1)";
+      summaryTitle = score >= 60 ? "Mostly checks out" : score >= 40 ? "Some facts don\u2019t check out" : "Several facts are wrong";
+      const topBad = truncate(contradictedClaims[0]?.text || "");
+      const moreStr = con > 1 ? ` (+${con - 1} more contradicted)` : "";
+      summaryBody = `We verified ${total} claims. ${sup} checked out, but "${topBad}" was contradicted by sources${moreStr}.${unv > 0 ? ` ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be verified.` : ""} Double-check the red-flagged claims before trusting this.`;
     }
+
     sections.push(`
-      <div class="verdict-summary" style="background:${verdictBg}">
-        <div class="verdict-header">${verdictIcon} What does this mean?</div>
-        <div class="verdict-text">${verdictText}</div>
+      <div class="verdict-summary" style="background:${summaryBg}">
+        <div class="verdict-header">${summaryIcon} ${summaryTitle}</div>
+        <div class="verdict-text">${summaryBody}</div>
       </div>
     `);
 
