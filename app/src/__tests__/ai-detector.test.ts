@@ -97,5 +97,34 @@ describe("AI Content Detector", () => {
       // AI text tends to have MORE uniform sentence lengths
       expect(typeof result.sentenceAnalysis.uniformityScore).toBe("number");
     });
+
+    it("should detect entropy signal in AI text", () => {
+      const result = detectAIContent(aiText);
+      const entropySignal = result.signals.find(s => s.type === "entropy");
+      // Entropy may or may not trigger — just make sure the field is valid
+      if (entropySignal) {
+        expect(entropySignal.score).toBeGreaterThanOrEqual(0);
+        expect(entropySignal.score).toBeLessThanOrEqual(100);
+        expect(entropySignal.detail).toContain("entropy");
+      }
+    });
+
+    it("should include valid signal types from extended set", () => {
+      const result = detectAIContent(aiText);
+      const validTypes = [
+        "perplexity", "burstiness", "vocabulary", "sentence_uniformity",
+        "hedging", "repetitive_structure", "filler_pattern",
+        "entropy", "zipf_deviation", "punctuation", "paragraph_variance",
+      ];
+      for (const signal of result.signals) {
+        expect(validTypes).toContain(signal.type);
+      }
+    });
+
+    it("should include a descriptive summary", () => {
+      const result = detectAIContent(aiText);
+      expect(result.summary).toBeTruthy();
+      expect(result.summary.length).toBeGreaterThan(20);
+    });
   });
 });

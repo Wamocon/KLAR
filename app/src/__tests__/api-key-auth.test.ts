@@ -78,7 +78,6 @@ describe("API Key Scope Checking", () => {
   it("returns false for missing scope", () => {
     expect(hasScope(mockAuth, "compliance")).toBe(false);
     expect(hasScope(mockAuth, "export")).toBe(false);
-    expect(hasScope(mockAuth, "benchmark")).toBe(false);
   });
 
   it("handles empty scopes array", () => {
@@ -89,11 +88,11 @@ describe("API Key Scope Checking", () => {
   it("handles all scopes granted", () => {
     const fullAuth: ApiKeyAuth = {
       ...mockAuth,
-      scopes: ["verify", "benchmark", "export", "batch", "compliance"],
+      scopes: ["verify", "export", "batch", "compliance"],
     };
     expect(hasScope(fullAuth, "verify")).toBe(true);
     expect(hasScope(fullAuth, "compliance")).toBe(true);
-    expect(hasScope(fullAuth, "benchmark")).toBe(true);
+    expect(hasScope(fullAuth, "batch")).toBe(true);
   });
 });
 

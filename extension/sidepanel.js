@@ -6,7 +6,7 @@
  *   - Bias analysis: score bar, signals, examples
  *   - AI detection: verdict, signals, sentence/vocabulary stats
  *   - Plagiarism: originality %, matches with source links
- *   - Framework eval: MECE/Red Team/BLUF/Pre-Mortem scores
+ *   - Plagiarism: originality percentage + matches
  *   - Verification history
  */
 
@@ -165,6 +165,7 @@ function showResult(result) {
       <div class="score-card">
         <span class="score-ring" style="color:${color}">${score}%</span>
         <span class="score-label">Trust Score</span>
+        <div class="score-desc">Percentage of claims verified as accurate by independent sources. Higher is better.</div>
         <div class="claims-bar">
           <span class="cb-s">${result.supported || 0} supported</span>
           <span class="cb-c">${result.contradicted || 0} contradicted</span>
@@ -202,6 +203,7 @@ function showResult(result) {
           <span class="analysis-title">Bias Analysis</span>
           <span class="analysis-badge" style="color:${color}">${esc(b.biasLevel || "unknown")}</span>
         </div>
+        <div class="analysis-desc">Measures how balanced the language is. 0 = neutral, 100 = heavily biased. Checks for emotional language, loaded words, and one-sided framing.</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${b.overallScore}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${b.overallScore}/100</span>
@@ -233,6 +235,7 @@ function showResult(result) {
           <span class="analysis-title">AI Detection</span>
           <span class="analysis-badge" style="color:${color}">${esc(ai.verdict || "unknown")}</span>
         </div>
+        <div class="analysis-desc">Estimates the likelihood this text was AI-generated using statistical patterns. This is a heuristic — not a definitive proof. Edited AI text may score lower.</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${ai.overallScore}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${ai.overallScore}/100</span>
@@ -263,6 +266,7 @@ function showResult(result) {
           <span class="analysis-title">Plagiarism Check</span>
           <span class="analysis-badge" style="color:${color}">${p.originalityPercent}% original</span>
         </div>
+        <div class="analysis-desc">Checks text fragments against known sources. Higher originality % means less overlap found with existing published content.</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${p.originalityPercent}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${esc(p.verdict || "unknown")}</span>
@@ -281,45 +285,6 @@ function showResult(result) {
           </div>
         ` : `<div class="analysis-clean">No significant text overlaps found.</div>`}
         ${p.summary ? `<div class="analysis-summary">${esc(p.summary)}</div>` : ""}
-      </div>
-    `);
-  }
-
-  // ── Framework Evaluation ──
-  if (result.framework) {
-    const fw = result.framework;
-    const color = fw.overallScore >= 70 ? "#22c55e" : fw.overallScore >= 45 ? "#eab308" : "#ef4444";
-    sections.push(`
-      <div class="analysis-card">
-        <div class="analysis-header">
-          <span class="analysis-icon analysis-icon-fw"></span>
-          <span class="analysis-title">Framework Evaluation</span>
-          <span class="analysis-badge" style="color:${color}">Grade ${esc(fw.overallGrade || "?")}</span>
-        </div>
-        ${fw.frameworks && fw.frameworks.length > 0 ? `
-          <div class="fw-grid">
-            ${fw.frameworks.map((f) => {
-              const c = f.score >= 60 ? "#22c55e" : f.score >= 40 ? "#eab308" : "#ef4444";
-              return `
-                <div class="fw-item">
-                  <span class="fw-name">${esc(f.framework)}</span>
-                  <div class="bar-track bar-track-sm" style="flex:1"><div class="bar-fill" style="width:${f.score}%;background:${c}"></div></div>
-                  <span class="fw-score" style="color:${c}">${f.score}</span>
-                  <span class="fw-pass ${f.passed ? 'pass' : 'fail'}">${f.passed ? "Pass" : "Fail"}</span>
-                </div>`;
-            }).join("")}
-          </div>
-        ` : ""}
-        ${fw.strengths && fw.strengths.length > 0 ? `
-          <div class="analysis-summary">
-            <strong>Strengths:</strong> ${fw.strengths.map(esc).join(" · ")}
-          </div>
-        ` : ""}
-        ${fw.weaknesses && fw.weaknesses.length > 0 ? `
-          <div class="analysis-summary" style="border-top:none;margin-top:4px;padding-top:0;">
-            <strong>Weaknesses:</strong> ${fw.weaknesses.map(esc).join(" · ")}
-          </div>
-        ` : ""}
       </div>
     `);
   }
@@ -461,7 +426,7 @@ function addToHistory(result) {
     claims: result.total_claims || 0,
     preview: result.claims?.[0]?.text?.slice(0, 80) || "Analysis",
     time: Date.now(),
-    hasAnalysis: !!(result.bias || result.ai_detection || result.plagiarism || result.framework),
+    hasAnalysis: !!(result.bias || result.ai_detection || result.plagiarism),
     // Store the full result for replay
     fullResult: result,
   };

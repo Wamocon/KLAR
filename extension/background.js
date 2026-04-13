@@ -279,7 +279,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
 
     if (claims.length === 0) {
       // No claims, but maybe we have analysis-only results
-      if (extractData.ai_detection || extractData.bias || extractData.plagiarism || extractData.framework) {
+      if (extractData.ai_detection || extractData.bias || extractData.plagiarism) {
         const analysisResult = {
           trust_score: 0,
           total_claims: 0,
@@ -293,7 +293,6 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
           ...(extractData.ai_detection && { ai_detection: extractData.ai_detection }),
           ...(extractData.bias && { bias: extractData.bias }),
           ...(extractData.plagiarism && { plagiarism: extractData.plagiarism }),
-          ...(extractData.framework && { framework: extractData.framework }),
         };
         notifyTab(tabId, { type: "KLAR_RESULT", result: analysisResult });
         return analysisResult;
@@ -395,7 +394,6 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
       ...(extractData.ai_detection && { ai_detection: extractData.ai_detection }),
       ...(extractData.bias && { bias: extractData.bias }),
       ...(extractData.plagiarism && { plagiarism: extractData.plagiarism }),
-      ...(extractData.framework && { framework: extractData.framework }),
     };
 
     notifyTab(tabId, { type: "KLAR_RESULT", result: finalResult });

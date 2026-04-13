@@ -13,7 +13,6 @@ import {
   LogOut,
   Zap,
   Settings,
-  Trophy,
   Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,12 +61,10 @@ export function Header() {
         { href: `/${locale}/dashboard`, label: t("dashboard"), icon: LayoutDashboard },
         { href: `/${locale}/history`, label: t("history"), icon: History },
         { href: `/${locale}/compliance`, label: locale === "de" ? "Compliance" : "Compliance", icon: Shield },
-        { href: `/${locale}/benchmark`, label: locale === "de" ? "Benchmark" : "Benchmark", icon: Trophy },
         { href: `/${locale}/settings`, label: locale === "de" ? "Einstellungen" : "Settings", icon: Settings },
         { href: `/${locale}/tools`, label: "Tools", icon: Zap },
       ]
     : [
-        { href: `/${locale}/benchmark`, label: locale === "de" ? "Benchmark" : "Benchmark", icon: Trophy },
         { href: `/${locale}/tools`, label: "Tools", icon: Zap },
       ];
 

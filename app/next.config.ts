@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["jsdom", "pdf-parse", "mammoth"],
+  serverExternalPackages: ["linkedom", "pdf-parse", "mammoth"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },

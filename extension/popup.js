@@ -3,7 +3,7 @@
  *
  * Two-screen UX:
  *   Setup screen: Shown only when no API key. Validate against server → auto-transition.
- *   Main screen:  Selection preview, 5 analysis actions, quick links, key management.
+ *   Main screen:  Selection preview, 6 analysis actions, 2 compliance actions, quick links, key management.
  */
 
 // ─── DOM refs ───
@@ -24,6 +24,7 @@ const changeKeyBtn = document.getElementById("changeKeyBtn");
 const settingsToggle = document.getElementById("settingsToggle");
 const openAppBtn = document.getElementById("openAppBtn");
 const actionsGrid = document.getElementById("actionsGrid");
+
 
 let capturedText = "";
 let currentApiKey = null;
@@ -225,8 +226,8 @@ saveKeyBtn.addEventListener("click", async () => {
   }
 });
 
-// ─── Analysis action buttons ───
-actionsGrid.addEventListener("click", async (e) => {
+// ─── Analysis action handler (shared by both grids) ───
+async function handleAnalysisClick(e) {
   const btn = e.target.closest(".action-btn");
   if (!btn || btn.disabled) return;
 
@@ -242,10 +243,10 @@ actionsGrid.addEventListener("click", async (e) => {
   }
 
   const analyses = analysis === "comprehensive"
-    ? ["fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval"]
+    ? ["fact-check", "bias-check", "ai-detection", "plagiarism"]
     : [analysis];
 
-  // Visual feedback: lock buttons, show "Analyzing…" on the clicked one
+  // Visual feedback: lock all buttons, show "Analyzing…" on the clicked one
   actionsGrid.querySelectorAll(".action-btn").forEach(b => { b.disabled = true; });
   const nameEl = btn.querySelector(".action-name");
   const originalName = nameEl.textContent;
@@ -271,7 +272,9 @@ actionsGrid.addEventListener("click", async (e) => {
 
   toast("info", "Opening results panel…");
   setTimeout(() => window.close(), 500);
-});
+}
+
+actionsGrid.addEventListener("click", handleAnalysisClick);
 
 // ─── Change key button ───
 changeKeyBtn.addEventListener("click", () => {

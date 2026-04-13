@@ -31,7 +31,8 @@ import { z } from "zod/v4";
 import type { AnalysisMode, UserPlan } from "@/types";
 
 const analysisModeSchema = z.enum([
-  "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",
+  "fact-check", "bias-check", "ai-detection", "plagiarism",
+  "ai-transparency", "security-headers", "comprehensive",
 ]);
 
 const verifySchema = z.union([
@@ -456,7 +457,7 @@ export async function POST(request: NextRequest) {
         let verificationId = "";
         let totalTokensUsed = 0;
         
-        for await (const event of runVerificationPipeline(text, language, analyses)) {
+        for await (const event of runVerificationPipeline(text, language, analyses, {}, sourceUrl || undefined)) {
           if (event.type === "token_usage") {
             totalTokensUsed = (event as { type: string; tokens: { totalTokens: number } }).tokens.totalTokens || 0;
             sendEvent(event);

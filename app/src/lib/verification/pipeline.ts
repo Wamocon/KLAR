@@ -7,7 +7,8 @@ import { crossReferenceValidation } from "@/lib/evidence/cross-reference";
 import { detectBias } from "@/lib/analysis/bias-detector";
 import { detectAIContent } from "@/lib/analysis/ai-detector";
 import { detectPlagiarism } from "@/lib/analysis/plagiarism-detector";
-import { evaluateWithFrameworks } from "@/lib/analysis/framework-evaluator";
+import { checkAIActCompliance } from "@/lib/analysis/ai-act-checker";
+import { scanSecurityHeaders } from "@/lib/analysis/security-scanner";
 import { collectTrainingSample } from "@/lib/rag/ingest";
 import type {
   AnalysisMode,
@@ -38,7 +39,8 @@ export async function* runVerificationPipeline(
   text: string,
   language: string = "en",
   analyses: AnalysisMode[] = ["fact-check"],
-  options: PipelineOptions = {}
+  options: PipelineOptions = {},
+  sourceUrl?: string,
 ): AsyncGenerator<PipelineEvent> {
   const startTime = Date.now();
   // Hard deadline: configurable, default leaves 5s buffer before Vercel's 60s limit
@@ -54,7 +56,8 @@ export async function* runVerificationPipeline(
   const runBias = isComprehensive || analyses.includes("bias-check");
   const runAIDetection = isComprehensive || analyses.includes("ai-detection");
   const runPlagiarism = isComprehensive || analyses.includes("plagiarism");
-  const runFrameworks = isComprehensive || analyses.includes("framework-eval");
+  const runAITransparency = isComprehensive || analyses.includes("ai-transparency");
+  const runSecurityHeaders = analyses.includes("security-headers"); // NOT in comprehensive — needs URL
 
   // Emit estimated token usage upfront for transparency
   yield {
@@ -69,12 +72,6 @@ export async function* runVerificationPipeline(
     yield { type: "status", stage: "ai-detection", message: "Analyzing for AI-generated content…" };
     const aiResult = detectAIContent(text);
     yield { type: "ai_detection", result: aiResult };
-  }
-
-  if (runFrameworks) {
-    yield { type: "status", stage: "framework-eval", message: "Evaluating with MECE, Red Team, BLUF, Pre-Mortem…" };
-    const frameworkResult = evaluateWithFrameworks(text);
-    yield { type: "framework_evaluation", result: frameworkResult };
   }
 
   // ── Claim extraction (needed for fact-check, bias, plagiarism) ──
@@ -267,8 +264,29 @@ export async function* runVerificationPipeline(
 
   if (runPlagiarism && !isOverDeadline()) {
     yield { type: "status", stage: "plagiarism", message: "Checking for plagiarism…" };
-    const plagiarismResult = detectPlagiarism(text, allSources);
+    const plagiarismResult = await detectPlagiarism(text, allSources);
     yield { type: "plagiarism_check", result: plagiarismResult };
+  }
+
+  // ── EU AI Act Transparency Check ──
+  if (runAITransparency && !isOverDeadline()) {
+    yield { type: "status", stage: "ai-transparency", message: "Checking EU AI Act compliance…" };
+    const aiActResult = checkAIActCompliance(text);
+    yield { type: "ai_transparency", result: aiActResult };
+  }
+
+  // ── Security Header Scan (requires URL — use sourceUrl or extract from text) ──
+  if (runSecurityHeaders && !isOverDeadline()) {
+    const scanUrl = sourceUrl || text.match(/https?:\/\/[^\s"<>]+/)?.[0];
+    if (scanUrl) {
+      yield { type: "status", stage: "security-headers", message: `Scanning security headers of ${scanUrl}…` };
+      try {
+        const securityResult = await scanSecurityHeaders(scanUrl);
+        yield { type: "security_scan", result: securityResult };
+      } catch {
+        yield { type: "security_scan", result: { overallScore: 0, grade: "F" as const, url: scanUrl, checks: [], httpsEnabled: false, summary: "Security scan failed." } };
+      }
+    }
   }
 
   const processingTime = Date.now() - startTime;

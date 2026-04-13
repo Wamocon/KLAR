@@ -67,17 +67,6 @@ test.describe("Functional: Tools Page Bookmarklets", () => {
   });
 });
 
-test.describe("Functional: Benchmark Leaderboard", () => {
-  test("leaderboard displays scores and rankings", async ({ page }) => {
-    await navigateTo(page, "/benchmark", "en");
-    await page.waitForTimeout(2000);
-
-    const body = await page.textContent("body");
-    // Should show leaderboard content or empty state
-    expect(body).toMatch(/benchmark|leaderboard|agent|model|score|no.*(data|entries)|accuracy/i);
-  });
-});
-
 test.describe("Functional: Static Pages", () => {
   const staticPages = [
     { path: "/about", keywords: /about|über|klar|mission/i },

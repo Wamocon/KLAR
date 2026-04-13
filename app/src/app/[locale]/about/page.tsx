@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { Shield, Target, Users, Lightbulb, FileSearch, Brain, Eye, BarChart3, Copy, Zap, Globe } from "lucide-react";
+import { Shield, Target, Users, Lightbulb, FileSearch, Brain, Eye, Copy, Zap, Globe } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default async function AboutPage({
@@ -95,7 +95,6 @@ export default async function AboutPage({
             { icon: Eye, label: isDE ? "Bias-Erkennung" : "Bias Detection", desc: isDE ? "Erkennt geladene Sprache, Framing und einseitige Perspektiven" : "Detects loaded language, framing, and one-sided perspectives" },
             { icon: Brain, label: isDE ? "KI-Erkennung" : "AI Detection", desc: isDE ? "Bestimmt ob Text von Menschen oder KI geschrieben wurde" : "Determines whether text was written by humans or AI" },
             { icon: Copy, label: isDE ? "Plagiatsprüfung" : "Plagiarism Check", desc: isDE ? "Findet Übereinstimmungen mit bekannten Web-Quellen" : "Finds matches with known web sources" },
-            { icon: BarChart3, label: isDE ? "Qualitätsbewertung" : "Quality Evaluation", desc: isDE ? "Bewertet mit MECE, Red Team, BLUF & Pre-Mortem Frameworks" : "Scores using MECE, Red Team, BLUF & Pre-Mortem frameworks" },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-start gap-4 rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 p-4">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">

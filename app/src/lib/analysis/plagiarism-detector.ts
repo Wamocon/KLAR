@@ -1,10 +1,11 @@
 import type { ClaimSource } from "@/types";
+import { searchWeb } from "@/lib/evidence/serper";
 
 export interface PlagiarismMatch {
   text: string;
   matchedSource: string;
   sourceUrl: string;
-  similarity: number;
+  similarity: number; // 0-100
 }
 
 export interface PlagiarismResult {
@@ -13,6 +14,57 @@ export interface PlagiarismResult {
   matches: PlagiarismMatch[];
   originalityPercent: number;
   summary: string;
+}
+
+/**
+ * Extract unique, search-worthy fingerprint phrases from text.
+ * Picks distinctive 6-8 word sequences avoiding common stopword-only runs.
+ */
+function extractFingerprints(text: string, count: number = 4): string[] {
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => {
+    const words = s.split(/\s+/);
+    return words.length >= 8;
+  });
+
+  if (sentences.length === 0) return [];
+
+  // Pick sentences spread across the text (beginning, middle, end)
+  const step = Math.max(1, Math.floor(sentences.length / count));
+  const selected: string[] = [];
+  for (let i = 0; i < sentences.length && selected.length < count; i += step) {
+    // Extract a 6-8 word phrase from each sentence (skip first 2 words which are often generic)
+    const words = sentences[i].split(/\s+/);
+    const start = Math.min(2, words.length - 6);
+    const phrase = words.slice(Math.max(0, start), Math.max(0, start) + 7).join(" ");
+    if (phrase.length >= 20) {
+      selected.push(`"${phrase}"`);
+    }
+  }
+  return selected;
+}
+
+/**
+ * Perform dedicated plagiarism search using text fingerprints.
+ * Sends unique phrases as quoted search queries to find exact/near matches on the web.
+ * Returns additional sources found through fingerprint matching.
+ */
+async function searchForPlagiarism(text: string): Promise<ClaimSource[]> {
+  const fingerprints = extractFingerprints(text, 3);
+  if (fingerprints.length === 0) return [];
+
+  const results: ClaimSource[] = [];
+  // Search fingerprints in parallel with a timeout
+  const searches = fingerprints.map(fp =>
+    searchWeb(fp).catch(() => [] as ClaimSource[])
+  );
+
+  const allResults = await Promise.allSettled(searches);
+  for (const result of allResults) {
+    if (result.status === "fulfilled") {
+      results.push(...result.value);
+    }
+  }
+  return results;
 }
 
 /**
@@ -61,9 +113,29 @@ function findOverlaps(text: string, snippet: string, minWords: number = 5): stri
 /**
  * Detect plagiarism by comparing input text against evidence sources.
  * Uses n-gram overlap and longest common subsequence analysis.
+ * Also performs dedicated web search for unique text fingerprints
+ * to catch plagiarism from sources not already in the evidence pool.
  */
-export function detectPlagiarism(text: string, sources: ClaimSource[]): PlagiarismResult {
-  if (sources.length === 0) {
+export async function detectPlagiarism(text: string, sources: ClaimSource[]): Promise<PlagiarismResult> {
+  // Phase 1: If we have very few sources, perform a dedicated plagiarism search
+  let allSources = [...sources];
+  if (sources.length < 5 && text.split(/\s+/).length >= 50) {
+    try {
+      const plagiarismResults = await searchForPlagiarism(text);
+      // Deduplicate by URL
+      const existingUrls = new Set(sources.map(s => s.url));
+      for (const result of plagiarismResults) {
+        if (!existingUrls.has(result.url)) {
+          allSources.push(result);
+          existingUrls.add(result.url);
+        }
+      }
+    } catch {
+      // Fingerprint search failed; fall through to comparison with existing sources
+    }
+  }
+
+  if (allSources.length === 0) {
     return {
       overallScore: 0,
       verdict: "original",
@@ -78,7 +150,7 @@ export function detectPlagiarism(text: string, sources: ClaimSource[]): Plagiari
   const matches: PlagiarismMatch[] = [];
   let maxSimilarity = 0;
 
-  for (const source of sources) {
+  for (const source of allSources) {
     if (!source.snippet || source.snippet.trim().length < 20) continue;
 
     const snippetNgrams4 = getNgrams(source.snippet, 4);
@@ -117,7 +189,7 @@ export function detectPlagiarism(text: string, sources: ClaimSource[]): Plagiari
   const avgMatchSim = matches.length > 0
     ? matches.reduce((sum, m) => sum + m.similarity, 0) / matches.length
     : 0;
-  const matchCoverage = Math.min(1, matches.length / Math.max(sources.length, 1));
+  const matchCoverage = Math.min(1, matches.length / Math.max(allSources.length, 1));
   
   const overallScore = Math.min(100, Math.round(
     avgMatchSim * 0.6 + matchCoverage * 40

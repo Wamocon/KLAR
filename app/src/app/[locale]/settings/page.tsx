@@ -308,7 +308,7 @@ export default function SettingsPage() {
                     {locale === "de" ? "Berechtigungen:" : "Scopes:"}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {["verify", "batch", "export", "compliance", "benchmark"].map((scope) => (
+                    {["verify", "batch", "export", "compliance"].map((scope) => (
                       <button
                         key={scope}
                         onClick={() => toggleScope(scope)}

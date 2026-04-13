@@ -184,16 +184,16 @@ describe("Rate Limiter — Mode Filtering", () => {
 
   it("free plan allows fact-check, bias, ai-detection", () => {
     const result = filterAllowedModes(
-      ["fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval"],
+      ["fact-check", "bias-check", "ai-detection", "plagiarism"],
       "free"
     );
     expect(result.filtered).toEqual(["fact-check", "bias-check", "ai-detection"]);
-    expect(result.blocked).toEqual(["plagiarism", "framework-eval"]);
+    expect(result.blocked).toEqual(["plagiarism"]);
   });
 
   it("pro plan allows all modes", () => {
     const result = filterAllowedModes(
-      ["fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive"],
+      ["fact-check", "bias-check", "ai-detection", "plagiarism", "ai-transparency", "comprehensive"],
       "pro"
     );
     expect(result.filtered.length).toBe(6);
@@ -201,7 +201,7 @@ describe("Rate Limiter — Mode Filtering", () => {
   });
 
   it("falls back to fact-check if all modes blocked", () => {
-    const result = filterAllowedModes(["plagiarism", "framework-eval"], "guest");
+    const result = filterAllowedModes(["plagiarism", "ai-transparency"], "guest");
     expect(result.filtered).toEqual(["fact-check"]);
   });
 });

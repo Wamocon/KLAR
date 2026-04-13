@@ -93,9 +93,9 @@ describe("B2B Types — ApiKey", () => {
   });
 
   it("ApiKey scopes are valid values", () => {
-    const validScopes: ApiKeyScope[] = ["verify", "benchmark", "export", "batch", "compliance"];
+    const validScopes: ApiKeyScope[] = ["verify", "export", "batch", "compliance"];
     validScopes.forEach((scope) => {
-      expect(["verify", "benchmark", "export", "batch", "compliance"]).toContain(scope);
+      expect(["verify", "export", "batch", "compliance"]).toContain(scope);
     });
   });
 });

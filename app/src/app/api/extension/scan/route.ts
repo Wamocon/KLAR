@@ -15,7 +15,7 @@ const scanSchema = z.object({
   url: z.string().url().optional(),
   language: z.string().optional().default("en"),
   analyses: z.array(z.enum([
-    "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",
+    "fact-check", "bias-check", "ai-detection", "plagiarism", "comprehensive",
   ])).optional().default(["fact-check"]),
 }).refine(
   (data) => data.text || data.url,
@@ -105,7 +105,6 @@ export async function POST(request: NextRequest) {
     let biasAnalysis: Record<string, unknown> | null = null;
     let aiDetection: Record<string, unknown> | null = null;
     let plagiarismCheck: Record<string, unknown> | null = null;
-    let frameworkEvaluation: Record<string, unknown> | null = null;
     let pipelineError: string | null = null;
 
     for await (const event of runVerificationPipeline(
@@ -130,13 +129,11 @@ export async function POST(request: NextRequest) {
         aiDetection = (event as unknown as { result: Record<string, unknown> }).result;
       } else if (event.type === "plagiarism_check") {
         plagiarismCheck = (event as unknown as { result: Record<string, unknown> }).result;
-      } else if (event.type === "framework_evaluation") {
-        frameworkEvaluation = (event as unknown as { result: Record<string, unknown> }).result;
       }
     }
 
     // Even without fact-check claims, return analysis-only results if available
-    if (!result && (biasAnalysis || aiDetection || plagiarismCheck || frameworkEvaluation)) {
+    if (!result && (biasAnalysis || aiDetection || plagiarismCheck)) {
       return corsResponse({
         trust_score: 0,
         total_claims: 0,
@@ -151,7 +148,6 @@ export async function POST(request: NextRequest) {
         ...(biasAnalysis && { bias: biasAnalysis }),
         ...(aiDetection && { ai_detection: aiDetection }),
         ...(plagiarismCheck && { plagiarism: plagiarismCheck }),
-        ...(frameworkEvaluation && { framework: frameworkEvaluation }),
       }, 200);
     }
 
@@ -190,7 +186,6 @@ export async function POST(request: NextRequest) {
       ...(biasAnalysis && { bias: biasAnalysis }),
       ...(aiDetection && { ai_detection: aiDetection }),
       ...(plagiarismCheck && { plagiarism: plagiarismCheck }),
-      ...(frameworkEvaluation && { framework: frameworkEvaluation }),
     }, 200);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Verification failed";

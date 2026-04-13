@@ -5,7 +5,6 @@ import { extractClaims, TokenTracker } from "@/lib/ai/gemini";
 import { detectBias } from "@/lib/analysis/bias-detector";
 import { detectAIContent } from "@/lib/analysis/ai-detector";
 import { detectPlagiarism } from "@/lib/analysis/plagiarism-detector";
-import { evaluateWithFrameworks } from "@/lib/analysis/framework-evaluator";
 import { z } from "zod/v4";
 
 export const maxDuration = 60;
@@ -17,7 +16,7 @@ const extractSchema = z.object({
   url: z.string().url().optional(),
   language: z.string().optional().default("en"),
   analyses: z.array(z.enum([
-    "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",
+    "fact-check", "bias-check", "ai-detection", "plagiarism", "comprehensive",
   ])).optional().default(["fact-check"]),
 }).refine(
   (data) => data.text || data.url,
@@ -121,9 +120,6 @@ export async function POST(request: NextRequest) {
     }
     if (isComprehensive || analyses.includes("plagiarism")) {
       result.plagiarism = detectPlagiarism(text, []);
-    }
-    if (isComprehensive || analyses.includes("framework-eval")) {
-      result.framework = evaluateWithFrameworks(text);
     }
 
     return corsResponse(result, 200);

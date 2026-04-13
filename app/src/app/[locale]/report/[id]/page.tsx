@@ -265,18 +265,19 @@ export default function ReportPage() {
                   </div>
                 </div>
                 <span className="text-sm font-medium text-gray-500">{t("trustScore")}</span>
+                <span className="mt-1 text-[11px] text-gray-400 text-center max-w-[200px] leading-snug">{t("help.trustScore")}</span>
               </div>
 
               <div className="col-span-3 grid grid-cols-2 sm:grid-cols-4 border-l border-gray-100 dark:border-gray-800">
                 {[
-                  { label: t("totalClaims"), value: verification.total_claims, color: "text-slate-800 dark:text-slate-300" },
-                  { label: t("supported"), value: verification.supported_count, color: "text-emerald-600" },
-                  { label: t("unverifiable"), value: verification.unverifiable_count, color: "text-amber-600" },
-                  { label: t("contradicted"), value: verification.contradicted_count, color: "text-red-600" },
+                  { label: t("totalClaims"), value: verification.total_claims, color: "text-slate-800 dark:text-slate-300", help: t("help.totalClaims") },
+                  { label: t("supported"), value: verification.supported_count, color: "text-emerald-600", help: t("help.supported") },
+                  { label: t("unverifiable"), value: verification.unverifiable_count, color: "text-amber-600", help: t("help.unverifiable") },
+                  { label: t("contradicted"), value: verification.contradicted_count, color: "text-red-600", help: t("help.contradicted") },
                 ].map((stat, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center p-6 border-b border-r border-gray-100 dark:border-gray-800 last:border-r-0">
+                  <div key={i} className="flex flex-col items-center justify-center p-6 border-b border-r border-gray-100 dark:border-gray-800 last:border-r-0" title={stat.help}>
                     <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
-                    <span className="text-xs text-gray-500 mt-1 text-center">{stat.label}</span>
+                    <span className="text-xs text-gray-500 mt-1 text-center flex items-center gap-1">{stat.label}<HelpCircle className="h-3 w-3 text-gray-400 opacity-50" /></span>
                   </div>
                 ))}
               </div>
@@ -296,9 +297,9 @@ export default function ReportPage() {
                 <p className="text-xs text-gray-500">{t("processingTime")}</p>
               </div>
               {verification.total_tokens && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="flex items-center gap-1.5 text-xs text-gray-400" title={t("help.processingTime")}>
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>{verification.total_tokens.toLocaleString()} tokens</span>
+                  <span>~{Math.round(verification.total_tokens * 0.75).toLocaleString()} {locale === "de" ? "Wörter analysiert" : "words analyzed"}</span>
                 </div>
               )}
             </CardContent>
@@ -377,7 +378,7 @@ export default function ReportPage() {
                       <Badge variant={claim.verdict === "supported" ? "success" : claim.verdict === "contradicted" ? "destructive" : "warning"}>
                         {getVerdictLabel(claim.verdict)}
                       </Badge>
-                      <span className="text-xs text-gray-400">{t("confidence")}: {Math.round(claim.confidence * 100)}%</span>
+                      <span className="text-xs text-gray-400" title={t("help.confidence")}>{t("confidence")}: {Math.round(claim.confidence * 100)}%</span>
                     </div>
                   </div>
                   <div className="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">

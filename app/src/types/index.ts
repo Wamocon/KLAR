@@ -12,7 +12,8 @@ export type AnalysisMode =
   | "bias-check"        // Detect loaded language, framing, one-sided perspectives
   | "ai-detection"      // Detect AI-generated content
   | "plagiarism"        // Check for text overlap with known sources
-  | "framework-eval"    // Evaluate using MECE, Red Team, BLUF, Pre-Mortem
+  | "ai-transparency"   // EU AI Act Art. 50 compliance checker
+  | "security-headers"  // HTTP security header scanner (OWASP)
   | "comprehensive";    // Run all analyses in one pass
 
 export type InputMode = "text" | "url" | "file";
@@ -29,7 +30,6 @@ export interface AnalysisRequest {
 export type { BiasAnalysis } from "@/lib/analysis/bias-detector";
 export type { AIDetectionResult } from "@/lib/analysis/ai-detector";
 export type { PlagiarismResult } from "@/lib/analysis/plagiarism-detector";
-export type { FrameworkEvaluation } from "@/lib/analysis/framework-evaluator";
 
 export interface ComprehensiveResult {
   factCheck?: {
@@ -42,11 +42,10 @@ export interface ComprehensiveResult {
   biasAnalysis?: import("@/lib/analysis/bias-detector").BiasAnalysis;
   aiDetection?: import("@/lib/analysis/ai-detector").AIDetectionResult;
   plagiarism?: import("@/lib/analysis/plagiarism-detector").PlagiarismResult;
-  frameworkEval?: import("@/lib/analysis/framework-evaluator").FrameworkEvaluation;
 }
 
 export type OrgRole = "owner" | "admin" | "member";
-export type ApiKeyScope = "verify" | "benchmark" | "export" | "batch" | "compliance";
+export type ApiKeyScope = "verify" | "export" | "batch" | "compliance";
 export type ComplianceReportType = "ai_act_transparency" | "ai_act_risk_assessment" | "monthly_summary" | "audit_export";
 
 export interface Profile {
@@ -355,19 +354,17 @@ export type PipelineEvent =
   | { type: "bias_analysis"; result: import("@/lib/analysis/bias-detector").BiasAnalysis }
   | { type: "ai_detection"; result: import("@/lib/analysis/ai-detector").AIDetectionResult }
   | { type: "plagiarism_check"; result: import("@/lib/analysis/plagiarism-detector").PlagiarismResult }
-  | { type: "framework_evaluation"; result: import("@/lib/analysis/framework-evaluator").FrameworkEvaluation }
+  | { type: "ai_transparency"; result: import("@/lib/analysis/ai-act-checker").AIActResult }
+  | { type: "security_scan"; result: import("@/lib/analysis/security-scanner").SecurityScanResult }
   | { type: "token_estimate"; estimatedInputTokens: number; estimatedTotalTokens: number }
   | { type: "token_usage"; tokens: TokenUsageInfo }
   | { type: "completed"; verification: Verification; claims: Claim[] }
   | { type: "error"; message: string };
 
 // ═══════════════════════════════════════════
-// Benchmark / SAE-inspired types
+// Adversarial & Source Types
 // ═══════════════════════════════════════════
 
-export type ExamCategory = "general" | "reasoning" | "safety" | "accuracy" | "adversarial";
-export type ExamQuestionGrading = "exact" | "verification" | "refusal" | "json_schema";
-export type SubmissionStatus = "started" | "completed" | "timed_out" | "failed";
 export type AdversarialDetectionType =
   | "prompt_injection"
   | "data_poisoning"
@@ -386,59 +383,6 @@ export type SourceCategory =
   | "blog"
   | "corporate"
   | "unknown";
-
-export interface BenchmarkAgent {
-  id: string;
-  name: string;
-  description: string | null;
-  model: string;
-  agent_type: string;
-  api_token: string;
-  total_submissions: number;
-  best_score: number | null;
-  avg_score: number | null;
-  is_active: boolean;
-  registered_at: string;
-  last_submission_at: string | null;
-}
-
-export interface BenchmarkExamQuestion {
-  id: string;
-  text: string;
-  category: ExamCategory;
-  grading: ExamQuestionGrading;
-  answer?: string | Record<string, unknown> | null;
-}
-
-export interface BenchmarkExam {
-  id: string;
-  title: string;
-  description: string | null;
-  version: string;
-  category: ExamCategory;
-  questions: BenchmarkExamQuestion[];
-  total_questions: number;
-  time_limit_minutes: number;
-  max_submissions: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface BenchmarkSubmission {
-  id: string;
-  agent_id: string;
-  exam_id: string;
-  status: SubmissionStatus;
-  answers: Record<string, string> | null;
-  score: number | null;
-  max_score: number | null;
-  percentage: number | null;
-  passed: boolean | null;
-  details: Record<string, unknown>;
-  started_at: string;
-  submitted_at: string | null;
-  graded_at: string | null;
-}
 
 export interface BatchJob {
   id: string;
@@ -484,48 +428,6 @@ export interface AdversarialDetection {
   confidence: number;
   details: Record<string, unknown>;
   detected_at: string;
-}
-
-// Leaderboard entry (computed view)
-export interface LeaderboardEntry {
-  rank: number;
-  agent_id: string;
-  agent_name: string;
-  model: string;
-  agent_type: string;
-  best_score: number;
-  avg_score: number;
-  total_submissions: number;
-  last_submission_at: string;
-}
-
-// API types for benchmark system
-export interface RegisterAgentRequest {
-  name: string;
-  description?: string;
-  model: string;
-  agentType?: string;
-}
-
-export interface RegisterAgentResponse {
-  agentId: string;
-  apiToken: string;
-  name: string;
-  model: string;
-  description: string | null;
-  agentType: string;
-}
-
-export interface StartExamResponse {
-  submissionId: string;
-  status: string;
-  startedAt: string;
-  timeLimitMinutes: number;
-  questions: { id: string; text: string }[];
-}
-
-export interface SubmitAnswersRequest {
-  answers: Record<string, string>;
 }
 
 export interface SubmitAnswersResponse {

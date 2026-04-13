@@ -15,7 +15,7 @@ const batchSchema = z.object({
     text: z.string().min(50).max(50000),
     language: z.string().optional().default("en"),
     analyses: z.array(z.enum([
-      "fact-check", "bias-check", "ai-detection", "plagiarism", "framework-eval", "comprehensive",
+      "fact-check", "bias-check", "ai-detection", "plagiarism", "comprehensive",
     ])).optional().default(["fact-check"]),
   })).min(1).max(50),
   webhook_url: z.string().url().optional(),

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   FileSearch, Loader2, AlertCircle, CheckCircle2, XCircle, HelpCircle,
   Sparkles, Globe, Type, Link2, ExternalLink, Upload, FileText,
-  Brain, Copy, BarChart3, Eye, X, Info,
+  Brain, Copy, Eye, X, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type {
   PipelineEvent, JudgmentResult, ExtractedClaim, AnalysisMode,
-  BiasAnalysis, AIDetectionResult, PlagiarismResult, FrameworkEvaluation,
+  BiasAnalysis, AIDetectionResult, PlagiarismResult,
   TokenUsageInfo,
 } from "@/types";
 
@@ -72,15 +72,6 @@ const ANALYSIS_MODES: AnalysisModeOption[] = [
     descriptionDe: "Textübereinstimmung mit bekannten Quellen prüfen",
     color: "amber",
   },
-  {
-    id: "framework-eval",
-    icon: <BarChart3 className="h-4 w-4" />,
-    label: "Quality Eval",
-    labelDe: "Qualitätsbewertung",
-    description: "Score using MECE, Red Team, BLUF, Pre-Mortem frameworks",
-    descriptionDe: "Bewertung mit MECE, Red Team, BLUF, Pre-Mortem",
-    color: "rose",
-  },
 ];
 
 export default function VerifyPage() {
@@ -110,7 +101,6 @@ export default function VerifyPage() {
   const [biasResult, setBiasResult] = useState<BiasAnalysis | null>(null);
   const [aiDetectionResult, setAIDetectionResult] = useState<AIDetectionResult | null>(null);
   const [plagiarismResult, setPlagiarismResult] = useState<PlagiarismResult | null>(null);
-  const [frameworkResult, setFrameworkResult] = useState<FrameworkEvaluation | null>(null);
 
   // Token transparency
   const [tokenUsage, setTokenUsage] = useState<TokenUsageInfo | null>(null);
@@ -205,7 +195,6 @@ export default function VerifyPage() {
     setBiasResult(null);
     setAIDetectionResult(null);
     setPlagiarismResult(null);
-    setFrameworkResult(null);
     setTokenUsage(null);
     setTokenEstimate(null);
     setStageMessage(
@@ -293,9 +282,6 @@ export default function VerifyPage() {
               case "plagiarism_check":
                 setPlagiarismResult(event.result);
                 break;
-              case "framework_evaluation":
-                setFrameworkResult(event.result);
-                break;
               case "token_estimate":
                 setTokenEstimate({ input: event.estimatedInputTokens, total: event.estimatedTotalTokens });
                 break;
@@ -374,8 +360,8 @@ export default function VerifyPage() {
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {locale === "de"
-              ? "Faktenprüfung • Bias-Erkennung • KI-Erkennung • Plagiatsprüfung • Qualitätsbewertung"
-              : "Fact Check • Bias Detection • AI Detection • Plagiarism • Quality Evaluation"}
+              ? "Faktenprüfung • Bias-Erkennung • KI-Erkennung • Plagiatsprüfung"
+              : "Fact Check • Bias Detection • AI Detection • Plagiarism"}
           </p>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 max-w-lg mx-auto">
             {locale === "de"
@@ -670,7 +656,7 @@ export default function VerifyPage() {
         )}
 
         {/* Live Analysis Results */}
-        {(aiDetectionResult || biasResult || plagiarismResult || frameworkResult) && (
+        {(aiDetectionResult || biasResult || plagiarismResult) && (
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
 
             {/* AI Detection Result */}
@@ -794,48 +780,6 @@ export default function VerifyPage() {
                   <p className="mt-2 text-xs text-gray-500">
                     {plagiarismResult.matches.length} {locale === "de" ? "Übereinstimmungen" : "matches found"}
                   </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Framework Evaluation Result */}
-            {frameworkResult && (
-              <Card className="border-rose-200/60 dark:border-rose-800/60 bg-rose-50/30 dark:bg-rose-900/10 backdrop-blur-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <BarChart3 className="h-4 w-4 text-rose-500" />
-                    {locale === "de" ? "Qualitätsbewertung" : "Quality Evaluation"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-300">
-                      {frameworkResult.overallScore}
-                    </span>
-                    <Badge variant={
-                      frameworkResult.overallScore >= 70 ? "success"
-                        : frameworkResult.overallScore >= 40 ? "warning"
-                        : "destructive"
-                    }>
-                      {locale === "de" ? `Note ${frameworkResult.overallGrade}` : `Grade ${frameworkResult.overallGrade}`}
-                    </Badge>
-                  </div>
-                  <div className="space-y-1.5">
-                    {frameworkResult.frameworks.map((fw: { framework: string; score: number }) => (
-                      <div key={fw.framework} className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono w-16 text-gray-500 uppercase">{fw.framework}</span>
-                        <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              fw.score >= 70 ? "bg-emerald-500" : fw.score >= 40 ? "bg-amber-500" : "bg-red-500"
-                            }`}
-                            style={{ width: `${fw.score}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] w-6 text-right text-gray-500">{fw.score}</span>
-                      </div>
-                    ))}
-                  </div>
                 </CardContent>
               </Card>
             )}

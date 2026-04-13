@@ -16,7 +16,7 @@ async function fetchSSE(url, opts) {
 async function main() {
   // 1. WEB UI PAGES
   console.log('\n=== 1. Web UI Pages ===');
-  const pages = ['/', '/about', '/contact', '/privacy', '/terms', '/imprint', '/verify', '/tools', '/benchmark', '/auth/login', '/auth/signup', '/settings', '/dashboard', '/history'];
+  const pages = ['/', '/about', '/contact', '/privacy', '/terms', '/imprint', '/verify', '/tools', '/auth/login', '/auth/signup', '/settings', '/dashboard', '/history'];
   for (const p of pages) {
     const r = await fetch(BASE + '/en' + p, { redirect: 'follow' });
     r.status === 200 ? ok('GET /en' + p) : no('GET /en' + p, 'status=' + r.status);
@@ -130,36 +130,8 @@ async function main() {
   const r7b = await fetch(BASE + "/api/verify?id=" + encodeURIComponent("'; DROP TABLE verifications;--"));
   r7b.status === 400 ? ok('SQL injection blocked') : no('SQL injection', 'status=' + r7b.status);
 
-  // 8. BENCHMARK
-  console.log('\n=== 8. Benchmark ===');
-  const agentR = await fetch(BASE + '/api/benchmark/agent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'QA-' + Date.now(), model: 'gpt-4o', description: 'QA test' })
-  });
-  if (agentR.status === 201) {
-    const ag = await agentR.json();
-    ok('Agent registered: ' + ag.agentId);
-    const examR = await fetch(BASE + '/api/benchmark/exam', { method: 'POST', headers: { 'Authorization': 'Bearer ' + ag.apiToken } });
-    if (examR.status === 200) {
-      const ex = await examR.json();
-      ok('Exam: ' + ex.questions?.length + ' questions');
-      const answers = {};
-      for (const q of (ex.questions || [])) answers[q.id] = 'QA test answer';
-      const subR = await fetch(BASE + '/api/benchmark/submit/' + ex.submissionId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ag.apiToken },
-        body: JSON.stringify({ answers })
-      });
-      if (subR.status === 200) { const s = await subR.json(); ok('Score: ' + s.totalScore + '/100'); }
-      else no('Submit', 'status=' + subR.status);
-    } else no('Exam', 'status=' + examR.status);
-    const lbR = await fetch(BASE + '/api/benchmark/leaderboard');
-    lbR.status === 200 ? ok('Leaderboard') : no('Leaderboard', 'status=' + lbR.status);
-  } else no('Agent', 'status=' + agentR.status);
-
-  // 9. USAGE API
-  console.log('\n=== 9. Usage API ===');
+  // 8. USAGE API
+  console.log('\n=== 8. Usage API ===');
   const r9 = await fetch(BASE + '/api/usage', { headers: { 'Authorization': 'Bearer ' + KEY } });
   if (r9.status === 200) { const d9 = await r9.json(); ok('Usage: used=' + d9.used + ' limit=' + d9.limit + ' plan=' + d9.plan); }
   else no('Usage', 'status=' + r9.status);

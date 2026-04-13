@@ -207,36 +207,7 @@ function showResult(result) {
     `);
   }
 
-  // ─── Framework Evaluation ───
-  if (result.framework) {
-    const fw = result.framework;
-    const fwColor = fw.overallScore >= 70 ? "#22c55e" : fw.overallScore >= 45 ? "#eab308" : "#ef4444";
-    sections.push(`
-      <div class="klar-analysis-card">
-        <div class="klar-analysis-header">
-          <span class="klar-analysis-icon klar-icon-fw">FW</span>
-          <span class="klar-analysis-title">Framework Eval</span>
-          <span class="klar-analysis-badge" style="color:${fwColor}">Grade ${escapeHtml(fw.overallGrade || "?")}</span>
-        </div>
-        ${fw.frameworks && fw.frameworks.length > 0 ? `
-          <div class="klar-fw-grid">
-            ${fw.frameworks.map((f) => {
-              const c = f.score >= 60 ? "#22c55e" : f.score >= 40 ? "#eab308" : "#ef4444";
-              return `
-                <div class="klar-fw-item">
-                  <span class="klar-fw-name">${escapeHtml(f.framework)}</span>
-                  <div class="klar-bar-track klar-bar-sm"><div class="klar-bar-fill" style="width:${f.score}%;background:${c}"></div></div>
-                  <span class="klar-fw-score" style="color:${c}">${f.score}</span>
-                </div>`;
-            }).join("")}
-          </div>
-        ` : ""}
-        ${fw.summary ? `<div class="klar-analysis-summary">${escapeHtml(fw.summary)}</div>` : ""}
-      </div>
-    `);
-  }
-
-  // ─── Fallback: no analysis results at all ───
+  // ── Fallback: no analysis results at all ──
   if (sections.length === 0) {
     sections.push(`<div class="klar-analysis-clean">No results returned — try selecting more text.</div>`);
   }

@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 
 const createKeySchema = z.object({
   name: z.string().min(1).max(100),
-  scopes: z.array(z.enum(["verify", "benchmark", "export", "batch", "compliance"])).min(1),
+  scopes: z.array(z.enum(["verify", "export", "batch", "compliance"])).min(1),
   rate_limit_per_minute: z.number().int().min(1).max(100).optional().default(10),
   expires_in_days: z.number().int().min(1).max(365).optional(),
 });

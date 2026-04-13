@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 
 export interface ExtractedPage {
@@ -86,9 +86,11 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
 
   const html = await response.text();
 
-  // Parse with JSDOM + Readability
-  const dom = new JSDOM(html, { url });
-  const reader = new Readability(dom.window.document.cloneNode(true) as Document);
+  // Parse with linkedom + Readability (linkedom is pure JS, no ESM-only deps like jsdom v29)
+  const { document } = parseHTML(html);
+  // Set documentURI for Readability to resolve relative URLs
+  Object.defineProperty(document, "documentURI", { value: url, writable: false });
+  const reader = new Readability(document.cloneNode(true) as unknown as Document);
   const article = reader.parse();
 
   if (article && article.textContent && article.textContent.trim().length > 100) {
@@ -104,11 +106,11 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
   }
 
   // Fallback 1: Extract from JSON-LD structured data (works for JS-heavy sites)
-  const jsonLdText = extractFromJsonLd(dom);
+  const jsonLdText = extractFromJsonLd(document);
   if (jsonLdText && jsonLdText.length > 100) {
     const cleanText = cleanExtractedText(jsonLdText);
     return {
-      title: dom.window.document.title || parsedUrl.hostname,
+      title: document.title || parsedUrl.hostname,
       content: cleanText.slice(0, 50000),
       url,
       siteName: parsedUrl.hostname,
@@ -118,10 +120,10 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
   }
 
   // Fallback 2: Extract from meta tags (og:description, description)
-  const metaText = extractFromMeta(dom);
+  const metaText = extractFromMeta(document);
 
   // Fallback 3: extract text from body
-  const fallbackText = extractFallbackText(dom);
+  const fallbackText = extractFallbackText(document);
   const combinedFallback = [metaText, fallbackText].filter(Boolean).join("\n\n");
 
   // Fallback 4: If all DOM-based approaches fail, try Serper's scrape API
@@ -129,7 +131,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
     const scraped = await scrapeViaSerper(url);
     if (scraped && scraped.length > 50) {
       return {
-        title: dom.window.document.title || parsedUrl.hostname,
+        title: document.title || parsedUrl.hostname,
         content: scraped.slice(0, 50000),
         url,
         siteName: parsedUrl.hostname,
@@ -141,7 +143,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
   }
 
   return {
-    title: dom.window.document.title || parsedUrl.hostname,
+    title: document.title || parsedUrl.hostname,
     content: combinedFallback.slice(0, 50000),
     url,
     siteName: parsedUrl.hostname,
@@ -150,8 +152,8 @@ export async function extractUrlContent(url: string): Promise<ExtractedPage> {
   };
 }
 
-function extractFromJsonLd(dom: JSDOM): string | null {
-  const scripts = dom.window.document.querySelectorAll('script[type="application/ld+json"]');
+function extractFromJsonLd(doc: Document): string | null {
+  const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
   const texts: string[] = [];
 
   scripts.forEach((script) => {
@@ -178,8 +180,7 @@ function extractFromJsonLd(dom: JSDOM): string | null {
   return texts.length > 0 ? texts.join("\n\n") : null;
 }
 
-function extractFromMeta(dom: JSDOM): string {
-  const doc = dom.window.document;
+function extractFromMeta(doc: Document): string {
   const parts: string[] = [];
 
   // og:description, twitter:description, description
@@ -270,9 +271,7 @@ function cleanExtractedText(text: string): string {
     .trim();
 }
 
-function extractFallbackText(dom: JSDOM): string {
-  const doc = dom.window.document;
-  
+function extractFallbackText(doc: Document): string {
   // Remove scripts, styles, nav, footer, header
   const removeSelectors = "script, style, nav, footer, header, aside, [role='navigation'], [role='banner']";
   doc.querySelectorAll(removeSelectors).forEach((el) => el.remove());

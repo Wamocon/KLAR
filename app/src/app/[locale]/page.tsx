@@ -16,7 +16,6 @@ import {
   Check,
   ArrowRight,
   Copy,
-  BarChart3,
   Upload,
   Sparkles,
   Key,
@@ -298,7 +297,7 @@ function LandingContent({ locale }: { locale: string }) {
               { icon: Eye, color: "violet", title: t("engines.biasDetection"), desc: t("engines.biasDetectionDesc") },
               { icon: Brain, color: "blue", title: t("engines.aiDetection"), desc: t("engines.aiDetectionDesc") },
               { icon: Copy, color: "amber", title: t("engines.plagiarism"), desc: t("engines.plagiarismDesc") },
-              { icon: BarChart3, color: "rose", title: t("engines.quality"), desc: t("engines.qualityDesc") },
+              { icon: Shield, color: "rose", title: t("engines.euCompliance"), desc: t("engines.euComplianceDesc") },
               { icon: Upload, color: "teal", title: t("engines.fileUpload"), desc: t("engines.fileUploadDesc") },
             ].map(({ icon: Icon, color, title, desc }, i) => {
               const colorMap: Record<string, string> = {

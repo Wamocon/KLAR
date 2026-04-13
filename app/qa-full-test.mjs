@@ -72,7 +72,6 @@ async function testWebPages() {
     "/en/privacy", "/de/privacy",
     "/en/terms", "/de/terms",
     "/en/imprint", "/de/imprint",
-    "/en/benchmark", "/de/benchmark",
   ];
 
   for (const page of pages) {
@@ -277,28 +276,15 @@ async function testAnalysisModes() {
     assert(false, "AI detection event missing from response");
   }
 
-  // Test framework-eval mode
-  const { status: s2, events: e2 } = await fetchSSE("/api/verify", {
-    text, language: "en", mode: "text", analyses: ["framework-eval"],
-  }, { Authorization: `Bearer ${API_KEY}` });
-  assert(s2 === 200, "Framework eval mode → 200");
-  const fwEvent = e2.find((e) => e.type === "framework_evaluation");
-  if (fwEvent) {
-    assert(typeof fwEvent.result?.overallScore === "number", "Framework eval has overallScore");
-    assert(typeof fwEvent.result?.frameworks === "object", "Framework eval has frameworks object");
-  } else {
-    assert(false, "Framework evaluation event missing from response");
-  }
-
   // Test comprehensive mode
-  const { status: s3, events: e3 } = await fetchSSE("/api/verify", {
+  const { status: s2, events: e2 } = await fetchSSE("/api/verify", {
     text, language: "en", mode: "text", analyses: ["comprehensive"],
   }, { Authorization: `Bearer ${API_KEY}` });
-  assert(s3 === 200, "Comprehensive mode → 200");
-  const e3types = e3.map((e) => e.type);
-  // Should have AI detection AND framework eval AND bias AND claims
-  assert(e3types.includes("ai_detection"), "Comprehensive includes AI detection");
-  assert(e3types.includes("framework_evaluation"), "Comprehensive includes framework eval");
+  assert(s2 === 200, "Comprehensive mode → 200");
+  const e2types = e2.map((e) => e.type);
+  // Should have AI detection AND bias AND claims
+  assert(e2types.includes("ai_detection"), "Comprehensive includes AI detection");
+}
 }
 
 // ════════════════════════════════════════
@@ -437,86 +423,10 @@ async function testExportAPI() {
 }
 
 // ════════════════════════════════════════
-// TEST SUITE 10: Benchmark System
-// ════════════════════════════════════════
-async function testBenchmark() {
-  console.log("\n═══ TEST 10: Benchmark System ═══");
-
-  const agentName = `QA-Agent-${Date.now()}`;
-
-  // Register agent (correct schema: name, model, description)
-  const { status: s1, json: j1 } = await fetchJSON("/api/benchmark/agent", {
-    method: "POST",
-    body: JSON.stringify({
-      name: agentName,
-      model: "Test Model v1",
-      description: "QA test agent",
-    }),
-  });
-  assert(s1 === 201, `Register agent → 201 (got ${s1})`);
-  assert(j1?.agentId, "Agent ID returned");
-  assert(j1?.apiToken?.startsWith("KLAR_"), "API token starts with KLAR_");
-
-  if (!j1?.agentId || !j1?.apiToken) {
-    console.log("  ⚠ Skipping remaining benchmark tests (registration failed)");
-    return;
-  }
-
-  const agentId = j1.agentId;
-  const token = j1.apiToken;
-
-  // Start exam (uses Bearer token auth)
-  const { status: s2, json: j2 } = await fetchJSON("/api/benchmark/exam", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({}),
-  });
-  assert(s2 === 200, `Start exam → 200 (got ${s2})`);
-  assert(j2?.submissionId, "Submission ID returned");
-  assert(j2?.questions?.length >= 5, `Got ≥5 questions (got ${j2?.questions?.length})`);
-  assert(typeof j2?.timeLimitMinutes === "number", "Time limit returned");
-
-  if (!j2?.submissionId || !j2?.questions) {
-    console.log("  ⚠ Skipping submit test (exam start failed)");
-    return;
-  }
-
-  // Validate question structure
-  const q = j2.questions[0];
-  assert(q.id, "Question has id");
-  assert(q.text?.length > 0, "Question has text");
-
-  // Submit answers (format: { answers: { id: "answer" } })
-  const answers = {};
-  j2.questions.forEach((q, i) => {
-    answers[q.id] = i % 3 === 0 ? "supported" : i % 3 === 1 ? "contradicted" : "unverifiable";
-  });
-
-  const { status: s3, json: j3 } = await fetchJSON(`/api/benchmark/submit/${j2.submissionId}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ answers }),
-  });
-  assert(s3 === 200, `Submit answers → 200 (got ${s3})`);
-  assert(typeof j3?.score === "object" || typeof j3?.score === "number", "Score returned");
-  assert(j3?.passed !== undefined, "passed flag returned");
-
-  // Get agent details
-  const { status: s4, json: j4 } = await fetchJSON(`/api/benchmark/agent?id=${agentId}`);
-  assert(s4 === 200, `Get agent → 200 (got ${s4})`);
-  assert(j4?.name === agentName, "Agent name matches");
-
-  // Leaderboard
-  const { status: s5, json: j5 } = await fetchJSON("/api/benchmark/leaderboard");
-  assert(s5 === 200, `Leaderboard → 200 (got ${s5})`);
-  assert(Array.isArray(j5?.leaderboard), "Leaderboard is array");
-}
-
-// ════════════════════════════════════════
-// TEST SUITE 11: Batch API
+// TEST SUITE 10: Batch API
 // ════════════════════════════════════════
 async function testBatchAPI() {
-  console.log("\n═══ TEST 11: Batch API ═══");
+  console.log("\n═══ TEST 10: Batch API ═══");
 
   // No auth
   const { status: s1 } = await fetchJSON("/api/batch", {
@@ -675,7 +585,6 @@ async function main() {
   await testVerifyGet();
   await testUsageAPI();
   await testExportAPI();
-  await testBenchmark();
   await testBatchAPI();
   await testLongText();
   await testSecurity();

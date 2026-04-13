@@ -1,6 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { detectPlagiarism } from "@/lib/analysis/plagiarism-detector";
 import type { ClaimSource } from "@/types";
+
+// Mock the searchWeb function so tests don't make real HTTP calls
+vi.mock("@/lib/evidence/serper", () => ({
+  searchWeb: vi.fn().mockResolvedValue([]),
+}));
 
 const originalText = `
 The rapid development of artificial intelligence has transformed numerous industries
@@ -42,19 +47,19 @@ const unrelatedSources: ClaimSource[] = [
 
 describe("Plagiarism Detector", () => {
   describe("detectPlagiarism", () => {
-    it("should detect high originality for unique text", () => {
-      const result = detectPlagiarism(originalText, unrelatedSources);
+    it("should detect high originality for unique text", async () => {
+      const result = await detectPlagiarism(originalText, unrelatedSources);
       expect(result.originalityPercent).toBeGreaterThan(60);
       expect(["original", "mostly_original"]).toContain(result.verdict);
     });
 
-    it("should detect overlap when text matches sources", () => {
-      const result = detectPlagiarism(plagiarizedText, sources);
+    it("should detect overlap when text matches sources", async () => {
+      const result = await detectPlagiarism(plagiarizedText, sources);
       expect(result.matches.length).toBeGreaterThanOrEqual(0);
     });
 
-    it("should return correct interface shape", () => {
-      const result = detectPlagiarism(originalText, sources);
+    it("should return correct interface shape", async () => {
+      const result = await detectPlagiarism(originalText, sources);
       expect(result).toHaveProperty("overallScore");
       expect(result).toHaveProperty("verdict");
       expect(result).toHaveProperty("matches");
@@ -63,8 +68,8 @@ describe("Plagiarism Detector", () => {
       expect(Array.isArray(result.matches)).toBe(true);
     });
 
-    it("should have proper match structure when matches found", () => {
-      const result = detectPlagiarism(plagiarizedText, sources);
+    it("should have proper match structure when matches found", async () => {
+      const result = await detectPlagiarism(plagiarizedText, sources);
       for (const match of result.matches) {
         expect(match).toHaveProperty("text");
         expect(match).toHaveProperty("matchedSource");
@@ -75,30 +80,30 @@ describe("Plagiarism Detector", () => {
       }
     });
 
-    it("should have originality percentage between 0 and 100", () => {
-      const result = detectPlagiarism(originalText, sources);
+    it("should have originality percentage between 0 and 100", async () => {
+      const result = await detectPlagiarism(originalText, sources);
       expect(result.originalityPercent).toBeGreaterThanOrEqual(0);
       expect(result.originalityPercent).toBeLessThanOrEqual(100);
     });
 
-    it("should have valid verdict values", () => {
-      const result = detectPlagiarism(originalText, sources);
+    it("should have valid verdict values", async () => {
+      const result = await detectPlagiarism(originalText, sources);
       expect(["original", "mostly_original", "some_overlap", "significant_overlap", "likely_plagiarized"]).toContain(result.verdict);
     });
 
-    it("should handle empty sources", () => {
-      const result = detectPlagiarism(originalText, []);
+    it("should handle empty sources", async () => {
+      const result = await detectPlagiarism(originalText, []);
       expect(result.originalityPercent).toBe(100);
       expect(result.verdict).toBe("original");
     });
 
-    it("should handle very short text", () => {
-      const result = detectPlagiarism("Short text.", sources);
+    it("should handle very short text", async () => {
+      const result = await detectPlagiarism("Short text.", sources);
       expect(result).toHaveProperty("overallScore");
     });
 
-    it("should produce non-empty summary", () => {
-      const result = detectPlagiarism(originalText, sources);
+    it("should produce non-empty summary", async () => {
+      const result = await detectPlagiarism(originalText, sources);
       expect(result.summary.length).toBeGreaterThan(0);
     });
   });

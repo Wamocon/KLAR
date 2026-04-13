@@ -26,11 +26,6 @@ test.describe("Navigation", () => {
     expect(url).toMatch(/history|login|auth/);
   });
 
-  test("navigates to Benchmark", async ({ page }) => {
-    await navigateTo(page, "/benchmark", "en");
-    await expect(page.locator("h1, h2").first()).toBeVisible();
-  });
-
   test("navigates to Tools", async ({ page }) => {
     await navigateTo(page, "/tools", "en");
     const heading = page.locator("h1").first();

@@ -1,35 +1,5 @@
 import { test, expect, navigateTo } from "./fixtures/helpers";
 
-test.describe("Benchmark / Leaderboard Page", () => {
-  test.beforeEach(async ({ page }) => {
-    await navigateTo(page, "/benchmark", "en");
-  });
-
-  test("loads the leaderboard page", async ({ page }) => {
-    const heading = page.locator("h1, h2").first();
-    await expect(heading).toBeVisible();
-    const text = await heading.textContent();
-    expect(text).toMatch(/benchmark|leaderboard|rang/i);
-  });
-
-  test("displays a leaderboard table or list", async ({ page }) => {
-    await page.waitForTimeout(2000);
-    // Should have some table or list structure
-    const table = page.locator("table, [role='table'], [class*='leaderboard']");
-    const list = page.locator("[class*='card'], [class*='Card']");
-    const hasTable = await table.first().isVisible().catch(() => false);
-    const hasList = (await list.count()) > 0;
-    expect(hasTable || hasList).toBe(true);
-  });
-
-  test("shows agent/model names", async ({ page }) => {
-    await page.waitForTimeout(2000);
-    // Verify there are some entries (or empty state message)
-    const body = await page.textContent("body");
-    expect(body).toMatch(/agent|model|score|accuracy|no.*(data|entries|agents)|\d+%/i);
-  });
-});
-
 test.describe("Tools Page", () => {
   test.beforeEach(async ({ page }) => {
     await navigateTo(page, "/tools", "en");

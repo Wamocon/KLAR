@@ -181,7 +181,7 @@ test.describe("Regression: Edge Cases", () => {
 
 test.describe("Regression: I18n Consistency", () => {
   test("all main pages load in both locales without error", async ({ page }) => {
-    const pages = ["", "/verify", "/tools", "/benchmark", "/about", "/privacy", "/terms", "/imprint", "/contact"];
+    const pages = ["", "/verify", "/tools", "/about", "/privacy", "/terms", "/imprint", "/contact"];
 
     for (const path of pages) {
       for (const locale of ["en", "de"]) {

@@ -102,5 +102,34 @@ describe("Bias Detector", () => {
       expect(result).toHaveProperty("overallScore");
       expect(result.overallScore).toBeGreaterThanOrEqual(0);
     });
+
+    it("should detect source bias from known media outlets", () => {
+      const biasedSources: ClaimSource[] = [
+        { title: "Breitbart Report", url: "https://breitbart.com/politics/story", snippet: "Political analysis", source_type: "web" },
+        { title: "Daily Wire", url: "https://www.dailywire.com/article", snippet: "Policy review", source_type: "web" },
+      ];
+      const result = detectBias(neutralText, biasedSources);
+      const sourceBiasSignal = result.signals.find(s => s.type === "source_bias");
+      // Should detect that sources lean right
+      expect(sourceBiasSignal || result.sourceBalanceScore > 0).toBeTruthy();
+    });
+
+    it("should determine political lean from known source database", () => {
+      const leftSources: ClaimSource[] = [
+        { title: "MSNBC", url: "https://msnbc.com/article", snippet: "Analysis", source_type: "web" },
+        { title: "HuffPost", url: "https://huffpost.com/entry/x", snippet: "Report", source_type: "web" },
+        { title: "Jacobin", url: "https://jacobin.com/2025/article", snippet: "Opinion", source_type: "web" },
+      ];
+      const result = detectBias(neutralText, leftSources);
+      expect(["left", "center-left"]).toContain(result.politicalLean);
+    });
+
+    it("should have valid signal types including source_bias", () => {
+      const result = detectBias(biasedText, diverseSources);
+      const validTypes = ["loaded_language", "one_sided", "emotional_appeal", "false_balance", "framing", "cherry_picking", "source_bias"];
+      for (const signal of result.signals) {
+        expect(validTypes).toContain(signal.type);
+      }
+    });
   });
 });
