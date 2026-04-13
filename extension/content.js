@@ -113,7 +113,7 @@ function showResult(result) {
       verdictText = `\ud83d\uded1 ${con} claim${con !== 1 ? "s" : ""} contradicted${topBad ? `: "${topBad}"` : ""}. Do not rely on this without checking.`;
     } else {
       const topBad = trunc(contradictedClaims[0]?.text || "");
-      const icon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\u26a0\ufe0f" : "\ud83d\udfe0";
+      const icon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\ud83d\udfe0" : "\ud83d\udd34";
       verdictText = `${icon} ${sup} verified, but "${topBad}" was contradicted.${con > 1 ? ` (+${con - 1} more)` : ""}${unv > 0 ? ` ${unv} unverified.` : ""} Check flagged claims.`;
     }
     sections.push(`<div class="klar-verdict">${verdictText}</div>`);

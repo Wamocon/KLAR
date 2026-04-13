@@ -210,8 +210,8 @@ function showResult(result) {
       summaryBody = `${con} claim${con !== 1 ? "s were" : " was"} directly contradicted by sources${topBad ? `: "${topBad}"` : ""}. None of the verifiable claims checked out. Do not rely on this content without independent verification.`;
     } else {
       // Mixed — some supported, some contradicted
-      summaryIcon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\u26a0\ufe0f" : "\ud83d\udfe0";
-      summaryBg = score >= 60 ? "rgba(16,185,129,0.08)" : score >= 40 ? "rgba(234,179,8,0.1)" : "rgba(249,115,22,0.1)";
+      summaryIcon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\ud83d\udfe0" : "\ud83d\udd34";
+      summaryBg = score >= 60 ? "rgba(16,185,129,0.08)" : score >= 40 ? "rgba(249,115,22,0.1)" : "rgba(239,68,68,0.1)";
       summaryTitle = score >= 60 ? "Mostly checks out" : score >= 40 ? "Some facts don\u2019t check out" : "Several facts are wrong";
       const topBad = truncate(contradictedClaims[0]?.text || "");
       const moreStr = con > 1 ? ` (+${con - 1} more contradicted)` : "";

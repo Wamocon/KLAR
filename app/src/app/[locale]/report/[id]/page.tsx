@@ -343,8 +343,8 @@ export default function ReportPage() {
               textColor = "text-emerald-800 dark:text-emerald-300";
               summaryTitle = isDE ? "Überwiegend korrekt" : "Mostly checks out";
             } else if (score >= 40) {
-              bgColor = "bg-amber-50 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/30";
-              textColor = "text-amber-800 dark:text-amber-300";
+              bgColor = "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30";
+              textColor = "text-orange-800 dark:text-orange-300";
               summaryTitle = isDE ? "Einige Fakten stimmen nicht" : "Some facts don\u2019t check out";
             } else {
               bgColor = "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30";

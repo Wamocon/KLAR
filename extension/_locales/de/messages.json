@@ -27,7 +27,7 @@
   "trustScore": { "message": "Vertrauenswert" },
   "supported": { "message": "$COUNT$ bestätigt", "placeholders": { "COUNT": { "content": "$1" } } },
   "contradicted": { "message": "$COUNT$ widerlegt", "placeholders": { "COUNT": { "content": "$1" } } },
-  "unknown": { "message": "$COUNT$ unbekannt", "placeholders": { "COUNT": { "content": "$1" } } },
+  "unknown": { "message": "$COUNT$ unbestätigt", "placeholders": { "COUNT": { "content": "$1" } } },
   "moreClaims": { "message": "+$COUNT$ weitere Aussagen", "placeholders": { "COUNT": { "content": "$1" } } },
   "recentVerifications": { "message": "Letzte Überprüfungen" },
   "verificationFailed": { "message": "Überprüfung fehlgeschlagen" },

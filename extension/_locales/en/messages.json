@@ -27,7 +27,7 @@
   "trustScore": { "message": "Trust Score" },
   "supported": { "message": "$COUNT$ supported", "placeholders": { "COUNT": { "content": "$1" } } },
   "contradicted": { "message": "$COUNT$ contradicted", "placeholders": { "COUNT": { "content": "$1" } } },
-  "unknown": { "message": "$COUNT$ unknown", "placeholders": { "COUNT": { "content": "$1" } } },
+  "unknown": { "message": "$COUNT$ unconfirmed", "placeholders": { "COUNT": { "content": "$1" } } },
   "moreClaims": { "message": "+$COUNT$ more claims", "placeholders": { "COUNT": { "content": "$1" } } },
   "recentVerifications": { "message": "Recent verifications" },
   "verificationFailed": { "message": "Verification failed" },

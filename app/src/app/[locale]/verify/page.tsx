@@ -327,7 +327,7 @@ export default function VerifyPage() {
       case "contradicted":
         return <XCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <HelpCircle className="h-4 w-4 text-amber-500" />;
+        return <HelpCircle className="h-4 w-4 text-slate-400" />;
     }
   };
 

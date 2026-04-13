@@ -93,8 +93,8 @@ export function HighlightedText({ text, claims, onClaimClick, activeClaim }: Hig
             isActive ? "ring-2 ring-red-400/50 bg-red-200/80 dark:bg-red-800/50" : ""
           }`;
         case "unverifiable":
-          return `${base} bg-amber-100/60 dark:bg-amber-900/30 border-amber-400 dark:border-amber-600 hover:bg-amber-200/80 dark:hover:bg-amber-800/40 ${
-            isActive ? "ring-2 ring-amber-400/50 bg-amber-200/80 dark:bg-amber-800/50" : ""
+          return `${base} bg-slate-100/60 dark:bg-slate-800/30 border-slate-400 dark:border-slate-600 hover:bg-slate-200/80 dark:hover:bg-slate-700/40 ${
+            isActive ? "ring-2 ring-slate-400/50 bg-slate-200/80 dark:bg-slate-700/50" : ""
           }`;
         default:
           return "";
@@ -136,7 +136,7 @@ export function HighlightLegend({ locale }: { locale: string }) {
   const items = [
     { color: "bg-emerald-400", label: locale === "de" ? "Bestätigt" : "Supported" },
     { color: "bg-red-400", label: locale === "de" ? "Widerlegt" : "Contradicted" },
-    { color: "bg-amber-400", label: locale === "de" ? "Nicht prüfbar" : "Unverifiable" },
+    { color: "bg-slate-400", label: locale === "de" ? "Unbestätigt" : "Unconfirmed" },
   ];
 
   return (
