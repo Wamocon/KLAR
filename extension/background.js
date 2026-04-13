@@ -8,6 +8,51 @@
 
 importScripts("constants.js");
 
+// ─── Background i18n (service worker — no DOM, loads locale files independently) ───
+let _bgMessages = null;
+let _bgLang = null;
+
+async function ensureBgI18n() {
+  if (_bgMessages) return;
+  try {
+    const [en, de] = await Promise.all([
+      fetch(chrome.runtime.getURL("_locales/en/messages.json")).then((r) => r.json()),
+      fetch(chrome.runtime.getURL("_locales/de/messages.json")).then((r) => r.json()),
+    ]);
+    _bgMessages = { en, de };
+  } catch {
+    _bgMessages = {};
+  }
+  const stored = await chrome.storage.sync.get(["klarLang"]);
+  _bgLang = stored.klarLang || (chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en");
+}
+
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.klarLang) _bgLang = changes.klarLang.newValue;
+});
+
+function _t(key, ...subs) {
+  if (_bgMessages && _bgLang) {
+    const entry = _bgMessages[_bgLang]?.[key];
+    if (entry) {
+      let msg = entry.message || "";
+      if (entry.placeholders && subs.length > 0) {
+        for (const [name, def] of Object.entries(entry.placeholders)) {
+          const m = (def.content || "").match(/^\$(\d+)$/);
+          if (m) {
+            const idx = parseInt(m[1], 10) - 1;
+            if (idx >= 0 && idx < subs.length) {
+              msg = msg.replace(new RegExp("\\$" + name + "\\$", "gi"), String(subs[idx]));
+            }
+          }
+        }
+      }
+      return msg;
+    }
+  }
+  return chrome.i18n.getMessage(key, subs) || key;
+}
+
 // ─── Keep-alive: prevent Chrome from killing the service worker during long API calls ───
 let keepAliveInterval = null;
 function startKeepAlive() {
@@ -254,9 +299,11 @@ const JUDGE_CONCURRENCY = 2; // Max parallel judge requests
  * Works for both text and URL modes.
  */
 async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
+  await ensureBgI18n();
+
   const apiKey = await getApiKey();
   if (!apiKey) {
-    const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured. Open the extension popup to set up.";
+    const msg = _t("noApiKeyError");
     notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "no_api_key" });
     return { error: "No API key" };
   }
@@ -273,7 +320,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
   await openSidePanel(tabId);
   await delay(300);
   await ensureContentScript(tabId);
-  notifyTab(tabId, { type: "KLAR_LOADING", stage: "extracting", message: chrome.i18n.getMessage("extractingClaims") || "Extracting factual claims…" });
+  notifyTab(tabId, { type: "KLAR_LOADING", stage: "extracting", message: _t("extractingClaims") });
 
   startKeepAlive();
   const headers = {
@@ -322,7 +369,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
         notifyTab(tabId, { type: "KLAR_RESULT", result: analysisResult });
         return analysisResult;
       }
-      notifyTab(tabId, { type: "KLAR_ERROR", error: chrome.i18n.getMessage("noFactualClaims") || "No factual claims found in this text.", errorCode: "no_claims" });
+      notifyTab(tabId, { type: "KLAR_ERROR", error: _t("noFactualClaims"), errorCode: "no_claims" });
       return { error: "No claims" };
     }
 
@@ -330,7 +377,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
     notifyTab(tabId, {
       type: "KLAR_PROGRESS",
       stage: "judging",
-      message: chrome.i18n.getMessage("foundClaimsVerifying", [String(claims.length)]) || `Found ${claims.length} claims — verifying…`,
+      message: _t("foundClaimsVerifying", String(claims.length)),
       total: claims.length,
       completed: 0,
     });
@@ -395,7 +442,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
       notifyTab(tabId, {
         type: "KLAR_PROGRESS",
         stage: "judging",
-        message: chrome.i18n.getMessage("verifiedXofY", [String(judgedClaims.length), String(claims.length)]) || `Verified ${judgedClaims.length} of ${claims.length} claims…`,
+        message: _t("verifiedXofY", String(judgedClaims.length), String(claims.length)),
         total: claims.length,
         completed: judgedClaims.length,
         partialClaims: judgedClaims,

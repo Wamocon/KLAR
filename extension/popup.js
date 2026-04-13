@@ -33,17 +33,18 @@ let currentPageUrl = "";
 let currentPageTitle = "";
 let detectedLanguage = "en"; // Detected from page content
 
-// ─── Detect language for links ───
-const lang = chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en";
-
-// Set all app links (null-safe — elements may be inside hidden screens)
-const setHref = (id, path) => { const el = document.getElementById(id); if (el) el.href = `${KLAR.API_BASE}/${lang}/${path}`; };
-setHref("getKeyLink", "settings");
-setHref("openAppBtn", "dashboard");
-setHref("linkDashboard", "dashboard");
-setHref("linkHistory", "history");
-setHref("linkVerify", "verify");
-setHref("linkSettings", "settings");
+// ─── Language toggle ───
+const langToggle = document.getElementById("langToggle");
+KLAR_I18N.init().then((lang) => {
+  if (langToggle) langToggle.textContent = lang.toUpperCase();
+});
+langToggle?.addEventListener("click", () => {
+  const newLang = KLAR_I18N.toggle();
+  langToggle.textContent = newLang.toUpperCase();
+});
+document.addEventListener("klar-lang-changed", (e) => {
+  if (langToggle) langToggle.textContent = e.detail.lang.toUpperCase();
+});
 
 // ─── Init: Check for existing key ───
 chrome.runtime.sendMessage({ type: "GET_API_KEY" }, (response) => {

@@ -20,9 +20,18 @@ const retryBtn = document.getElementById("retryBtn");
 const historyEl = document.getElementById("history");
 const historyListEl = document.getElementById("historyList");
 
-// Set app link
-const lang = (chrome.i18n.getUILanguage() || "en").startsWith("de") ? "de" : "en";
-document.getElementById("openAppBtn").href = `${KLAR.API_BASE}/${lang}/dashboard`;
+// Set app link + language toggle
+const langToggle = document.getElementById("langToggle");
+KLAR_I18N.init().then((lang) => {
+  if (langToggle) langToggle.textContent = lang.toUpperCase();
+});
+langToggle?.addEventListener("click", () => {
+  const newLang = KLAR_I18N.toggle();
+  langToggle.textContent = newLang.toUpperCase();
+});
+document.addEventListener("klar-lang-changed", (e) => {
+  if (langToggle) langToggle.textContent = e.detail.lang.toUpperCase();
+});
 
 let verificationHistory = [];
 
