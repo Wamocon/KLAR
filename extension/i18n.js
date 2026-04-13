@@ -6,6 +6,10 @@
  */
 
 function klarI18n() {
+  // Set HTML lang attribute based on browser locale
+  const uiLang = chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en";
+  document.documentElement.lang = uiLang;
+
   // Translate text content
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");

@@ -46,7 +46,7 @@ function showLoading(statusMessage) {
   // Update status text if provided
   const statusEl = loadingDiv.querySelector(".klar-loading-status");
   if (statusEl) {
-    statusEl.textContent = statusMessage || "Analyzing…";
+    statusEl.textContent = statusMessage || (chrome.i18n.getMessage("analyzingContent") || "Analyzing…");
   }
 }
 
@@ -59,7 +59,7 @@ function showProgress(data) {
   panel.querySelector(".klar-error").style.display = "none";
   const statusEl = loadingDiv.querySelector(".klar-loading-status");
   if (statusEl) {
-    statusEl.textContent = data.message || `Verifying ${data.completed || 0} of ${data.total || "?"} claims…`;
+    statusEl.textContent = data.message || (chrome.i18n.getMessage("verifiedXofY", [String(data.completed || 0), String(data.total || "?")]) || `Verifying ${data.completed || 0} of ${data.total || "?"} claims…`);
   }
 }
 
@@ -82,12 +82,12 @@ function showResult(result) {
     sections.push(`
       <div class="klar-score" style="color:${scoreColor}">
         <span class="klar-score-number">${score}%</span>
-        <span class="klar-score-label">Trust Score</span>
+        <span class="klar-score-label">${chrome.i18n.getMessage("trustScoreLabel") || "Trust Score"}</span>
       </div>
       <div class="klar-claims-summary">
-        <span class="klar-supported">${result.supported || 0} supported</span>
-        <span class="klar-contradicted">${result.contradicted || 0} contradicted</span>
-        <span class="klar-unverifiable">${result.unverifiable || 0} unconfirmed</span>
+        <span class="klar-supported">${chrome.i18n.getMessage("xSupported", [String(result.supported || 0)]) || `${result.supported || 0} supported`}</span>
+        <span class="klar-contradicted">${chrome.i18n.getMessage("xContradicted", [String(result.contradicted || 0)]) || `${result.contradicted || 0} contradicted`}</span>
+        <span class="klar-unverifiable">${chrome.i18n.getMessage("xUnconfirmed", [String(result.unverifiable || 0)]) || `${result.unverifiable || 0} unconfirmed`}</span>
       </div>
     `);
 
@@ -99,22 +99,20 @@ function showResult(result) {
     const claims = result.claims || [];
     const contradictedClaims = claims.filter(c => c.verdict === "contradicted");
     const supportedClaims = claims.filter(c => c.verdict === "supported");
-    const trunc = (s, max = 70) => s && s.length > max ? s.slice(0, max).replace(/\s+\S*$/, "") + "\u2026" : s;
     let verdictText;
     const verifiable = sup + con;
+    const _t = (k, ...s) => chrome.i18n.getMessage(k, s) || k;
     if (verifiable === 0) {
-      verdictText = `\u2753 Checked ${total} claims \u2014 couldn\u2019t find sources to confirm or deny any. Common for recent/niche topics.`;
+      verdictText = `\u2753 ${_t("verdictCouldNotVerifyBody", String(total))}`;
     } else if (con === 0 && sup > 0) {
       verdictText = sup === total
-        ? `\u2705 All ${sup} claims checked out against independent sources.`
-        : `\u2705 ${sup} claim${sup !== 1 ? "s" : ""} verified, nothing contradicted. ${unv} couldn\u2019t be checked.`;
+        ? `\u2705 ${_t("verdictAllVerified", String(sup))}`
+        : `\u2705 ${_t("verdictMostVerified", String(sup), String(total), String(unv))}`;
     } else if (sup === 0 && con > 0) {
-      const topBad = trunc(contradictedClaims[0]?.text || "");
-      verdictText = `\ud83d\uded1 ${con} claim${con !== 1 ? "s" : ""} contradicted${topBad ? `: "${topBad}"` : ""}. Do not rely on this without checking.`;
+      verdictText = `\ud83d\uded1 ${_t("verdictAllContradicted", String(con))}`;
     } else {
-      const topBad = trunc(contradictedClaims[0]?.text || "");
       const icon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\ud83d\udfe0" : "\ud83d\udd34";
-      verdictText = `${icon} ${sup} verified, but "${topBad}" was contradicted.${con > 1 ? ` (+${con - 1} more)` : ""}${unv > 0 ? ` ${unv} unverified.` : ""} Check flagged claims.`;
+      verdictText = `${icon} ${_t("verdictMixedBody", String(total), String(sup))}`;
     }
     sections.push(`<div class="klar-verdict">${verdictText}</div>`);
 
@@ -123,7 +121,7 @@ function showResult(result) {
         ${result.claims.slice(0, KLAR.MAX_VISIBLE_CLAIMS).map((c) => `
           <div class="klar-claim klar-claim-${escapeHtml(c.verdict)}">
             <div class="klar-claim-header">
-              <span class="klar-claim-verdict">${c.verdict === "unverifiable" ? "unconfirmed" : escapeHtml(c.verdict)}</span>
+              <span class="klar-claim-verdict">${c.verdict === "unverifiable" ? (chrome.i18n.getMessage("unconfirmedLabel") || "unconfirmed") : escapeHtml(c.verdict)}</span>
               ${c.confidence != null ? `<span class="klar-claim-conf">${Math.round(c.confidence * 100)}%</span>` : ""}
             </div>
             <div class="klar-claim-text">${escapeHtml(c.text)}</div>
@@ -153,7 +151,7 @@ function showResult(result) {
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
           <span class="klar-analysis-icon klar-icon-bias">B</span>
-          <span class="klar-analysis-title">Bias Analysis</span>
+          <span class="klar-analysis-title">${chrome.i18n.getMessage("biasAnalysisTitle") || "Bias Analysis"}</span>
           <span class="klar-analysis-badge" style="color:${biasColor}">${escapeHtml(b.biasLevel || "unknown")}</span>
         </div>
         <div class="klar-analysis-score-bar">
@@ -169,7 +167,7 @@ function showResult(result) {
               </div>
             `).join("")}
           </div>
-        ` : `<div class="klar-analysis-clean">No significant bias signals detected.</div>`}
+        ` : `<div class="klar-analysis-clean">${chrome.i18n.getMessage("noBiasSignals") || "No significant bias signals detected."}</div>`}
         ${b.summary ? `<div class="klar-analysis-summary">${escapeHtml(b.summary)}</div>` : ""}
       </div>
     `);
@@ -183,7 +181,7 @@ function showResult(result) {
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
           <span class="klar-analysis-icon klar-icon-ai">AI</span>
-          <span class="klar-analysis-title">AI Detection</span>
+          <span class="klar-analysis-title">${chrome.i18n.getMessage("aiDetectionTitle") || "AI Detection"}</span>
           <span class="klar-analysis-badge" style="color:${aiColor}">${escapeHtml(ai.verdict || "unknown")}</span>
         </div>
         <div class="klar-analysis-score-bar">
@@ -199,7 +197,7 @@ function showResult(result) {
               </div>
             `).join("")}
           </div>
-        ` : `<div class="klar-analysis-clean">No strong AI signals detected.</div>`}
+        ` : `<div class="klar-analysis-clean">${chrome.i18n.getMessage("noAiSignals") || "No strong AI signals detected."}</div>`}
         ${ai.summary ? `<div class="klar-analysis-summary">${escapeHtml(ai.summary)}</div>` : ""}
       </div>
     `);
@@ -213,8 +211,8 @@ function showResult(result) {
       <div class="klar-analysis-card">
         <div class="klar-analysis-header">
           <span class="klar-analysis-icon klar-icon-plag">PL</span>
-          <span class="klar-analysis-title">Plagiarism Check</span>
-          <span class="klar-analysis-badge" style="color:${origColor}">${p.originalityPercent}% original</span>
+          <span class="klar-analysis-title">${chrome.i18n.getMessage("plagiarismCheckTitle") || "Plagiarism Check"}</span>
+          <span class="klar-analysis-badge" style="color:${origColor}">${chrome.i18n.getMessage("pctOriginal", [String(p.originalityPercent)]) || `${p.originalityPercent}% original`}</span>
         </div>
         <div class="klar-analysis-score-bar">
           <div class="klar-bar-track"><div class="klar-bar-fill" style="width:${p.originalityPercent}%;background:${origColor}"></div></div>
@@ -231,7 +229,7 @@ function showResult(result) {
               </div>
             `).join("")}
           </div>
-        ` : `<div class="klar-analysis-clean">No significant overlaps found.</div>`}
+        ` : `<div class="klar-analysis-clean">${chrome.i18n.getMessage("noOverlaps") || "No significant overlaps found."}</div>`}
         ${p.summary ? `<div class="klar-analysis-summary">${escapeHtml(p.summary)}</div>` : ""}
       </div>
     `);
@@ -239,7 +237,7 @@ function showResult(result) {
 
   // ── Fallback: no analysis results at all ──
   if (sections.length === 0) {
-    sections.push(`<div class="klar-analysis-clean">No results returned — try selecting more text.</div>`);
+    sections.push(`<div class="klar-analysis-clean">${chrome.i18n.getMessage("noResults") || "No results returned — try selecting more text."}</div>`);
   }
 
   // ─── Processing time ───
@@ -269,34 +267,35 @@ function showError(error) {
 
 function categorizeError(error) {
   const msg = (error || "").toLowerCase();
+  const _t = (k, fallback) => chrome.i18n.getMessage(k) || fallback;
   if (msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
-    return { icon: "📡", title: "Connection failed", message: "Could not reach the KLAR server.", hint: "Check your internet connection and try again." };
+    return { icon: "📡", title: _t("errConnectionTitle", "Connection failed"), message: _t("errConnectionDesc", "Could not reach the KLAR server."), hint: _t("errConnectionHint", "Check your internet connection and try again.") };
   }
   if (msg.includes("timeout") || msg.includes("timed out")) {
-    return { icon: "⏱️", title: "Analysis timed out", message: "The server took too long to respond.", hint: "Try again — performance varies. If it persists, select a shorter text passage." };
+    return { icon: "⏱️", title: _t("errTimeoutTitle", "Analysis timed out"), message: _t("errTimeoutDesc", "The server took too long to respond."), hint: _t("errTimeoutHint", "Try again or select a shorter text passage.") };
   }
   if (msg.includes("rate limit")) {
-    return { icon: "🚦", title: "Rate limit reached", message: "Too many requests. Wait a moment and retry." };
+    return { icon: "🚦", title: _t("errRateLimitTitle", "Rate limit reached"), message: _t("errRateLimitDesc", "Too many requests. Wait a moment and retry.") };
   }
   if (msg.includes("api key")) {
-    return { icon: "🔑", title: "API key required", message: "Open the KLAR popup to configure your key." };
+    return { icon: "🔑", title: _t("errApiKeyRequired", "API key required"), message: _t("errApiKeyRequiredDesc", "Open the KLAR popup to configure your key.") };
   }
   if (msg.includes("text too short")) {
-    return { icon: "📝", title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
+    return { icon: "📝", title: _t("textTooShort", "Text too short"), message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters.` };
   }
   if (msg.includes("no factual claims")) {
-    return { icon: "🔍", title: "No claims found", message: "No verifiable facts in this text.", hint: "Try selecting text with specific facts, numbers, or dates." };
+    return { icon: "🔍", title: _t("errNoClaimsTitle", "No claims found"), message: _t("errNoClaimsDesc", "No verifiable facts in this text."), hint: _t("errNoClaimsHint", "Try selecting text with specific facts, numbers, or dates.") };
   }
   if (msg.includes("prompt manipulation")) {
-    return { icon: "🛡️", title: "Content blocked", message: "Text flagged as potential prompt injection.", hint: "Try selecting a smaller, cleaner portion of text." };
+    return { icon: "🛡️", title: _t("errContentBlocked", "Content blocked"), message: _t("errContentBlockedDesc", "Text flagged as potential prompt injection."), hint: _t("errContentBlockedHint", "Try selecting a smaller, cleaner portion of text.") };
   }
   if (msg.includes("quota") || msg.includes("resource_exhausted")) {
-    return { icon: "⏳", title: "AI quota reached", message: "Too many requests — the AI service is temporarily busy.", hint: "Wait 30 seconds, then try again." };
+    return { icon: "⏳", title: _t("errQuotaTitle", "AI quota reached"), message: _t("errQuotaDesc", "Too many requests — the AI service is temporarily busy."), hint: _t("errQuotaHint", "Wait 30 seconds, then try again.") };
   }
   if (msg.includes("http 5") || msg.includes("server") || msg.includes("pipeline")) {
-    return { icon: "🔧", title: "Server error", message: error || "KLAR had a temporary issue.", hint: "Try again in a few seconds." };
+    return { icon: "🔧", title: _t("errServerTitle", "Server error"), message: error || _t("unexpectedError", "KLAR had a temporary issue."), hint: _t("errServerHint", "Try again in a few seconds.") };
   }
-  return { icon: "!", title: "Verification failed", message: error || "An unexpected error occurred." };
+  return { icon: "!", title: _t("verificationFailed", "Verification failed"), message: error || _t("unexpectedError", "An unexpected error occurred.") };
 }
 
 function escapeHtml(str) {

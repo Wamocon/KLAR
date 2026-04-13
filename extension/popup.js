@@ -31,6 +31,7 @@ let currentApiKey = null;
 let captureMode = "selection"; // "selection" | "page" | "url"
 let currentPageUrl = "";
 let currentPageTitle = "";
+let detectedLanguage = "en"; // Detected from page content
 
 // ─── Detect language for links ───
 const lang = chrome.i18n.getUILanguage().startsWith("de") ? "de" : "en";
@@ -61,11 +62,35 @@ chrome.runtime.sendMessage({ type: "GET_API_KEY" }, (response) => {
     if (!tab?.id || tab.url?.startsWith("chrome://") || tab.url?.startsWith("about:")) return;
     currentPageUrl = tab.url || "";
     currentPageTitle = tab.title || "";
+    // Detect page language + selection in one call
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: () => window.getSelection()?.toString() || "",
+      func: () => ({
+        selection: window.getSelection()?.toString() || "",
+        lang: document.documentElement.lang || document.documentElement.getAttribute("xml:lang") || "",
+      }),
     });
-    capturedText = results?.[0]?.result || "";
+    const pageData = results?.[0]?.result || {};
+    capturedText = pageData.selection || "";
+    // Detect language from page lang attribute, URL, or content heuristics
+    const pageLang = (pageData.lang || "").toLowerCase();
+    if (pageLang.startsWith("de")) {
+      detectedLanguage = "de";
+    } else if (pageLang.startsWith("en")) {
+      detectedLanguage = "en";
+    } else {
+      // Heuristic: check URL for .de domain or /de/ path
+      const url = (tab.url || "").toLowerCase();
+      if (url.includes(".de/") || url.includes("/de/") || url.includes("lang=de")) {
+        detectedLanguage = "de";
+      } else {
+        // Heuristic: check text for common German words
+        const sample = (capturedText || "").slice(0, 500).toLowerCase();
+        const deWords = ["und", "der", "die", "das", "ist", "nicht", "ein", "eine", "auch", "sich", "werden", "nach", "für", "über"];
+        const deCount = deWords.filter(w => sample.includes(" " + w + " ")).length;
+        detectedLanguage = deCount >= 3 ? "de" : "en";
+      }
+    }
     updateSelectionUI();
   } catch { /* Can't inject into this page */ }
 })();
@@ -81,13 +106,13 @@ function setCaptureModeUI(mode) {
   [captureSelBtn, capturePageBtn, captureUrlBtn].forEach(b => b.classList.remove("active"));
   if (mode === "selection") {
     captureSelBtn.classList.add("active");
-    selLabel.textContent = "Selected text";
+    selLabel.textContent = t("selectedText");
   } else if (mode === "page") {
     capturePageBtn.classList.add("active");
-    selLabel.textContent = "Full page content";
+    selLabel.textContent = t("fullPageContent");
   } else {
     captureUrlBtn.classList.add("active");
-    selLabel.textContent = "Page URL (server-side)";
+    selLabel.textContent = t("pageUrlLabel");
   }
   updateSelectionUI();
 }
@@ -113,7 +138,7 @@ capturePageBtn.addEventListener("click", async () => {
     capturedText = (results?.[0]?.result || "").slice(0, KLAR.MAX_TEXT_LENGTH);
     updateSelectionUI();
   } catch {
-    toast("error", "Cannot capture this page — try a regular website");
+    toast("error", t("cannotCapturePage"));
     setCaptureModeUI("selection");
   }
 });
@@ -161,10 +186,10 @@ function updateSelectionUI() {
     selCard.classList.remove("has-text");
     selCount.textContent = "";
     selEmpty.textContent = captureMode === "page"
-      ? "Capturing page content…"
+      ? t("capturingPage")
       : captureMode === "url"
-        ? "No page URL available"
-        : "Select text on a page, then pick an action below";
+        ? t("noPageUrl")
+        : t("selectTextHintFull");
   }
 
   // Enable/disable action buttons
@@ -177,7 +202,7 @@ function updateSelectionUI() {
 toggleVis.addEventListener("click", () => {
   const isPassword = apiKeyInput.type === "password";
   apiKeyInput.type = isPassword ? "text" : "password";
-  toggleVis.textContent = isPassword ? "Hide" : "Show";
+  toggleVis.textContent = isPassword ? t("hideKey") : t("showKey");
 });
 
 // ─── Save & Validate key (server-side) ───
@@ -185,18 +210,18 @@ saveKeyBtn.addEventListener("click", async () => {
   const key = apiKeyInput.value.trim();
 
   if (!key) {
-    toast("error", "Please enter an API key");
+    toast("error", t("enterApiKey"));
     return;
   }
   if (!key.startsWith("klar_")) {
-    toast("error", "Invalid format — keys start with klar_");
+    toast("error", t("invalidKeyFormat"));
     return;
   }
 
   // Loading state
   saveKeyBtn.disabled = true;
   saveSpinner.style.display = "inline-block";
-  saveBtnText.textContent = "Validating...";
+  saveBtnText.textContent = t("validatingKey");
 
   try {
     // Use the lightweight validate endpoint — no pipeline execution needed
@@ -214,7 +239,7 @@ saveKeyBtn.addEventListener("click", async () => {
     currentApiKey = key;
     chrome.runtime.sendMessage({ type: "SET_API_KEY", apiKey: key }, () => {
       const planLabel = result.plan ? ` (${result.plan} plan)` : "";
-      toast("ok", `API key verified & saved${planLabel}`);
+      toast("ok", `${t("apiKeyVerified")}${planLabel}`);
       setTimeout(() => showMainScreen(), 600);
     });
   } catch (err) {
@@ -222,7 +247,7 @@ saveKeyBtn.addEventListener("click", async () => {
   } finally {
     saveKeyBtn.disabled = false;
     saveSpinner.style.display = "none";
-    saveBtnText.textContent = "Verify & Save Key";
+    saveBtnText.textContent = t("verifyAndSaveKey");
   }
 });
 
@@ -238,7 +263,7 @@ async function handleAnalysisClick(e) {
   // Block restricted pages where content script cannot run
   const url = tab.url || "";
   if (/^(chrome|edge|brave|about|chrome-extension|devtools):/.test(url)) {
-    toast("error", "Cannot analyze on this page — try a regular website");
+    toast("error", t("cannotAnalyzePage"));
     return;
   }
 
@@ -250,7 +275,7 @@ async function handleAnalysisClick(e) {
   actionsGrid.querySelectorAll(".action-btn").forEach(b => { b.disabled = true; });
   const nameEl = btn.querySelector(".action-name");
   const originalName = nameEl.textContent;
-  nameEl.textContent = "Analyzing…";
+  nameEl.textContent = t("analyzing");
   btn.style.borderColor = "#059669";
 
   // Dispatch based on capture mode
@@ -260,6 +285,7 @@ async function handleAnalysisClick(e) {
       url: currentPageUrl,
       tabId: tab.id,
       analyses,
+      language: detectedLanguage,
     });
   } else {
     chrome.runtime.sendMessage({
@@ -267,6 +293,7 @@ async function handleAnalysisClick(e) {
       text: capturedText,
       tabId: tab.id,
       analyses,
+      language: detectedLanguage,
     });
   }
 

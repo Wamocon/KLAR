@@ -191,42 +191,42 @@
       <img class="header-icon" src="icons/icon-32.png" alt="KLAR">
       <div class="header-text">
         <div class="logo">KLAR</div>
-        <div class="tagline">AI Content Verifier</div>
+        <div class="tagline" data-i18n="tagline">AI Content Verifier</div>
       </div>
     </div>
     <div class="header-actions">
-      <a class="header-btn" id="openAppBtn" target="_blank" rel="noopener">Open App</a>
+      <a class="header-btn" id="openAppBtn" target="_blank" rel="noopener" data-i18n="openApp">Open App</a>
     </div>
   </div>
 
   <div class="content">
     <div id="empty" class="empty-state">
       <div class="empty-icon">KLAR</div>
-      <div class="empty-title">No verification yet</div>
+      <div class="empty-title" data-i18n="noVerification">No verification yet</div>
       <div class="empty-steps">
-        <div class="empty-step"><span class="step-num">1</span> Select text on any webpage</div>
-        <div class="empty-step"><span class="step-num">2</span> Click the KLAR extension icon</div>
-        <div class="empty-step"><span class="step-num">3</span> Choose an analysis action</div>
+        <div class="empty-step"><span class="step-num">1</span> <span data-i18n="step1">Select text on any webpage</span></div>
+        <div class="empty-step"><span class="step-num">2</span> <span data-i18n="step2">Click the KLAR extension icon</span></div>
+        <div class="empty-step"><span class="step-num">3</span> <span data-i18n="step3">Choose an analysis action</span></div>
       </div>
     </div>
 
     <div id="loading" class="loading">
       <div class="spinner"></div>
-      <span class="loading-text">Analyzing content…</span>
-      <span class="loading-sub">This may take 10–30 seconds</span>
+      <span class="loading-text" data-i18n="analyzingContent">Analyzing content…</span>
+      <span class="loading-sub" data-i18n="analysisMayTake">This may take 10–30 seconds</span>
     </div>
 
     <div id="result" class="result hidden"></div>
 
     <div id="error" class="error">
       <div class="error-icon">!</div>
-      <div id="errorTitle" class="error-title">Verification failed</div>
+      <div id="errorTitle" class="error-title" data-i18n="verificationFailed">Verification failed</div>
       <div id="errorMessage" class="error-message"></div>
-      <button id="retryBtn" class="retry-btn" style="display:none;">Retry</button>
+      <button id="retryBtn" class="retry-btn" style="display:none;" data-i18n="retry">Retry</button>
     </div>
 
     <div id="history" class="history hidden">
-      <div class="section-title">Recent verifications</div>
+      <div class="section-title" data-i18n="recentVerifications">Recent verifications</div>
       <div id="historyList"></div>
     </div>
   </div>

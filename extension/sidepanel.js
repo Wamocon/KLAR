@@ -72,15 +72,15 @@ function showLoading(statusMessage) {
   const statusEl = loadingEl.querySelector(".loading-text");
   const subEl = loadingEl.querySelector(".loading-sub");
   if (statusEl) {
-    statusEl.textContent = statusMessage || "Analyzing content…";
+    statusEl.textContent = statusMessage || t("analyzingContent");
   }
   if (subEl) {
-    subEl.textContent = statusMessage ? "" : "This may take 10–30 seconds";
+    subEl.textContent = statusMessage ? "" : t("analysisMayTake");
   }
 }
 
 function showLoadingProgress(data) {
-  showLoading(data.message || `Verifying ${data.completed || 0} of ${data.total || "?"} claims…`);
+  showLoading(data.message || t("verifiedXofY", String(data.completed || 0), String(data.total || "?")));
 }
 
 function showError(error, errorCode) {
@@ -139,10 +139,10 @@ retryBtn.addEventListener("click", async () => {
         analyses: ["fact-check"],
       });
     } else {
-      showError("Select text on a page or navigate to a website to retry.", "no_content");
+      showError(t("selectTextHintFull"), "no_content");
     }
   } catch {
-    showError("Could not retry — try selecting text and using the popup.", "retry_failed");
+    showError(t("retryFailed") || "Could not retry — try selecting text and using the popup.", "retry_failed");
   }
 });
 
@@ -164,12 +164,12 @@ function showResult(result) {
     sections.push(`
       <div class="score-card">
         <span class="score-ring" style="color:${color}">${score}%</span>
-        <span class="score-label">Trust Score</span>
-        <div class="score-desc">Ratio of supported vs. contradicted claims. Unconfirmed claims are excluded from this score.</div>
+        <span class="score-label">${t("trustScoreLabel")}</span>
+        <div class="score-desc">${t("trustScoreDesc")}</div>
         <div class="claims-bar">
-          <span class="cb-s">${result.supported || 0} supported</span>
-          <span class="cb-c">${result.contradicted || 0} contradicted</span>
-          <span class="cb-u">${result.unverifiable || 0} unconfirmed</span>
+          <span class="cb-s">${t("xSupported", String(result.supported || 0))}</span>
+          <span class="cb-c">${t("xContradicted", String(result.contradicted || 0))}</span>
+          <span class="cb-u">${t("xUnconfirmed", String(result.unverifiable || 0))}</span>
         </div>
       </div>
     `);
@@ -184,7 +184,7 @@ function showResult(result) {
     // Extract key claims for the summary
     const contradictedClaims = claims.filter(c => c.verdict === "contradicted");
     const supportedClaims = claims.filter(c => c.verdict === "supported");
-    const truncate = (s, max = 80) => s && s.length > max ? s.slice(0, max).replace(/\s+\S*$/, "") + "…" : s;
+
 
     let summaryIcon, summaryBg, summaryTitle, summaryBody;
     const verifiable = sup + con;
@@ -192,30 +192,26 @@ function showResult(result) {
     if (verifiable === 0) {
       // All unconfirmed
       summaryIcon = "\u2753"; summaryBg = "rgba(100,116,139,0.1)";
-      summaryTitle = "Could not verify";
-      summaryBody = `We checked ${total} claims but couldn\u2019t find sources to confirm or deny any of them. This is common for very recent news, niche topics, or highly specific product details.`;
+      summaryTitle = t("verdictCouldNotVerify");
+      summaryBody = t("verdictCouldNotVerifyBody", String(total));
     } else if (con === 0 && sup > 0) {
       // All verifiable claims are supported
       summaryIcon = "\u2705"; summaryBg = "rgba(16,185,129,0.1)";
-      summaryTitle = "Looks reliable";
-      const topClaim = truncate(supportedClaims[0]?.text || "");
+      summaryTitle = t("verdictReliable");
       summaryBody = sup === total
-        ? `All ${sup} claims checked out against independent sources. This content appears factually accurate.`
-        : `${sup} of ${total} claims are backed by sources${topClaim ? ` \u2014 e.g. "${topClaim}"` : ""}. ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be checked but nothing was contradicted.`;
+        ? t("verdictAllVerified", String(sup))
+        : t("verdictMostVerified", String(sup), String(total), String(unv));
     } else if (sup === 0 && con > 0) {
       // All verifiable claims are contradicted
       summaryIcon = "\ud83d\uded1"; summaryBg = "rgba(239,68,68,0.1)";
-      summaryTitle = "Key facts are wrong";
-      const topBad = truncate(contradictedClaims[0]?.text || "");
-      summaryBody = `${con} claim${con !== 1 ? "s were" : " was"} directly contradicted by sources${topBad ? `: "${topBad}"` : ""}. None of the verifiable claims checked out. Do not rely on this content without independent verification.`;
+      summaryTitle = t("verdictFactsWrong");
+      summaryBody = t("verdictAllContradicted", String(con));
     } else {
       // Mixed — some supported, some contradicted
       summaryIcon = score >= 60 ? "\ud83d\udfe2" : score >= 40 ? "\ud83d\udfe0" : "\ud83d\udd34";
       summaryBg = score >= 60 ? "rgba(16,185,129,0.08)" : score >= 40 ? "rgba(249,115,22,0.1)" : "rgba(239,68,68,0.1)";
-      summaryTitle = score >= 60 ? "Mostly checks out" : score >= 40 ? "Some facts don\u2019t check out" : "Several facts are wrong";
-      const topBad = truncate(contradictedClaims[0]?.text || "");
-      const moreStr = con > 1 ? ` (+${con - 1} more contradicted)` : "";
-      summaryBody = `We verified ${total} claims. ${sup} checked out, but "${topBad}" was contradicted by sources${moreStr}.${unv > 0 ? ` ${unv} claim${unv !== 1 ? "s" : ""} couldn\u2019t be verified.` : ""} Double-check the red-flagged claims before trusting this.`;
+      summaryTitle = score >= 60 ? t("verdictMostlyChecks") : score >= 40 ? t("verdictSomeFacts") : t("verdictSeveralWrong");
+      summaryBody = t("verdictMixedBody", String(total), String(sup));
     }
 
     sections.push(`
@@ -225,16 +221,16 @@ function showResult(result) {
       </div>
     `);
 
-    sections.push(`<div class="section-title">Claims</div>`);
+    sections.push(`<div class="section-title">${t("claimsTitle")}</div>`);
 
     for (const c of result.claims) {
       const v = esc(c.verdict || "unverifiable");
-      const label = v === "unverifiable" ? "unconfirmed" : v;
+      const label = v === "unverifiable" ? t("unconfirmedLabel") : v;
       sections.push(`
         <div class="claim-card ${v}">
           <div class="claim-header">
             <span class="claim-badge">${label}</span>
-            ${c.confidence != null ? `<span class="claim-conf">${Math.round(c.confidence * 100)}% confidence</span>` : ""}
+            ${c.confidence != null ? `<span class="claim-conf">${t("confidencePct", String(Math.round(c.confidence * 100)))}</span>` : ""}
           </div>
           <div class="claim-text">${esc(c.text)}</div>
           ${c.reasoning ? `<div class="claim-reasoning">${esc(c.reasoning)}</div>` : ""}
@@ -252,10 +248,10 @@ function showResult(result) {
       <div class="analysis-card">
         <div class="analysis-header">
           <span class="analysis-icon analysis-icon-bias"></span>
-          <span class="analysis-title">Bias Analysis</span>
+          <span class="analysis-title">${t("biasAnalysisTitle")}</span>
           <span class="analysis-badge" style="color:${color}">${esc(b.biasLevel || "unknown")}</span>
         </div>
-        <div class="analysis-desc">Measures how balanced the language is. 0 = neutral, 100 = heavily biased. Checks for emotional language, loaded words, and one-sided framing.</div>
+        <div class="analysis-desc">${t("biasAnalysisDesc")}</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${b.overallScore}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${b.overallScore}/100</span>
@@ -270,7 +266,7 @@ function showResult(result) {
               </div>
             `).join("")}
           </div>
-        ` : `<div class="analysis-clean">No significant bias signals detected.</div>`}
+        ` : `<div class="analysis-clean">${t("noBiasSignals")}</div>`}
         ${b.summary ? `<div class="analysis-summary">${esc(b.summary)}</div>` : ""}
       </div>
     `);
@@ -284,10 +280,10 @@ function showResult(result) {
       <div class="analysis-card">
         <div class="analysis-header">
           <span class="analysis-icon analysis-icon-ai"></span>
-          <span class="analysis-title">AI Detection</span>
+          <span class="analysis-title">${t("aiDetectionTitle")}</span>
           <span class="analysis-badge" style="color:${color}">${esc(ai.verdict || "unknown")}</span>
         </div>
-        <div class="analysis-desc">Estimates the likelihood this text was AI-generated using statistical patterns. This is a heuristic — not a definitive proof. Edited AI text may score lower.</div>
+        <div class="analysis-desc">${t("aiDetectionResultDesc")}</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${ai.overallScore}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${ai.overallScore}/100</span>
@@ -301,7 +297,7 @@ function showResult(result) {
               </div>
             `).join("")}
           </div>
-        ` : `<div class="analysis-clean">No strong AI-generation signals detected.</div>`}
+        ` : `<div class="analysis-clean">${t("noAiSignals")}</div>`}
         ${ai.summary ? `<div class="analysis-summary">${esc(ai.summary)}</div>` : ""}
       </div>
     `);
@@ -315,10 +311,10 @@ function showResult(result) {
       <div class="analysis-card">
         <div class="analysis-header">
           <span class="analysis-icon analysis-icon-plag"></span>
-          <span class="analysis-title">Plagiarism Check</span>
-          <span class="analysis-badge" style="color:${color}">${p.originalityPercent}% original</span>
+          <span class="analysis-title">${t("plagiarismCheckTitle")}</span>
+          <span class="analysis-badge" style="color:${color}">${t("pctOriginal", String(p.originalityPercent))}</span>
         </div>
-        <div class="analysis-desc">Checks text fragments against known sources. Higher originality % means less overlap found with existing published content.</div>
+        <div class="analysis-desc">${t("plagiarismCheckDesc")}</div>
         <div class="bar-row">
           <div class="bar-track"><div class="bar-fill" style="width:${p.originalityPercent}%;background:${color}"></div></div>
           <span class="bar-value" style="color:${color}">${esc(p.verdict || "unknown")}</span>
@@ -328,14 +324,14 @@ function showResult(result) {
             ${p.matches.slice(0, 5).map((m) => `
               <div class="match-item">
                 <div class="match-header">
-                  <span class="match-pct" style="color:${m.similarity > 50 ? "#ef4444" : "#eab308"}">${m.similarity}% match</span>
+                  <span class="match-pct" style="color:${m.similarity > 50 ? "#ef4444" : "#eab308"}">${t("pctMatch", String(m.similarity))}</span>
                   <span class="match-source"><a href="${esc(m.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(m.matchedSource)}</a></span>
                 </div>
                 ${m.text ? `<div class="match-text">"${esc(m.text.slice(0, 120))}"</div>` : ""}
               </div>
             `).join("")}
           </div>
-        ` : `<div class="analysis-clean">No significant text overlaps found.</div>`}
+        ` : `<div class="analysis-clean">${t("noOverlaps")}</div>`}
         ${p.summary ? `<div class="analysis-summary">${esc(p.summary)}</div>` : ""}
       </div>
     `);
@@ -343,12 +339,12 @@ function showResult(result) {
 
   // ── Fallback ──
   if (sections.length === 0) {
-    sections.push(`<div class="analysis-clean">No analysis results returned. Try selecting more text.</div>`);
+    sections.push(`<div class="analysis-clean">${t("noResults")}</div>`);
   }
 
   // ── Processing time ──
   if (result.processing_time_ms) {
-    sections.push(`<div class="proc-time">Completed in ${(result.processing_time_ms / 1000).toFixed(1)}s</div>`);
+    sections.push(`<div class="proc-time">${t("completedInSec", (result.processing_time_ms / 1000).toFixed(1))}</div>`);
   }
 
   resultEl.innerHTML = sections.join("");
@@ -363,7 +359,7 @@ function renderSources(sources) {
       ${sources.slice(0, 5).map((s) => {
         let domain = "";
         try { domain = new URL(s.url).hostname.replace(/^www\./, ""); } catch { domain = s.url; }
-        const typeLabel = s.source_type === "wikipedia" ? "Wiki" : s.source_type === "academic" ? "Academic" : "";
+        const typeLabel = s.source_type === "wikipedia" ? t("sourceWiki") : s.source_type === "academic" ? t("sourceAcademic") : "";
         return `
           <a class="source-pill" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.snippet || s.title || "")}">
             <span class="source-pill-text">${esc(s.title || domain)}</span>
@@ -391,81 +387,81 @@ function categorizeError(error, errorCode) {
   const code = errorCode || "";
 
   if (code === "no_api_key" || msg.includes("api key")) {
-    return { title: "API key required", message: "Open the KLAR popup and enter your API key.", retryable: false };
+    return { title: t("errApiKeyRequired"), message: t("errApiKeyRequiredDesc"), retryable: false };
   }
   if (code === "text_too_short" || msg.includes("text too short")) {
-    return { title: "Text too short", message: `Select at least ${KLAR.MIN_TEXT_LENGTH} characters to verify.`, retryable: false };
+    return { title: t("textTooShort"), message: t("textTooShortDesc", String(KLAR.MIN_TEXT_LENGTH)), retryable: false };
   }
   if (code === "no_claims" || msg.includes("no factual claims")) {
     return {
-      title: "No verifiable claims found",
-      message: "The selected text doesn't contain checkable facts.",
-      hint: "Try selecting text with specific facts, statistics, dates, or names.",
+      title: t("errNoClaimsTitle"),
+      message: t("errNoClaimsDesc"),
+      hint: t("errNoClaimsHint"),
       retryable: true,
     };
   }
   if (code === "timeout" || msg.includes("timed out") || msg.includes("timeout")) {
     return {
-      title: "Request timed out",
-      message: "The analysis took too long to complete.",
-      hint: "Try selecting shorter text (1-2 paragraphs work best) or using a single analysis mode instead of comprehensive.",
+      title: t("errTimeoutTitle"),
+      message: t("errTimeoutDesc"),
+      hint: t("errTimeoutHint"),
       retryable: true,
     };
   }
   if (code === "network" || msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("net::")) {
     return {
-      title: "Connection failed",
-      message: "Could not reach the KLAR server.",
-      hint: "Check your internet connection and try again.",
+      title: t("errConnectionTitle"),
+      message: t("errConnectionDesc"),
+      hint: t("errConnectionHint"),
       retryable: true,
     };
   }
   if (code === "extraction_failed" || msg.includes("failed to extract") || msg.includes("claim extraction") || msg.includes("failed to parse")) {
     return {
-      title: "Analysis failed",
-      message: "Could not extract claims from this text.",
-      hint: "The AI model may be temporarily overloaded. Try again in a moment, or select different text.",
+      title: t("errAnalysisTitle"),
+      message: t("errAnalysisDesc"),
+      hint: t("errAnalysisHint"),
       retryable: true,
     };
   }
   if (msg.includes("rate limit")) {
-    return { title: "Rate limit reached", message: "Too many requests. Wait a moment and retry.", retryable: true };
+    return { title: t("errRateLimitTitle"), message: t("errRateLimitDesc"), retryable: true };
   }
   if (msg.includes("failed to fetch url") || msg.includes("restricted network") || msg.includes("could not extract meaningful content")) {
     return {
-      title: "Cannot read this page",
-      message: "The server couldn't fetch or parse this URL.",
-      hint: "Try using 'Selection' or 'Full Page' capture mode instead of URL mode.",
+      title: t("errCannotReadPage"),
+      message: t("errCannotReadPageDesc"),
+      hint: t("errCannotReadPageHint"),
       retryable: true,
     };
   }
   if (msg.includes("prompt manipulation")) {
     return {
-      title: "Content blocked",
-      message: "The text was flagged as containing prompt injection patterns.",
-      hint: "If this is legitimate content, try selecting a smaller portion without meta-instructions.",
+      title: t("errContentBlocked"),
+      message: t("errContentBlockedDesc"),
+      hint: t("errContentBlockedHint"),
       retryable: false,
     };
   }
   if (msg.includes("quota") || msg.includes("resource_exhausted") || code === "quota_exceeded") {
     return {
-      title: "AI quota reached",
-      message: "Too many requests — the AI service is temporarily busy.",
-      hint: "Wait 30 seconds, then try again.",
+      title: t("errQuotaTitle"),
+      message: t("errQuotaDesc"),
+      hint: t("errQuotaHint"),
       retryable: true,
     };
   }
   if (msg.includes("server returned 5") || code === "pipeline_error" || code === "server_error") {
     return {
-      title: "Server error",
-      message: error || "The KLAR server encountered an internal error.",
-      hint: "This is usually temporary. Try again in a few seconds.",
+      title: t("errServerTitle"),
+      message: error || t("unexpectedError"),
+      hint: t("errServerHint"),
       retryable: true,
     };
   }
   return {
-    title: "Verification failed",
-    message: error || "An unexpected error occurred.",
+    title: t("verificationFailed"),
+    message: error || t("unexpectedError"),
     retryable: true,
   };
 }

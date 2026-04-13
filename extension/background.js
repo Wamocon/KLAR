@@ -38,23 +38,43 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "klar-verify-selection" && info.selectionText) {
-    await verifyText(info.selectionText, tab?.id);
+    // Detect language from page
+    let pageLang = "en";
+    try {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => document.documentElement.lang || "",
+      });
+      const lang = (results?.[0]?.result || "").toLowerCase();
+      if (lang.startsWith("de")) pageLang = "de";
+    } catch { /* content script might not be injectable */ }
+    await verifyText(info.selectionText, tab?.id, undefined, pageLang);
   } else if (info.menuItemId === "klar-verify-page" && tab?.url) {
-    await verifyUrl(tab.url, tab.id, ["fact-check", "bias-check", "ai-detection"]);
+    // Detect language from page
+    let pageLang = "en";
+    try {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => document.documentElement.lang || "",
+      });
+      const lang = (results?.[0]?.result || "").toLowerCase();
+      if (lang.startsWith("de")) pageLang = "de";
+    } catch { /* content script might not be injectable */ }
+    await verifyUrl(tab.url, tab.id, ["fact-check", "bias-check", "ai-detection"], pageLang);
   }
 });
 
 // Listen for messages from popup/content script
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "VERIFY_TEXT") {
-    verifyText(message.text, message.tabId, message.analyses)
+    verifyText(message.text, message.tabId, message.analyses, message.language)
       .then(sendResponse)
       .catch(() => {}); // sender (popup) may have closed
     return true;
   }
   if (message.type === "VERIFY_URL") {
     // FIX: Forward analyses from the message (was being dropped before)
-    verifyUrl(message.url, message.tabId, message.analyses).then(sendResponse);
+    verifyUrl(message.url, message.tabId, message.analyses, message.language).then(sendResponse);
     return true;
   }
   if (message.type === "VALIDATE_KEY") {
@@ -233,7 +253,7 @@ const JUDGE_CONCURRENCY = 2; // Max parallel judge requests
  * Run the two-phase verification pipeline.
  * Works for both text and URL modes.
  */
-async function runTwoPhaseVerification(tabId, extractBody, analyses) {
+async function runTwoPhaseVerification(tabId, extractBody, analyses, language) {
   const apiKey = await getApiKey();
   if (!apiKey) {
     const msg = chrome.i18n.getMessage("noApiKeyError") || "No API key configured. Open the extension popup to set up.";
@@ -241,10 +261,19 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
     return { error: "No API key" };
   }
 
+  // Auto-detect language from text if not provided
+  if (!language && extractBody.text) {
+    const sample = extractBody.text.slice(0, 500).toLowerCase();
+    const deWords = ["und", "der", "die", "das", "ist", "nicht", "ein", "eine", "auch", "sich", "werden", "nach", "f\u00fcr", "\u00fcber"];
+    const deCount = deWords.filter(w => sample.includes(" " + w + " ")).length;
+    language = deCount >= 3 ? "de" : "en";
+  }
+  const effectiveLanguage = language || "en";
+
   await openSidePanel(tabId);
   await delay(300);
   await ensureContentScript(tabId);
-  notifyTab(tabId, { type: "KLAR_LOADING", stage: "extracting", message: "Extracting factual claims…" });
+  notifyTab(tabId, { type: "KLAR_LOADING", stage: "extracting", message: chrome.i18n.getMessage("extractingClaims") || "Extracting factual claims…" });
 
   startKeepAlive();
   const headers = {
@@ -258,7 +287,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
     const extractRes = await fetchWithRetry(`${KLAR.API_BASE}/api/extension/extract`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ ...extractBody, analyses: analyses || ["fact-check"] }),
+      body: JSON.stringify({ ...extractBody, language: effectiveLanguage, analyses: analyses || ["fact-check"] }),
     });
 
     const extractData = await extractRes.json().catch(() => ({}));
@@ -285,7 +314,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
           claims: [],
           source_url: extractData.source_url,
           source_title: extractData.source_title,
-          language: extractData.language,
+          language: extractData.language || effectiveLanguage,
           ...(extractData.ai_detection && { ai_detection: extractData.ai_detection }),
           ...(extractData.bias && { bias: extractData.bias }),
           ...(extractData.plagiarism && { plagiarism: extractData.plagiarism }),
@@ -293,7 +322,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
         notifyTab(tabId, { type: "KLAR_RESULT", result: analysisResult });
         return analysisResult;
       }
-      notifyTab(tabId, { type: "KLAR_ERROR", error: "No factual claims found in this text.", errorCode: "no_claims" });
+      notifyTab(tabId, { type: "KLAR_ERROR", error: chrome.i18n.getMessage("noFactualClaims") || "No factual claims found in this text.", errorCode: "no_claims" });
       return { error: "No claims" };
     }
 
@@ -301,13 +330,13 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
     notifyTab(tabId, {
       type: "KLAR_PROGRESS",
       stage: "judging",
-      message: `Found ${claims.length} claims — verifying…`,
+      message: chrome.i18n.getMessage("foundClaimsVerifying", [String(claims.length)]) || `Found ${claims.length} claims — verifying…`,
       total: claims.length,
       completed: 0,
     });
 
     // ── Phase 2: Judge each claim (parallel, limited concurrency) ──
-    const language = extractData.language || "en";
+    const language = extractData.language || effectiveLanguage;
     const judgedClaims = [];
     let supported = 0, contradicted = 0, unverifiable = 0;
 
@@ -366,7 +395,7 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
       notifyTab(tabId, {
         type: "KLAR_PROGRESS",
         stage: "judging",
-        message: `Verified ${judgedClaims.length} of ${claims.length} claims…`,
+        message: chrome.i18n.getMessage("verifiedXofY", [String(judgedClaims.length), String(claims.length)]) || `Verified ${judgedClaims.length} of ${claims.length} claims…`,
         total: claims.length,
         completed: judgedClaims.length,
         partialClaims: judgedClaims,
@@ -413,17 +442,17 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
   }
 }
 
-async function verifyText(text, tabId, analyses) {
+async function verifyText(text, tabId, analyses, language) {
   if (text.length < KLAR.MIN_TEXT_LENGTH) {
     const msg = `Text too short. Select at least ${KLAR.MIN_TEXT_LENGTH} characters.`;
     notifyTab(tabId, { type: "KLAR_ERROR", error: msg, errorCode: "text_too_short" });
     return { error: "Text too short" };
   }
-  return runTwoPhaseVerification(tabId, { text: text.slice(0, KLAR.MAX_TEXT_LENGTH) }, analyses);
+  return runTwoPhaseVerification(tabId, { text: text.slice(0, KLAR.MAX_TEXT_LENGTH) }, analyses, language);
 }
 
-async function verifyUrl(url, tabId, analyses) {
-  return runTwoPhaseVerification(tabId, { url }, analyses);
+async function verifyUrl(url, tabId, analyses, language) {
+  return runTwoPhaseVerification(tabId, { url }, analyses, language);
 }
 
 // ─── Persistent state store — sidepanel can request this even if it opens late ───
