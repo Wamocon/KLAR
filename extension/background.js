@@ -379,7 +379,10 @@ async function runTwoPhaseVerification(tabId, extractBody, analyses) {
 
     // ── Final result ──
     const totalClaims = judgedClaims.length;
-    const trustScore = totalClaims > 0 ? Math.round((supported / totalClaims) * 100) : 0;
+    // Trust score: ratio of supported to verifiable claims (unverifiable excluded)
+    // This ensures unverified claims don't penalize the score the same as contradictions
+    const verifiable = supported + contradicted;
+    const trustScore = verifiable > 0 ? Math.round((supported / verifiable) * 100) : (totalClaims > 0 ? 50 : 0);
 
     const finalResult = {
       trust_score: trustScore,

@@ -70,7 +70,7 @@
       "step4Title": "Evidence search",
       "step4Desc": "Each claim is searched against Wikipedia, Wikidata, and Google. 3-5 sources per claim.",
       "step5Title": "Color-coded Trust Report",
-      "step5Desc": "Green = supported, red = contradicted, yellow = unverifiable. Every verdict with sources and reasoning."
+      "step5Desc": "Green = supported, red = contradicted, gray = unconfirmed. Every verdict with sources and reasoning."
     },
     "engines": {
       "title": "5 Specialized Analysis Engines",
@@ -93,7 +93,7 @@
       "evidenceBased": "Evidence-Based Verification",
       "evidenceBasedDesc": "Every claim is checked against real, external sources — Wikipedia, Wikidata, and Google. Not AI judging AI, but AI verified against fact.",
       "transparent": "Full Transparency",
-      "transparentDesc": "Every verdict comes with a plain-English explanation and clickable source links. You see exactly why each claim was judged supported, contradicted, or unverifiable.",
+      "transparentDesc": "Every verdict comes with a plain-English explanation and clickable source links. You see exactly why each claim was judged supported, contradicted, or unconfirmed.",
       "universal": "Any Text, Any Format",
       "universalDesc": "Paste text directly, upload PDF/DOCX/TXT files, or enter a URL. Works with AI-generated content, press releases, research papers, blog posts — anything with factual claims.",
       "euCompliant": "EU-Compliant & GDPR by Design",
@@ -172,7 +172,7 @@
     "faq": {
       "title": "Frequently Asked Questions",
       "q1": "How accurate is KLAR?",
-      "a1": "KLAR's accuracy depends on source availability. Claims verifiable against Wikipedia and reliable web sources receive highly accurate verdicts. Very recent events or niche topics may be classified as 'Unverifiable' when no reliable source exists — which is the honest answer.",
+      "a1": "KLAR's accuracy depends on source availability. Claims verifiable against Wikipedia and reliable web sources receive highly accurate verdicts. Very recent events or niche topics may be classified as 'Unconfirmed' when no reliable source exists \u2014 which is the honest answer.",
       "q2": "How is KLAR different from asking ChatGPT to fact-check?",
       "a2": "ChatGPT cannot access the internet in real-time and frequently fabricates sources. KLAR actually searches live sources (Wikipedia, Wikidata, Google) and provides clickable links to every source used. Every claim is verified against real, external evidence — not AI opinion.",
       "q3": "Does KLAR store my text?",
@@ -211,7 +211,7 @@
     "trustScore": "Trust Score",
     "totalClaims": "Total Claims",
     "supported": "Supported",
-    "unverifiable": "Unverifiable",
+    "unverifiable": "Unconfirmed",
     "contradicted": "Contradicted",
     "processingTime": "Processing Time",
     "seconds": "seconds",
@@ -226,15 +226,16 @@
     "originalText": "Original text",
     "backToVerify": "New verification",
     "verdict": {
-      "high": "Highly trustworthy — {supported} of {total} claims are backed by independent sources. This content appears factually reliable.",
-      "good": "Mostly reliable — {supported} of {total} claims verified, but {unverifiable} could not be independently confirmed. Check unverified claims before sharing.",
-      "mixed": "Mixed reliability — only {supported} of {total} claims could be verified. {unverifiable} remain unconfirmed. Treat this content with caution.",
-      "low": "Low reliability — most claims could not be verified. {contradicted} contradicted, {unverifiable} unconfirmed. Cross-check before trusting this content.",
-      "veryLow": "Unreliable — very few claims are supported by sources. {contradicted} directly contradicted. Do not share without independent verification.",
+      "high": "Highly trustworthy — {supported} of {total} claims are backed by independent sources. No claims were contradicted. This content appears factually reliable.",
+      "good": "Mostly reliable — {supported} claims verified, {contradicted} contradicted. {unverifiable} could not be independently confirmed but are not necessarily wrong.",
+      "mixed": "Mixed reliability — {supported} claims supported but {contradicted} contradicted by sources. {unverifiable} remain unconfirmed. Verify key facts before sharing.",
+      "low": "Low reliability — {contradicted} claims directly contradicted by sources. Only {supported} supported. Cross-check this content carefully.",
+      "veryLow": "Unreliable — {contradicted} claims contradicted and very few are supported. Do not share without independent verification.",
+      "allUnconfirmed": "Could not verify — none of the {total} claims could be confirmed or denied by available sources. This is common for very recent news or niche topics.",
       "label": "What does this mean?"
     },
     "help": {
-      "trustScore": "Percentage of claims confirmed by independent sources. Higher = more factually reliable.",
+      "trustScore": "Ratio of supported vs. contradicted claims. Unconfirmed claims (where no source was found either way) are excluded from this score — they don't count against you.",
       "supported": "Claim confirmed — at least one independent source supports this statement.",
       "unverifiable": "No reliable source found to confirm or deny this claim. This does not mean it's wrong — just that we couldn't verify it.",
       "contradicted": "Claim disputed — at least one reliable source directly contradicts this statement.",

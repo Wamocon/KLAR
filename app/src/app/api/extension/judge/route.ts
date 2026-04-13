@@ -92,6 +92,20 @@ export async function POST(request: NextRequest) {
       adjustedConfidence = Math.max(0, adjustedConfidence - 0.1);
     }
 
+    // Filter sources to only include those the AI actually referenced in its reasoning
+    // This prevents showing irrelevant search results (e.g. "Zimbabwe" for a pricing claim)
+    const reasoning = (judgment.reasoning || "").toLowerCase();
+    const relevantSources = judgment.sources.filter((s, i) => {
+      // Keep source if the AI mentioned it by index ("Source 1", "Source 2" etc.)
+      if (reasoning.includes(`source ${i + 1}`)) return true;
+      // Keep source if the title or domain appears in the reasoning
+      const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      if (titleWords.some(w => reasoning.includes(w))) return true;
+      // For supported/contradicted verdicts, keep all sources (they were relevant enough for a verdict)
+      if (judgment.verdict !== "unverifiable") return true;
+      return false;
+    });
+
     return corsResponse({
       claim_text: sanitizedClaim.claim_text,
       original_sentence: sanitizedClaim.original_sentence,
@@ -99,7 +113,7 @@ export async function POST(request: NextRequest) {
       confidence: Math.round(adjustedConfidence * 100) / 100,
       reasoning: judgment.reasoning,
       recommendation: judgment.recommendation,
-      sources: judgment.sources.map(s => ({
+      sources: relevantSources.map(s => ({
         title: s.title,
         url: s.url,
         snippet: s.snippet,

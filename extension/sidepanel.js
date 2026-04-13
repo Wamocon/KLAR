@@ -169,7 +169,7 @@ function showResult(result) {
         <div class="claims-bar">
           <span class="cb-s">${result.supported || 0} supported</span>
           <span class="cb-c">${result.contradicted || 0} contradicted</span>
-          <span class="cb-u">${result.unverifiable || 0} unknown</span>
+          <span class="cb-u">${result.unverifiable || 0} unconfirmed</span>
         </div>
       </div>
     `);
@@ -180,21 +180,25 @@ function showResult(result) {
     const unv = result.unverifiable || 0;
     const total = sup + con + unv;
     let verdictText, verdictIcon, verdictBg;
-    if (score >= 80) {
+    const verifiable = sup + con;
+    if (verifiable === 0) {
+      verdictIcon = "\u2753"; verdictBg = "rgba(100,116,139,0.1)";
+      verdictText = `Could not verify \u2014 none of the ${total} claims could be confirmed or denied by available sources. This is common for very recent news or niche topics.`;
+    } else if (score >= 80) {
       verdictIcon = "\u2705"; verdictBg = "rgba(16,185,129,0.1)";
-      verdictText = `Highly trustworthy \u2014 ${sup} of ${total} claims are backed by independent sources. This content appears factually reliable.`;
+      verdictText = `Highly trustworthy \u2014 ${sup} of ${total} claims are backed by independent sources. No claims were contradicted. This content appears factually reliable.`;
     } else if (score >= 60) {
       verdictIcon = "\ud83d\udfe2"; verdictBg = "rgba(16,185,129,0.08)";
-      verdictText = `Mostly reliable \u2014 ${sup} of ${total} claims verified, but ${unv} could not be independently confirmed. Check unverified claims before sharing.`;
+      verdictText = `Mostly reliable \u2014 ${sup} claims verified, ${con} contradicted. ${unv} could not be independently confirmed but are not necessarily wrong.`;
     } else if (score >= 40) {
       verdictIcon = "\u26a0\ufe0f"; verdictBg = "rgba(234,179,8,0.1)";
-      verdictText = `Mixed reliability \u2014 only ${sup} of ${total} claims could be verified. ${unv} remain unconfirmed. Treat this content with caution.`;
+      verdictText = `Mixed reliability \u2014 ${sup} claims supported but ${con} contradicted by sources. ${unv} remain unconfirmed. Verify key facts before sharing.`;
     } else if (score >= 20) {
       verdictIcon = "\ud83d\udfe0"; verdictBg = "rgba(249,115,22,0.1)";
-      verdictText = `Low reliability \u2014 most claims could not be verified. ${con} contradicted, ${unv} unconfirmed. Cross-check before trusting this content.`;
+      verdictText = `Low reliability \u2014 ${con} claims directly contradicted by sources. Only ${sup} supported. Cross-check this content carefully.`;
     } else {
       verdictIcon = "\ud83d\uded1"; verdictBg = "rgba(239,68,68,0.1)";
-      verdictText = `Unreliable \u2014 very few claims are supported by sources. ${con} directly contradicted. Do not share without independent verification.`;
+      verdictText = `Unreliable \u2014 ${con} claims contradicted and very few are supported. Do not share without independent verification.`;
     }
     sections.push(`
       <div class="verdict-summary" style="background:${verdictBg}">

@@ -163,7 +163,7 @@ export default function ReportPage() {
     switch (verdict) {
       case "supported": return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
       case "contradicted": return <XCircle className="h-5 w-5 text-red-500" />;
-      default: return <HelpCircle className="h-5 w-5 text-amber-500" />;
+      default: return <HelpCircle className="h-5 w-5 text-slate-400" />;
     }
   };
 
@@ -272,7 +272,7 @@ export default function ReportPage() {
                 {[
                   { label: t("totalClaims"), value: verification.total_claims, color: "text-slate-800 dark:text-slate-300", help: t("help.totalClaims") },
                   { label: t("supported"), value: verification.supported_count, color: "text-emerald-600", help: t("help.supported") },
-                  { label: t("unverifiable"), value: verification.unverifiable_count, color: "text-amber-600", help: t("help.unverifiable") },
+                  { label: t("unverifiable"), value: verification.unverifiable_count, color: "text-slate-500", help: t("help.unverifiable") },
                   { label: t("contradicted"), value: verification.contradicted_count, color: "text-red-600", help: t("help.contradicted") },
                 ].map((stat, i) => (
                   <div key={i} className="flex flex-col items-center justify-center p-6 border-b border-r border-gray-100 dark:border-gray-800 last:border-r-0" title={stat.help}>
@@ -292,13 +292,15 @@ export default function ReportPage() {
           const con = verification.contradicted_count;
           const unv = verification.unverifiable_count;
           const total = verification.total_claims;
-          const tier = score >= 80 ? "high" : score >= 60 ? "good" : score >= 40 ? "mixed" : score >= 20 ? "low" : "veryLow";
-          const bgColor = score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200/60 dark:border-emerald-800/30"
+          const tier = (sup + con === 0) ? "allUnconfirmed" : score >= 80 ? "high" : score >= 60 ? "good" : score >= 40 ? "mixed" : score >= 20 ? "low" : "veryLow";
+          const bgColor = tier === "allUnconfirmed" ? "bg-slate-50 dark:bg-slate-900/15 border-slate-200/60 dark:border-slate-800/30"
+            : score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200/60 dark:border-emerald-800/30"
             : score >= 60 ? "bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/40 dark:border-emerald-800/20"
             : score >= 40 ? "bg-amber-50 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/30"
             : score >= 20 ? "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30"
             : "bg-red-50 dark:bg-red-900/15 border-red-200/60 dark:border-red-800/30";
-          const textColor = score >= 60 ? "text-emerald-800 dark:text-emerald-300"
+          const textColor = tier === "allUnconfirmed" ? "text-slate-700 dark:text-slate-300"
+            : score >= 60 ? "text-emerald-800 dark:text-emerald-300"
             : score >= 40 ? "text-amber-800 dark:text-amber-300"
             : "text-red-800 dark:text-red-300";
           return (
@@ -339,7 +341,7 @@ export default function ReportPage() {
                     style={{ width: `${(verification.supported_count / verification.total_claims) * 100}%` }} />
                 )}
                 {verification.unverifiable_count > 0 && (
-                  <div className="bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all"
+                  <div className="bg-gradient-to-r from-slate-400 to-slate-300 dark:from-slate-500 dark:to-slate-400 rounded-full transition-all"
                     style={{ width: `${(verification.unverifiable_count / verification.total_claims) * 100}%` }} />
                 )}
                 {verification.contradicted_count > 0 && (
@@ -349,7 +351,7 @@ export default function ReportPage() {
               </div>
               <div className="mt-2 flex justify-between text-[10px] text-gray-500 font-medium">
                 <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{t("supported")} ({verification.supported_count})</span>
-                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" />{t("unverifiable")} ({verification.unverifiable_count})</span>
+                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-slate-400" />{t("unverifiable")} ({verification.unverifiable_count})</span>
                 <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />{t("contradicted")} ({verification.contradicted_count})</span>
               </div>
             </CardContent>
@@ -390,7 +392,7 @@ export default function ReportPage() {
               } ${
                 claim.verdict === "supported" ? "hover:border-emerald-200 dark:hover:border-emerald-800/50"
                 : claim.verdict === "contradicted" ? "hover:border-red-200 dark:hover:border-red-800/50"
-                : "hover:border-amber-200 dark:hover:border-amber-800/50"
+                : "hover:border-slate-200 dark:hover:border-slate-700/50"
               }`}
               style={{ animationDelay: `${index * 50}ms` }}
               onClick={() => setExpandedClaim(expandedClaim === claim.id ? null : claim.id)}
@@ -401,7 +403,7 @@ export default function ReportPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-300 leading-relaxed">{claim.claim_text}</p>
                     <div className="mt-2 flex items-center gap-2">
-                      <Badge variant={claim.verdict === "supported" ? "success" : claim.verdict === "contradicted" ? "destructive" : "warning"}>
+                      <Badge variant={claim.verdict === "supported" ? "success" : claim.verdict === "contradicted" ? "destructive" : "secondary"}>
                         {getVerdictLabel(claim.verdict)}
                       </Badge>
                       <span className="text-xs text-gray-400" title={t("help.confidence")}>{t("confidence")}: {Math.round(claim.confidence * 100)}%</span>

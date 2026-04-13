@@ -291,7 +291,10 @@ export async function* runVerificationPipeline(
 
   const processingTime = Date.now() - startTime;
   const totalClaims = extractedClaims.length;
-  const trustScore = totalClaims > 0 ? Math.round((supported / totalClaims) * 100) : 0;
+  // Trust score: ratio of supported to verifiable claims (unverifiable excluded)
+  // This ensures unverified claims don't penalize the score the same as contradictions
+  const verifiable = supported + contradicted;
+  const trustScore = verifiable > 0 ? Math.round((supported / verifiable) * 100) : (totalClaims > 0 ? 50 : 0);
 
   const verification: Omit<Verification, "id" | "user_id" | "created_at"> = {
     input_text: text,
@@ -310,17 +313,28 @@ export async function* runVerificationPipeline(
   };
 
   const claims: Omit<Claim, "id" | "verification_id" | "created_at">[] =
-    judgments.map((j) => ({
-      claim_text: j.claim.claim_text,
-      original_sentence: j.claim.original_sentence,
-      verdict: j.verdict,
-      confidence: j.confidence,
-      reasoning: j.reasoning,
-      recommendation: j.recommendation || undefined,
-      sources: j.sources,
-      position_start: j.claim.position_start,
-      position_end: j.claim.position_end,
-    }));
+    judgments.map((j) => {
+      // Filter sources to only include those the AI actually referenced in its reasoning
+      const reasoning = (j.reasoning || "").toLowerCase();
+      const relevantSources = j.sources.filter((s, i) => {
+        if (reasoning.includes(`source ${i + 1}`)) return true;
+        const titleWords = s.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+        if (titleWords.some(w => reasoning.includes(w))) return true;
+        if (j.verdict !== "unverifiable") return true;
+        return false;
+      });
+      return {
+        claim_text: j.claim.claim_text,
+        original_sentence: j.claim.original_sentence,
+        verdict: j.verdict,
+        confidence: j.confidence,
+        reasoning: j.reasoning,
+        recommendation: j.recommendation || undefined,
+        sources: relevantSources,
+        position_start: j.claim.position_start,
+        position_end: j.claim.position_end,
+      };
+    });
 
   // Emit final token usage for transparency
   const tokenUsage = tracker.getSession();

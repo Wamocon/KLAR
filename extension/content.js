@@ -87,7 +87,7 @@ function showResult(result) {
       <div class="klar-claims-summary">
         <span class="klar-supported">${result.supported || 0} supported</span>
         <span class="klar-contradicted">${result.contradicted || 0} contradicted</span>
-        <span class="klar-unverifiable">${result.unverifiable || 0} unknown</span>
+        <span class="klar-unverifiable">${result.unverifiable || 0} unconfirmed</span>
       </div>
     `);
 
@@ -97,16 +97,19 @@ function showResult(result) {
     const unv = result.unverifiable || 0;
     const total = sup + con + unv;
     let verdictText;
-    if (score >= 80) {
-      verdictText = `\u2705 Highly trustworthy \u2014 ${sup} of ${total} claims backed by independent sources.`;
+    const verifiable = sup + con;
+    if (verifiable === 0) {
+      verdictText = `\u2753 Could not verify \u2014 none of the ${total} claims could be confirmed or denied by available sources.`;
+    } else if (score >= 80) {
+      verdictText = `\u2705 Highly trustworthy \u2014 ${sup} of ${total} claims backed by independent sources. No contradictions found.`;
     } else if (score >= 60) {
-      verdictText = `\ud83d\udfe2 Mostly reliable \u2014 ${sup} of ${total} verified, but ${unv} unconfirmed. Check before sharing.`;
+      verdictText = `\ud83d\udfe2 Mostly reliable \u2014 ${sup} verified, ${con} contradicted. ${unv} unconfirmed but not necessarily wrong.`;
     } else if (score >= 40) {
-      verdictText = `\u26a0\ufe0f Mixed reliability \u2014 only ${sup} of ${total} verified. ${unv} unconfirmed. Treat with caution.`;
+      verdictText = `\u26a0\ufe0f Mixed reliability \u2014 ${sup} supported but ${con} contradicted. ${unv} unconfirmed. Verify key facts.`;
     } else if (score >= 20) {
-      verdictText = `\ud83d\udfe0 Low reliability \u2014 ${con} contradicted, ${unv} unconfirmed. Cross-check before trusting.`;
+      verdictText = `\ud83d\udfe0 Low reliability \u2014 ${con} contradicted, only ${sup} supported. Cross-check carefully.`;
     } else {
-      verdictText = `\ud83d\uded1 Unreliable \u2014 ${con} contradicted. Do not share without independent verification.`;
+      verdictText = `\ud83d\uded1 Unreliable \u2014 ${con} contradicted, very few supported. Do not share without verification.`;
     }
     sections.push(`<div class="klar-verdict">${verdictText}</div>`);
 

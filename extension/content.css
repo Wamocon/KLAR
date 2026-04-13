@@ -116,7 +116,7 @@
 
 .klar-supported { color: #4ade80; }
 .klar-contradicted { color: #f87171; }
-.klar-unverifiable { color: #fbbf24; }
+.klar-unverifiable { color: #94a3b8; }
 
 /* ─── Verdict Summary ─── */
 .klar-verdict {
@@ -148,7 +148,7 @@
 
 .klar-claim-supported { border-left-color: #22c55e; }
 .klar-claim-contradicted { border-left-color: #ef4444; }
-.klar-claim-unverifiable { border-left-color: #eab308; }
+.klar-claim-unverifiable { border-left-color: #64748b; }
 
 .klar-claim-header {
   display: flex;
@@ -168,7 +168,7 @@
 
 .klar-claim-supported .klar-claim-verdict { background: rgba(34,197,94,0.15); color: #4ade80; }
 .klar-claim-contradicted .klar-claim-verdict { background: rgba(239,68,68,0.15); color: #f87171; }
-.klar-claim-unverifiable .klar-claim-verdict { background: rgba(234,179,8,0.15); color: #fbbf24; }
+.klar-claim-unverifiable .klar-claim-verdict { background: rgba(100,116,139,0.15); color: #94a3b8; }
 
 .klar-claim-conf {
   font-size: 10px;
