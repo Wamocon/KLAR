@@ -225,6 +225,14 @@
     "overrideVerdict": "Bewertung korrigieren",
     "originalText": "Originaltext",
     "backToVerify": "Neue Verifizierung",
+    "verdict": {
+      "high": "Sehr vertrauenswürdig — {supported} von {total} Behauptungen werden durch unabhängige Quellen gestützt. Dieser Inhalt erscheint faktisch zuverlässig.",
+      "good": "Überwiegend zuverlässig — {supported} von {total} Behauptungen verifiziert, aber {unverifiable} konnten nicht unabhängig bestätigt werden. Prüfen Sie unbestätigte Aussagen vor dem Teilen.",
+      "mixed": "Gemischte Zuverlässigkeit — nur {supported} von {total} Behauptungen konnten verifiziert werden. {unverifiable} bleiben unbestätigt. Behandeln Sie diesen Inhalt mit Vorsicht.",
+      "low": "Geringe Zuverlässigkeit — die meisten Behauptungen konnten nicht verifiziert werden. {contradicted} widerlegt, {unverifiable} unbestätigt. Vor dem Vertrauen gegenchecken.",
+      "veryLow": "Unzuverlässig — sehr wenige Behauptungen werden durch Quellen gestützt. {contradicted} direkt widerlegt. Nicht teilen ohne unabhängige Überprüfung.",
+      "label": "Was bedeutet das?"
+    },
     "help": {
       "trustScore": "Anteil der Behauptungen, die durch unabh\u00e4ngige Quellen best\u00e4tigt wurden. H\u00f6her = zuverl\u00e4ssiger.",
       "supported": "Behauptung best\u00e4tigt \u2014 mindestens eine unabh\u00e4ngige Quelle st\u00fctzt diese Aussage.",

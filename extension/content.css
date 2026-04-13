@@ -118,6 +118,18 @@
 .klar-contradicted { color: #f87171; }
 .klar-unverifiable { color: #fbbf24; }
 
+/* ─── Verdict Summary ─── */
+.klar-verdict {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border-left: 3px solid #475569;
+}
+
 /* ─── Fact-Check: Individual Claims ─── */
 .klar-claims {
   border-top: 1px solid #151c2c;

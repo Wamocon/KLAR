@@ -225,6 +225,14 @@
     "overrideVerdict": "Override verdict",
     "originalText": "Original text",
     "backToVerify": "New verification",
+    "verdict": {
+      "high": "Highly trustworthy — {supported} of {total} claims are backed by independent sources. This content appears factually reliable.",
+      "good": "Mostly reliable — {supported} of {total} claims verified, but {unverifiable} could not be independently confirmed. Check unverified claims before sharing.",
+      "mixed": "Mixed reliability — only {supported} of {total} claims could be verified. {unverifiable} remain unconfirmed. Treat this content with caution.",
+      "low": "Low reliability — most claims could not be verified. {contradicted} contradicted, {unverifiable} unconfirmed. Cross-check before trusting this content.",
+      "veryLow": "Unreliable — very few claims are supported by sources. {contradicted} directly contradicted. Do not share without independent verification.",
+      "label": "What does this mean?"
+    },
     "help": {
       "trustScore": "Percentage of claims confirmed by independent sources. Higher = more factually reliable.",
       "supported": "Claim confirmed — at least one independent source supports this statement.",

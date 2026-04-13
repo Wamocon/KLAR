@@ -285,6 +285,32 @@ export default function ReportPage() {
           </CardContent>
         </Card>
 
+        {/* Verdict Summary */}
+        {(() => {
+          const score = verification.trust_score;
+          const sup = verification.supported_count;
+          const con = verification.contradicted_count;
+          const unv = verification.unverifiable_count;
+          const total = verification.total_claims;
+          const tier = score >= 80 ? "high" : score >= 60 ? "good" : score >= 40 ? "mixed" : score >= 20 ? "low" : "veryLow";
+          const bgColor = score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200/60 dark:border-emerald-800/30"
+            : score >= 60 ? "bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/40 dark:border-emerald-800/20"
+            : score >= 40 ? "bg-amber-50 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/30"
+            : score >= 20 ? "bg-orange-50 dark:bg-orange-900/15 border-orange-200/60 dark:border-orange-800/30"
+            : "bg-red-50 dark:bg-red-900/15 border-red-200/60 dark:border-red-800/30";
+          const textColor = score >= 60 ? "text-emerald-800 dark:text-emerald-300"
+            : score >= 40 ? "text-amber-800 dark:text-amber-300"
+            : "text-red-800 dark:text-red-300";
+          return (
+            <div className={`mb-8 rounded-2xl border p-5 ${bgColor}`}>
+              <h3 className={`text-sm font-semibold mb-1.5 ${textColor}`}>{t("verdict.label")}</h3>
+              <p className={`text-sm leading-relaxed ${textColor} opacity-90`}>
+                {t(`verdict.${tier}`, { supported: sup, total, contradicted: con, unverifiable: unv })}
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Processing Time + Distribution */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card className="border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">

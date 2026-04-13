@@ -174,6 +174,35 @@ function showResult(result) {
       </div>
     `);
 
+    // ── Dynamic verdict summary ──
+    const sup = result.supported || 0;
+    const con = result.contradicted || 0;
+    const unv = result.unverifiable || 0;
+    const total = sup + con + unv;
+    let verdictText, verdictIcon, verdictBg;
+    if (score >= 80) {
+      verdictIcon = "\u2705"; verdictBg = "rgba(16,185,129,0.1)";
+      verdictText = `Highly trustworthy \u2014 ${sup} of ${total} claims are backed by independent sources. This content appears factually reliable.`;
+    } else if (score >= 60) {
+      verdictIcon = "\ud83d\udfe2"; verdictBg = "rgba(16,185,129,0.08)";
+      verdictText = `Mostly reliable \u2014 ${sup} of ${total} claims verified, but ${unv} could not be independently confirmed. Check unverified claims before sharing.`;
+    } else if (score >= 40) {
+      verdictIcon = "\u26a0\ufe0f"; verdictBg = "rgba(234,179,8,0.1)";
+      verdictText = `Mixed reliability \u2014 only ${sup} of ${total} claims could be verified. ${unv} remain unconfirmed. Treat this content with caution.`;
+    } else if (score >= 20) {
+      verdictIcon = "\ud83d\udfe0"; verdictBg = "rgba(249,115,22,0.1)";
+      verdictText = `Low reliability \u2014 most claims could not be verified. ${con} contradicted, ${unv} unconfirmed. Cross-check before trusting this content.`;
+    } else {
+      verdictIcon = "\ud83d\uded1"; verdictBg = "rgba(239,68,68,0.1)";
+      verdictText = `Unreliable \u2014 very few claims are supported by sources. ${con} directly contradicted. Do not share without independent verification.`;
+    }
+    sections.push(`
+      <div class="verdict-summary" style="background:${verdictBg}">
+        <div class="verdict-header">${verdictIcon} What does this mean?</div>
+        <div class="verdict-text">${verdictText}</div>
+      </div>
+    `);
+
     sections.push(`<div class="section-title">Claims</div>`);
 
     for (const c of result.claims) {
