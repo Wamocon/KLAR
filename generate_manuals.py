@@ -236,13 +236,13 @@ def build_english(doc):
     add_para(doc, "KLAR stands for Knowledge Legitimacy Audit & Review. It is a web application that takes any text — whether AI-generated or human-written — and automatically:")
     add_bullet(doc, "Finds every factual claim in the text", bold_prefix="Extracts claims: ")
     add_bullet(doc, "Searches Wikipedia, Wikidata, and Google for evidence", bold_prefix="Searches for evidence: ")
-    add_bullet(doc, "Classifies each claim as Supported, Contradicted, or Unverifiable", bold_prefix="Judges each claim: ")
+    add_bullet(doc, "Classifies each claim as Supported, Contradicted, or Unconfirmed", bold_prefix="Judges each claim: ")
     add_bullet(doc, "Provides source links for every verdict", bold_prefix="Cites sources: ")
     add_bullet(doc, "Determines if the text was written by AI", bold_prefix="Detects AI origin: ")
     add_bullet(doc, "Identifies emotional language, one-sided framing, and political lean", bold_prefix="Analyzes bias: ")
     add_bullet(doc, "Checks for copied content from the web", bold_prefix="Finds plagiarism: ")
     add_bullet(doc, "Scores the text using professional evaluation frameworks", bold_prefix="Evaluates quality: ")
-    add_para(doc, "The result is a comprehensive Trust Report with a color-coded visualization of your text, where each claim is highlighted in green (supported), red (contradicted), or yellow (unverifiable). You can click on any claim to see the evidence and reasoning behind the verdict.")
+    add_para(doc, "The result is a comprehensive Trust Report with a color-coded visualization of your text, where each claim is highlighted in green (supported), red (contradicted), or gray (unconfirmed). You can click on any claim to see the evidence and reasoning behind the verdict.")
     add_para(doc, "Think of KLAR as a smart research assistant that reads your text, questions every factual statement, finds the evidence for or against it, and presents you with a clear, transparent report — all in under 15 seconds.")
     doc.add_page_break()
 
@@ -281,7 +281,7 @@ def build_english(doc):
     add_bullet(doc, "A second AI pass evaluates each claim against the collected evidence and classifies it:", bold_prefix="Step 3 — Judgment: ")
     add_colored_bullet(doc, "16A34A", "Supported (Green) — The evidence confirms this claim is accurate")
     add_colored_bullet(doc, "DC2626", "Contradicted (Red) — The evidence shows this claim is wrong")
-    add_colored_bullet(doc, "D97706", "Unverifiable (Yellow) — No reliable source could be found to confirm or deny this")
+    add_colored_bullet(doc, "64748B", "Unconfirmed (Gray) — No reliable source could be found to confirm or deny this. This does not mean the claim is wrong.")
     add_para(doc, "Each verdict comes with a plain-English explanation of why the claim was judged that way, plus clickable links to every source used.")
 
     doc.add_heading("4.2 AI Detection", level=2)
@@ -330,9 +330,9 @@ def build_english(doc):
 
     doc.add_heading("4.8 Trust Report", level=2)
     add_para(doc, "After analysis, KLAR generates a comprehensive trust report that includes:")
-    add_bullet(doc, "A trust score (0–100) showing overall reliability")
+    add_bullet(doc, "A trust score (0–100) based on the ratio of supported vs. contradicted claims (unconfirmed claims are excluded from the score)")
     add_bullet(doc, "Color-coded claims with verdicts and sources")
-    add_bullet(doc, "A highlighted text view — your original text with claims marked in green, red, and yellow")
+    add_bullet(doc, "A highlighted text view — your original text with claims marked in green (supported), red (contradicted), and gray (unconfirmed)")
     add_bullet(doc, "Source links for every verdict")
     add_bullet(doc, "PDF export — download the full report")
 
@@ -342,7 +342,7 @@ def build_english(doc):
     add_bullet(doc, "Your trust score trends over time")
     add_bullet(doc, "Recent contradicted claims to watch out for")
     add_bullet(doc, "Quick access to your latest reports")
-    add_para(doc, "The Verification History is a searchable, sortable list of every text you have ever verified. Filter by date, sort by trust score, search by keywords. Click any entry to re-open the full report.")
+    add_para(doc, "The Verification History is a searchable, sortable list of every text you have ever verified. Filter by date, sort by trust score, search by keywords. Click any entry to re-open the full report.\n\nNote: The trust score measures supported claims vs. contradicted claims. Unconfirmed claims (where no source could be found either way) are excluded from the score — they do not count against you.")
 
     doc.add_heading("4.10 Human Review System", level=2)
     add_para(doc, "If you disagree with KLAR's verdict on a claim, you can submit a review with your own assessment and comments. This creates a record that helps improve future accuracy.")
@@ -432,7 +432,7 @@ def build_english(doc):
     doc.add_heading("How to Use", level=2)
     add_bullet(doc, "Select text on any webpage, right-click, and choose \"Verify with KLAR\"", bold_prefix="Right-click → Verify: ")
     add_bullet(doc, "Right-click anywhere on a page (without selecting text) to verify the entire page", bold_prefix="Whole page verification: ")
-    add_bullet(doc, "Results appear in a floating panel directly on the page, showing trust score and claim verdicts", bold_prefix="Inline results: ")
+    add_bullet(doc, "Results appear in a floating panel directly on the page, showing trust score and claim verdicts. Only sources the AI actually referenced are shown.", bold_prefix="Inline results: ")
     add_bullet(doc, "The extension automatically adapts to your system theme", bold_prefix="Dark mode: ")
     add_para(doc, "The extension is also compatible with Edge and all Chromium-based browsers.")
     doc.add_page_break()
@@ -539,7 +539,7 @@ def build_english(doc):
     # ── 15. FAQ ──
     doc.add_heading("15. Frequently Asked Questions", level=1)
     faqs = [
-        ("How accurate is KLAR?", "KLAR's accuracy depends on the availability of sources. Claims that can be verified against Wikipedia and reliable web sources receive highly accurate verdicts. Claims about very recent events or niche topics may be classified as 'Unverifiable' when no reliable source exists."),
+        ("How accurate is KLAR?", "KLAR's accuracy depends on the availability of sources. Claims that can be verified against Wikipedia and reliable web sources receive highly accurate verdicts. Claims about very recent events or niche topics may be classified as 'Unconfirmed' when no reliable source exists. Unconfirmed does not mean wrong — it simply means no source could be found to confirm or deny it."),
         ("Does KLAR store my original text?", "KLAR stores the extracted claims and their verdicts so you can access your history. All data is stored in Frankfurt (EU) with Row Level Security."),
         ("Can KLAR check text in languages other than German and English?", "The analysis engine processes text in many languages since the source search works across languages. The user interface is available in German and English."),
         ("Is my data safe?", "Yes. KLAR is GDPR-compliant, stores all data in Frankfurt (EU), uses Row Level Security for data isolation, and does not use tracking cookies or sell data to third parties."),
@@ -626,13 +626,13 @@ def build_german(doc):
     add_para(doc, "KLAR steht für Knowledge Legitimacy Audit & Review. Es ist eine Web-Anwendung, die jeden Text — ob KI-generiert oder menschlich geschrieben — automatisch:")
     add_bullet(doc, "Findet jede faktische Behauptung im Text", bold_prefix="Behauptungen extrahieren: ")
     add_bullet(doc, "Durchsucht Wikipedia, Wikidata und Google nach Belegen", bold_prefix="Belege suchen: ")
-    add_bullet(doc, "Stuft jede Behauptung ein als Bestätigt, Widerlegt oder Nicht prüfbar", bold_prefix="Jede Behauptung bewerten: ")
+    add_bullet(doc, "Stuft jede Behauptung ein als Bestätigt, Widerlegt oder Unbestätigt", bold_prefix="Jede Behauptung bewerten: ")
     add_bullet(doc, "Liefert Quellenlinks für jedes Urteil", bold_prefix="Quellen zitieren: ")
     add_bullet(doc, "Erkennt, ob der Text von KI geschrieben wurde", bold_prefix="KI-Herkunft erkennen: ")
     add_bullet(doc, "Identifiziert emotionale Sprache, einseitige Darstellung und politische Tendenz", bold_prefix="Bias analysieren: ")
     add_bullet(doc, "Prüft auf kopierten Inhalt aus dem Web", bold_prefix="Plagiate finden: ")
     add_bullet(doc, "Bewertet den Text mit professionellen Analyse-Frameworks", bold_prefix="Qualität bewerten: ")
-    add_para(doc, "Das Ergebnis ist ein umfassender Trust Report mit einer farbcodierten Darstellung Ihres Textes, in der jede Behauptung in Grün (bestätigt), Rot (widerlegt) oder Gelb (nicht prüfbar) markiert ist. Sie können auf jede Behauptung klicken, um die Belege und die Begründung hinter dem Urteil zu sehen.")
+    add_para(doc, "Das Ergebnis ist ein umfassender Trust Report mit einer farbcodierten Darstellung Ihres Textes, in der jede Behauptung in Grün (bestätigt), Rot (widerlegt) oder Grau (unbestätigt) markiert ist. Sie können auf jede Behauptung klicken, um die Belege und die Begründung hinter dem Urteil zu sehen.")
     add_para(doc, "Stellen Sie sich KLAR als einen intelligenten Forschungsassistenten vor, der Ihren Text liest, jede faktische Aussage hinterfragt, die Belege dafür oder dagegen findet und Ihnen einen klaren, transparenten Bericht präsentiert — alles in unter 15 Sekunden.")
     doc.add_page_break()
 
@@ -671,7 +671,7 @@ def build_german(doc):
     add_bullet(doc, "Ein zweiter KI-Durchlauf bewertet jede Behauptung gegen die gesammelten Belege:", bold_prefix="Schritt 3 — Urteil: ")
     add_colored_bullet(doc, "16A34A", "Bestätigt (Grün) — Die Belege bestätigen die Richtigkeit dieser Behauptung")
     add_colored_bullet(doc, "DC2626", "Widerlegt (Rot) — Die Belege zeigen, dass diese Behauptung falsch ist")
-    add_colored_bullet(doc, "D97706", "Nicht prüfbar (Gelb) — Keine zuverlässige Quelle konnte gefunden werden")
+    add_colored_bullet(doc, "64748B", "Unbestätigt (Grau) — Keine zuverlässige Quelle konnte gefunden werden. Das bedeutet nicht, dass die Behauptung falsch ist.")
     add_para(doc, "Jedes Urteil kommt mit einer verständlichen Erklärung und anklickbaren Quellenlinks.")
 
     doc.add_heading("4.2 AI-Erkennung", level=2)
@@ -711,14 +711,14 @@ def build_german(doc):
 
     doc.add_heading("4.8 Trust Report", level=2)
     add_para(doc, "Nach der Analyse generiert KLAR einen umfassenden Trust Report:")
-    add_bullet(doc, "Trust Score (0–100) für die Gesamtzuverlässigkeit")
+    add_bullet(doc, "Trust Score (0–100) basierend auf dem Verhältnis von bestätigten zu widerlegten Behauptungen (unbestätigte Behauptungen werden vom Score ausgeschlossen)")
     add_bullet(doc, "Farbcodierte Behauptungen mit Urteilen und Quellen")
     add_bullet(doc, "Hervorgehobene Textansicht — Ihr Originaltext mit markierten Behauptungen")
     add_bullet(doc, "Quellenlinks für jedes Urteil")
     add_bullet(doc, "PDF-Export des vollständigen Berichts")
 
     doc.add_heading("4.9 Dashboard & Prüfhistorie", level=2)
-    add_para(doc, "Das Dashboard zeigt: Anzahl der Prüfungen, Trust-Score-Trends, aktuelle widerlegte Behauptungen und Schnellzugriff auf letzte Berichte. Die Prüfhistorie ist eine durchsuchbare, sortierbare Liste aller bisherigen Prüfungen.")
+    add_para(doc, "Das Dashboard zeigt: Anzahl der Prüfungen, Trust-Score-Trends, aktuelle widerlegte Behauptungen und Schnellzugriff auf letzte Berichte. Die Prüfhistorie ist eine durchsuchbare, sortierbare Liste aller bisherigen Prüfungen.\n\nHinweis: Der Trust Score misst bestätigte vs. widerlegte Behauptungen. Unbestätigte Behauptungen (ohne Quellen für oder gegen) werden vom Score ausgeschlossen.")
 
     doc.add_heading("4.10 Menschliches Bewertungssystem", level=2)
     add_para(doc, "Wenn Sie mit KLARs Urteil nicht einverstanden sind, können Sie eine eigene Bewertung mit Kommentar abgeben.")
@@ -794,7 +794,7 @@ def build_german(doc):
     doc.add_heading("Verwendung", level=2)
     add_bullet(doc, 'Text markieren \u2192 Rechtsklick \u2192 "Mit KLAR pr\u00fcfen"', bold_prefix='Rechtsklick-Pr\u00fcfung: ')
     add_bullet(doc, "Rechtsklick ohne Textauswahl prüft die gesamte Seite", bold_prefix="Ganzseitenprüfung: ")
-    add_bullet(doc, "Ein schwebendes Panel zeigt Trust Score und Behauptungsurteile", bold_prefix="Inline-Ergebnisse: ")
+    add_bullet(doc, "Ein schwebendes Panel zeigt Trust Score und Behauptungsurteile. Es werden nur Quellen angezeigt, die die KI tatsächlich referenziert hat.", bold_prefix="Inline-Ergebnisse: ")
     add_para(doc, "Kompatibel mit Chrome, Edge und allen Chromium-basierten Browsern.")
     doc.add_page_break()
 
@@ -896,7 +896,7 @@ def build_german(doc):
     # ── 15 ──
     doc.add_heading("15. Häufige Fragen", level=1)
     faqs = [
-        ("Wie genau ist KLAR?", 'Die Genauigkeit h\u00e4ngt von der Verf\u00fcgbarkeit der Quellen ab. Behauptungen, die gegen Wikipedia und zuverl\u00e4ssige Webquellen gepr\u00fcft werden k\u00f6nnen, erhalten hochgenaue Urteile. Behauptungen \u00fcber sehr aktuelle Ereignisse oder Nischenthemen k\u00f6nnen als "Nicht pr\u00fcfbar" eingestuft werden.'),
+        ("Wie genau ist KLAR?", 'Die Genauigkeit h\u00e4ngt von der Verf\u00fcgbarkeit der Quellen ab. Behauptungen, die gegen Wikipedia und zuverl\u00e4ssige Webquellen gepr\u00fcft werden k\u00f6nnen, erhalten hochgenaue Urteile. Behauptungen \u00fcber sehr aktuelle Ereignisse oder Nischenthemen k\u00f6nnen als "Unbest\u00e4tigt" eingestuft werden. Unbest\u00e4tigt bedeutet nicht falsch \u2014 es bedeutet nur, dass keine Quelle gefunden werden konnte.'),
         ("Speichert KLAR meinen Originaltext?", "KLAR speichert die extrahierten Behauptungen und ihre Urteile, damit Sie auf Ihre Historie zugreifen können. Alle Daten werden in Frankfurt (EU) mit Row Level Security gespeichert."),
         ("Kann KLAR Texte in anderen Sprachen prüfen?", "Die Analyse-Engine verarbeitet Texte in vielen Sprachen, da die Quellensuche sprachübergreifend funktioniert. Die Benutzeroberfläche ist in Deutsch und Englisch verfügbar."),
         ("Sind meine Daten sicher?", "Ja. KLAR ist DSGVO-konform, speichert alle Daten in Frankfurt (EU), verwendet Row Level Security und nutzt keine Tracking-Cookies oder verkauft Daten an Dritte."),

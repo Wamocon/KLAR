@@ -2,7 +2,7 @@
 ## Knowledge Legitimacy Audit & Review
 
 ### 1. Product Overview
-KLAR is a production-grade web platform that verifies AI-generated content by checking every factual claim against real-world evidence sources (Wikipedia, Wikidata, web search). It produces a color-coded trust report showing Supported (green), Unverifiable (yellow), and Contradicted (red) claims — each with source links.
+KLAR is a production-grade web platform that verifies AI-generated content by checking every factual claim against real-world evidence sources (Wikipedia, Wikidata, web search). It produces a color-coded trust report showing Supported (green), Unconfirmed (gray), and Contradicted (red) claims — each with source links.
 
 ### 2. Target Users
 - Knowledge workers & freelancers
@@ -30,10 +30,10 @@ KLAR is a production-grade web platform that verifies AI-generated content by ch
    - 3-5 sources collected per claim
 4. **AI Judgment**: Second Gemini pass classifies each claim:
    - SUPPORTED (green) — evidence confirms
-   - UNVERIFIABLE (yellow) — insufficient evidence
+   - UNCONFIRMED (gray) — no source found to confirm or deny (excluded from trust score)
    - CONTRADICTED (red) — evidence contradicts
 5. **Report Generation**: Color-coded interactive report with:
-   - Overall trust score (% supported)
+   - Overall trust score (supported / (supported + contradicted) × 100; unconfirmed claims excluded)
    - Per-claim verdict with reasoning
    - Source links for each claim
    - Click-to-expand detail view

@@ -20,7 +20,7 @@ Think of it as a **smart assistant that reads your text, finds every factual cla
 **What you get:** A color-coded report:
 - 🟢 **Green** = This claim is supported by real sources
 - 🔴 **Red** = This claim contradicts what reliable sources say
-- 🟡 **Yellow** = No reliable source could be found to confirm or deny this
+- ⚪ **Gray** = No reliable source could be found to confirm or deny this (this does not mean the claim is wrong)
 
 Each claim includes links to the sources that were used to check it, plus a plain-English explanation of why it was judged the way it was.
 
@@ -101,9 +101,9 @@ KLAR automatically extracts the text from your file and runs all the analyses yo
 
 ### 📑 8. Trust Report
 **What it does:** After analyzing your content, KLAR generates a detailed report that includes:
-- A **trust score** (0-100) showing overall reliability
+- A **trust score** (0-100) based on the ratio of supported vs. contradicted claims (unconfirmed claims are excluded from the score)
 - **Color-coded claims** with verdicts and sources
-- A **highlighted text view** — your original text with claims marked in green/red/yellow
+- A **highlighted text view** — your original text with claims marked in green (supported), red (contradicted), and gray (unconfirmed)
 - **Source links** for every verdict
 - **PDF export** — download the full report
 
@@ -129,6 +129,8 @@ No extension installation needed. Works in Chrome, Firefox, Edge, Safari.
 
 ### 📜 11. Verification History
 **What it does:** A searchable, sortable list of every text you've ever verified. Filter by date, sort by trust score, search by keywords. Click any entry to re-open the full report.
+
+> **Note:** The trust score measures supported claims vs. contradicted claims. Unconfirmed claims (where no source could be found) are excluded from the score — they don’t count against you.
 
 ---
 

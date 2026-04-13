@@ -75,9 +75,9 @@
 - language (text)
 - total_claims (int)
 - supported_count (int)
-- unverifiable_count (int)
+- unverifiable_count (int) — claims where no source confirmed or denied (excluded from trust_score)
 - contradicted_count (int)
-- trust_score (decimal)
+- trust_score (decimal) — supported / (supported + contradicted) × 100; unverifiable claims excluded
 - status (text: 'processing'|'completed'|'failed')
 - processing_time_ms (int)
 - created_at (timestamptz)
@@ -87,7 +87,7 @@
 - verification_id (uuid, FK → verifications.id)
 - claim_text (text)
 - original_sentence (text)
-- verdict (text: 'supported'|'unverifiable'|'contradicted')
+- verdict (text: 'supported'|'unverifiable'|'contradicted') — displayed as "Unconfirmed" in the UI
 - confidence (decimal)
 - reasoning (text)
 - sources (jsonb)
