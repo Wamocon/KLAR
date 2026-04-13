@@ -31,8 +31,6 @@ export interface PipelineOptions {
   batchSize?: number;
   /** Pipeline deadline in ms before giving up (default: 55000) */
   deadlineMs?: number;
-  /** Fast mode: skip grounded search, use tighter AI timeouts (for extension) */
-  fast?: boolean;
 }
 
 export async function* runVerificationPipeline(
@@ -112,7 +110,7 @@ export async function* runVerificationPipeline(
     const maxExtractClaims = options.maxClaims ?? 10;
     extractedClaims = await extractClaims(text, language, tracker, {
       maxClaims: maxExtractClaims,
-      timeoutMs: options.fast ? 15000 : 30000,
+      timeoutMs: 30000,
     });
   } catch (error) {
     yield {
@@ -177,9 +175,9 @@ export async function* runVerificationPipeline(
     const batchResults = await Promise.all(
       batch.map(async (sanitizedClaim) => {
         try {
-          const sources = await findEvidence(sanitizedClaim, language, { fast: options.fast });
+          const sources = await findEvidence(sanitizedClaim, language);
           const judgment = await judgeClaim(sanitizedClaim, sources, language, tracker, {
-            timeoutMs: options.fast ? 12000 : 20000,
+            timeoutMs: 20000,
           });
           const crossRef = crossReferenceValidation(sanitizedClaim.claim_text, sources);
           const hallucinationCheck = detectHallucinations(sanitizedClaim.claim_text, sources);

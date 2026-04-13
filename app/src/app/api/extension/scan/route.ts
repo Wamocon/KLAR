@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       text,
       parsed.data.language,
       parsed.data.analyses as AnalysisMode[],
-      { maxClaims: 3, batchSize: 3, deadlineMs: 50000, fast: true }
+      { maxClaims: 3, batchSize: 3, deadlineMs: 50000 }
     )) {
       if (event.type === "completed") {
         const completedEvent = event as unknown as {

@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
       claim_text: sanitizeClaim(claim.claim_text),
     };
 
-    // Find evidence — fast mode (skip grounded search, tighter timeouts)
-    const sources = await findEvidence(sanitizedClaim, language, { fast: true });
+    // Find evidence — full mode (same sources as web app, including grounded search)
+    const sources = await findEvidence(sanitizedClaim, language);
 
     // Judge the claim
     const judgment = await judgeClaim(sanitizedClaim, sources, language, tracker, {
-      timeoutMs: 15000,
+      timeoutMs: 20000,
     });
 
     // Cross-reference and hallucination checks (instant, NLP-based)

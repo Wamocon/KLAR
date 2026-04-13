@@ -132,29 +132,21 @@ function scoreRelevance(claimText: string, source: ClaimSource): number {
   return Math.min(1, overlap / Math.max(3, claimWords.size));
 }
 
-export interface FindEvidenceOptions {
-  /** Skip grounded search (saves ~12s Gemini call) */
-  fast?: boolean;
-}
-
 export async function findEvidence(
   claim: ExtractedClaim,
   language: string = "en",
-  options?: FindEvidenceOptions
 ): Promise<ClaimSource[]> {
   const sources: ClaimSource[] = [];
-  const fast = options?.fast ?? false;
 
   // Extract focused search queries instead of using raw claim text
   const { webQuery, wikiQuery } = extractSearchQuery(claim.claim_text);
 
   // Run all evidence sources in parallel with per-source timeout fallbacks
-  // In fast mode, skip grounded search (another Gemini call, ~12s) — rely on Wikipedia + Serper
   const [wikiResults, wikidataResults, groundedResults, ragResults] = await Promise.all([
-    withFallback(searchWikipedia(wikiQuery, language), fast ? 4000 : 6000, []),
-    withFallback(searchWikidata(wikiQuery), fast ? 4000 : 6000, []),
-    fast ? Promise.resolve([]) : withFallback(searchGrounded(claim), 12000, []),
-    withFallback(retrieveKnowledge(claim.claim_text, { limit: 5 }).catch(() => []), fast ? 3000 : 5000, []),
+    withFallback(searchWikipedia(wikiQuery, language), 6000, []),
+    withFallback(searchWikidata(wikiQuery), 6000, []),
+    withFallback(searchGrounded(claim), 12000, []),
+    withFallback(retrieveKnowledge(claim.claim_text, { limit: 5 }).catch(() => []), 5000, []),
   ]);
 
   // Add RAG knowledge base results first (highest relevance)
@@ -173,9 +165,9 @@ export async function findEvidence(
   }
 
   // Serper uses the web-optimized query (Google handles natural language well)
-  // Always call in fast mode since grounded is skipped
-  if (sources.length < 3 || fast) {
-    const webResults = await withFallback(searchWeb(webQuery), fast ? 4000 : 6000, []);
+  // Always call Serper — it provides the most topically relevant results
+  {
+    const webResults = await withFallback(searchWeb(webQuery), 6000, []);
     for (const result of webResults) {
       if (!existingUrls.has(result.url)) {
         sources.push(result);
